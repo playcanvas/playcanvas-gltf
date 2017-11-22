@@ -32,10 +32,18 @@
             });
 
             // load glTF model
+            /*
             var url = "assets/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf";
             app.assets.loadFromUrl(url, "json", function (err, asset) {
                 var gltf = JSON.parse(asset.resource);
                 var root = loadGltf(gltf, app.graphicsDevice);
+                app.root.addChild(root);
+            });
+*/
+            var url = "assets/DamagedHelmet/glTF-Binary/DamagedHelmet.glb";
+            app.assets.loadFromUrl(url, "binary", function (err, asset) {
+                var glb = asset.resource;
+                var root = loadGlb(glb, app.graphicsDevice);
                 app.root.addChild(root);
             });
 

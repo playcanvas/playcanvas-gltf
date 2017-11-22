@@ -485,19 +485,64 @@
         return entities;
     }
 
-    function loadGltf(gltf, device) {
+    function loadGltf(gltf, device, buffers) {
         var resources = {
             device: device,
             defaultMaterial: translateMaterial({})
         };
         resources.textures = loadImages(gltf, resources);
-        resources.arrayBuffers = loadBuffers(gltf, resources);
+        resources.arrayBuffers = buffers ? buffers : loadBuffers(gltf, resources);
         resources.materials = loadMaterials(gltf, resources);
         resources.meshGroups = loadMeshes(gltf, resources);
         resources.entities = loadNodes(gltf, resources);
 
         return resources.entities[0];
     }
-    
+
+    function loadGlb(glb, device) {
+        var dataView = new DataView(glb);
+
+        // Read header
+        var magic = dataView.getUint32(0, true);
+        if (magic !== 0x46546C67) {
+            console.error("Invalid magic number found in glb header. Expected 0x46546C67, found 0x" + magic.toString(16));
+            return null;
+        } 
+        var version = dataView.getUint32(4, true);
+        var length = dataView.getUint32(8, true);
+
+        // Read JSON chunk
+        var chunkLength = dataView.getUint32(12, true);
+        var chunkType = dataView.getUint32(16, true);
+        if (chunkType !== 0x4E4F534A) {
+            console.error("Invalid chunk type found in glb file. Expected 0x4E4F534A, found 0x" + chunkType.toString(16));
+            return null;
+        } 
+        var jsonData = new Uint8Array(glb, 20, chunkLength);
+
+        var buffers = [];
+        var byteOffset = 20 + chunkLength;
+        while (byteOffset < length) {
+            chunkLength = dataView.getUint32(byteOffset, true);
+            chunkType = dataView.getUint32(byteOffset + 4, true);
+            if (chunkType !== 0x004E4942) {
+                console.error("Invalid chunk type found in glb file. Expected 0x004E4942, found 0x" + chunkType.toString(16));
+                return null;
+            }
+
+//            var buffer = new Uint8Array(glb, byteOffset + 8, chunkLength);
+            var buffer = glb.slice(byteOffset + 8, byteOffset + 8 + chunkLength);
+            buffers.push(buffer);
+
+            byteOffset += chunkLength + 8;
+        }
+
+        var decoder = new TextDecoder('utf-8');
+        var json = decoder.decode(jsonData);
+        json = JSON.parse(json);
+        return loadGltf(json, device, buffers);
+    }
+
     window.loadGltf = loadGltf;
+    window.loadGlb = loadGlb;
 }());
