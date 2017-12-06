@@ -75,8 +75,20 @@
         image.addEventListener('load', function () {
             texture.setSource(image);
         }, false);
-        image.src = data.uri;
 
+        if (data.hasOwnProperty('uri')) {
+            image.src = data.uri;
+        }
+        if (data.hasOwnProperty('bufferView')) {
+            var gltf = resources.gltf;
+            var arrayBuffers = resources.arrayBuffers;
+            var bufferView = gltf.bufferViews[data.bufferView];
+            var arrayBuffer = arrayBuffers[bufferView.buffer];
+            var byteOffset = bufferView.hasOwnProperty('byteOffset') ? bufferView.byteOffset : 0;
+            var imageBuffer = arrayBuffer.slice(byteOffset, byteOffset + bufferView.byteLength);
+            var blob = new Blob([ imageBuffer ], { type: data.mimeType });
+            image.src = URL.createObjectURL(blob);
+        }
         return texture;
     }
 
@@ -487,11 +499,12 @@
 
     function loadGltf(gltf, device, buffers) {
         var resources = {
+            gltf: gltf,
             device: device,
             defaultMaterial: translateMaterial({})
         };
-        resources.textures = loadImages(gltf, resources);
         resources.arrayBuffers = buffers ? buffers : loadBuffers(gltf, resources);
+        resources.textures = loadImages(gltf, resources);
         resources.materials = loadMaterials(gltf, resources);
         resources.meshGroups = loadMeshes(gltf, resources);
         resources.entities = loadNodes(gltf, resources);
