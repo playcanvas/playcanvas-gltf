@@ -19,6 +19,7 @@
         <script>
             // create a PlayCanvas application
             var canvas = document.getElementById('application');
+
             var app = new pc.Application(canvas, { });
             app.start();
 
@@ -29,22 +30,6 @@
             // ensure canvas is resized when window changes size
             window.addEventListener('resize', function() {
                 app.resizeCanvas();
-            });
-
-            // load glTF model
-            /*
-            var url = "assets/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf";
-            app.assets.loadFromUrl(url, "json", function (err, asset) {
-                var gltf = JSON.parse(asset.resource);
-                var root = loadGltf(gltf, app.graphicsDevice);
-                app.root.addChild(root);
-            });
-*/
-            var url = "assets/DamagedHelmet/glTF-Binary/DamagedHelmet.glb";
-            app.assets.loadFromUrl(url, "binary", function (err, asset) {
-                var glb = asset.resource;
-                var root = loadGlb(glb, app.graphicsDevice);
-                app.root.addChild(root);
             });
 
             // create camera entity
@@ -62,6 +47,50 @@
             // set up initial positions and orientations
             camera.setPosition(0, 0, 3);
             light.setEulerAngles(45, 0, 0);
+
+            // Handle dropped GLB/GLTF files
+            document.addEventListener('dragover', function (event) {
+                event.preventDefault();
+            }, false);
+            document.addEventListener('drop', function (event) {
+                event.preventDefault();
+
+                var loadFile = function (file) {
+                    var fr = new FileReader();
+                    fr.onload = function() {
+                        var root;
+                        var arrayBuffer = fr.result;
+                        var extension = file.name.split('.').pop();
+                        if (extension === 'glb') {
+                            root = loadGlb(arrayBuffer, app.graphicsDevice);
+                            app.root.addChild(root);
+                        } else if (extension === 'gltf') {
+                            var decoder = new TextDecoder('utf-8');
+                            var json = decoder.decode(arrayBuffer);
+                            json = JSON.parse(json);
+                            root = loadGltf(json, app.graphicsDevice);
+                            app.root.addChild(root);
+                        }
+                    };
+                    fr.readAsArrayBuffer(file);
+                };
+
+                var i;
+                var dt = event.dataTransfer;
+                if (dt.items) {
+                    // Use DataTransferItemList interface to access the file(s)
+                    for (i = 0; i < dt.items.length; i++) {
+                        if (dt.items[i].kind == "file") {
+                            loadFile(dt.items[i].getAsFile());
+                        }
+                    }
+                } else {
+                    // Use DataTransfer interface to access the file(s)
+                    for (i = 0; i < dt.files.length; i++) {
+                        loadFile(dt.files[i]);
+                    }  
+                }
+            }, false);
         </script>
     </body>
 </html>
