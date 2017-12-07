@@ -12,13 +12,13 @@ To use the loader with the Editor, simply add gltf-loader.js and monkey-patch.js
 
 # API
 ```
-loadGlb(ArrayBuffer glb, pc.GraphicsDevice device);
+pc.Entity loadGlb(ArrayBuffer glb, pc.GraphicsDevice device);
 ```
 * glb - An ArrayBuffer holding the binary glb file data
 * device - The graphics device
 
 ```
-loadGltf(Object gltf, pc.GraphicsDevice device);
+pc.Entity loadGltf(Object gltf, pc.GraphicsDevice device);
 ```
 * gltf - The glTF root object
 * device - The graphics device
