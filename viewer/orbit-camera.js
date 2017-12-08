@@ -541,8 +541,6 @@ OrbitCamera.prototype.update = function(dt) {
     this._pitch = pc.math.lerp(this._pitch, this._targetPitch, t);
 
     this._updatePosition();
-
-    console.log(this.entity.getPosition());
 };
 
 
