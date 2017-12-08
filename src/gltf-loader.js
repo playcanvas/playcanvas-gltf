@@ -96,11 +96,19 @@
     }
 
     function translateImage(data, resources) {
-        var texture = new pc.Texture(resources.device);
-
         var image = new Image();
         image.addEventListener('load', function () {
-            texture.setSource(image);
+            var gltf = resources.gltf;
+
+            var imageIndex = resources.images.indexOf(image);
+            for (var i = 0; i < gltf.textures.length; i++) {
+                var t = gltf.textures[i];
+                if (t.hasOwnProperty('source')) {
+                    if (t.source === imageIndex) {
+                        resources.textures[i].setSource(image);
+                    }
+                }
+            }
         }, false);
 
         if (data.hasOwnProperty('uri')) {
@@ -116,33 +124,32 @@
             var blob = new Blob([ imageBuffer ], { type: data.mimeType });
             image.src = URL.createObjectURL(blob);
         }
-        return texture;
+
+        return image;
     }
 
-    function getTexture(index, resources) {
-        var gltf = resources.gltf;
-        var texture = gltf.textures[index];
-        var source = texture.source;
-        var pcTex = resources.textures[source];
+    function translateTexture(data, resources) {
+        var texture = new pc.Texture(resources.device);
 
-        if (texture.hasOwnProperty('sampler')) {
-            var sampler = texture.sampler;
+        if (data.hasOwnProperty('sampler')) {
+            var gltf = resources.gltf;
+            var sampler = gltf.samplers[data.sampler];
 
             if (sampler.hasOwnProperty('minFilter')) {
-                pcTex.minFilter = getFilter(sampler.minFilter);
+                texture.minFilter = getFilter(sampler.minFilter);
             }
             if (sampler.hasOwnProperty('magFilter')) {
-                pcTex.magFilter = getFilter(sampler.magFilter);
+                texture.magFilter = getFilter(sampler.magFilter);
             }
             if (sampler.hasOwnProperty('wrapS')) {
-                pcTex.addressU = getWrap(sampler.wrapS);
+                texture.addressU = getWrap(sampler.wrapS);
             }
             if (sampler.hasOwnProperty('wrapT')) {
-                pcTex.addressV = getWrap(sampler.wrapT);
+                texture.addressV = getWrap(sampler.wrapT);
             }
         }
 
-        return pcTex;
+        return texture;
     }
 
     function translateMaterial(data, resources) {
@@ -165,7 +172,7 @@
                 material.opacity = 1;
             }
             if (pbrData.hasOwnProperty('baseColorTexture')) {
-                material.diffuseMap = getTexture(pbrData.baseColorTexture.index, resources);
+                material.diffuseMap = resources.textures[pbrData.baseColorTexture.index];
             }
             material.useMetalness = true;
             if (pbrData.hasOwnProperty('metallicFactor')) {
@@ -179,21 +186,21 @@
                 material.shininess = 0;
             }
             if (pbrData.hasOwnProperty('metallicRoughnessTexture')) {
-                material.metalnessMap = getTexture(pbrData.metallicRoughnessTexture.index, resources);
+                material.metalnessMap = resources.textures[pbrData.metallicRoughnessTexture.index];
                 material.metalnessMapChannel = 'b';
-                material.glossMap = getTexture(pbrData.metallicRoughnessTexture.index, resources);
+                material.glossMap = resources.textures[pbrData.metallicRoughnessTexture.index];
                 material.glossMapChannel = 'g';
             }
         }
 
         if (data.hasOwnProperty('normalTexture')) {
-            material.normalMap = getTexture(data.normalTexture.index, resources);
+            material.normalMap = resources.textures[data.normalTexture.index];
         }
         if (data.hasOwnProperty('occlusionTexture')) {
-            material.aoMap = getTexture(data.occlusionTexture.index, resources);
+            material.aoMap = resources.textures[data.occlusionTexture.index];
         }
         if (data.hasOwnProperty('emissiveTexture')) {
-            material.emissiveMap = getTexture(data.emissiveTexture.index, resources);
+            material.emissiveMap = resources.textures[data.emissiveTexture.index];
         }
         if (data.hasOwnProperty('emissiveFactor')) {
             material.emissive.r = data.emissiveFactor[0];
@@ -504,6 +511,18 @@
         return arrayBuffers;
     }
 
+    function loadTextures(gltf, resources) {
+        var textures = [];
+
+        if (gltf.hasOwnProperty('textures')) {
+            gltf.textures.forEach(function (texture) {
+                textures.push(translateTexture(texture, resources));
+            });
+        }
+
+        return textures;
+    }
+
     function loadImages(gltf, resources) {
         var textures = [];
 
@@ -557,7 +576,8 @@
             defaultMaterial: translateMaterial({})
         };
         resources.arrayBuffers = buffers ? buffers : loadBuffers(gltf, resources);
-        resources.textures = loadImages(gltf, resources);
+        resources.textures = loadTextures(gltf, resources);
+        resources.images = loadImages(gltf, resources);
         resources.materials = loadMaterials(gltf, resources);
         resources.meshGroups = loadMeshes(gltf, resources);
         resources.entities = loadNodes(gltf, resources);
