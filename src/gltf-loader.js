@@ -131,6 +131,10 @@
     function translateTexture(data, resources) {
         var texture = new pc.Texture(resources.device);
 
+        if (data.hasOwnProperty('name')) {
+            texture.name = data.name;
+        }
+
         if (data.hasOwnProperty('sampler')) {
             var gltf = resources.gltf;
             var sampler = gltf.samplers[data.sampler];
@@ -233,14 +237,10 @@
             material.alphaTest = 0.5;
         }
         if (data.hasOwnProperty('doubleSided')) {
-            // Not quite correctly supported in the PlayCanvas engine. The spec says:
-            // 
-            // "Specifies whether the material is double sided. When this value is false, 
-            // back-face culling is enabled. When this value is true, back-face culling 
-            // is disabled and double sided lighting is enabled. The back-face must have 
-            // its normals reversed before the lighting equation is evaluated."
+            material.twoSidedLighting = data.doubleSided;
             material.cull = data.doubleSided ? pc.CULLFACE_NONE : pc.CULLFACE_BACK;
         } else {
+            material.twoSidedLighting = false;
             material.cull = pc.CULLFACE_BACK;
         }
 
