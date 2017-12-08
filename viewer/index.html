@@ -10,7 +10,7 @@
                 overflow: hidden;
             }
         </style>
-        <script src='https://code.playcanvas.com/playcanvas-stable.min.js'></script>
+        <script src='https://code.playcanvas.com/playcanvas-stable.js'></script>
         <script src='../src/gltf-loader.js'></script>
         <script src='../src/monkey-patch.js'></script>
     </head>
@@ -37,22 +37,31 @@
             // create camera entity
             var camera = new pc.Entity('camera');
             camera.addComponent('camera');
+            camera.addComponent('script');
+            app.root.addChild(camera);
+            camera.setLocalPosition(0, 0, 1);
+
+            // make the camera interactive
+            app.assets.loadFromUrl('./orbit-camera.js', 'script', function (err, asset) {
+                camera.script.create('orbitCamera', {
+                    inertiaFactor: 0,
+                    distanceMin: 0,
+                    distanceMax: 0,
+                    pitchAngleMax: -90,
+                    pitchAngleMin: 90
+                });
+                camera.script.create('keyboardInput');
+                camera.script.create('mouseInput');
+            });
 
             // create directional light entity
             var light = new pc.Entity('light');
             light.addComponent('light');
-
-            // add to hierarchy
-            app.root.addChild(camera);
+            light.setEulerAngles(45, 0, 0);
             app.root.addChild(light);
 
-            // set up initial positions and orientations
-            camera.setPosition(0, 0, 15);
-            light.setEulerAngles(45, 0, 0);
-
+            // handle dropped GLB/GLTF files
             var root;
-
-            // Handle dropped GLB/GLTF files
             document.addEventListener('dragover', function (event) {
                 event.preventDefault();
             }, false);
