@@ -48,6 +48,8 @@
             camera.setPosition(0, 0, 3);
             light.setEulerAngles(45, 0, 0);
 
+            var root;
+
             // Handle dropped GLB/GLTF files
             document.addEventListener('dragover', function (event) {
                 event.preventDefault();
@@ -58,9 +60,12 @@
                 var loadFile = function (file) {
                     var fr = new FileReader();
                     fr.onload = function() {
-                        var root;
                         var arrayBuffer = fr.result;
                         var extension = file.name.split('.').pop();
+                        if (root) {
+                            app.root.removeChild(root);
+                            root.destroy();
+                        }
                         if (extension === 'glb') {
                             root = loadGlb(arrayBuffer, app.graphicsDevice);
                             app.root.addChild(root);
