@@ -68,6 +68,33 @@
         return size;
     }
 
+    function getFilter(filter) {
+        var pcFilter = pc.FILTER_LINEAR;
+
+        switch (filter) {
+            case 9728: pcFilter = pc.FILTER_NEAREST; break;
+            case 9729: pcFilter = pc.FILTER_LINEAR; break;
+            case 9984: pcFilter = pc.FILTER_NEAREST_MIPMAP_NEAREST; break;
+            case 9985: pcFilter = pc.FILTER_LINEAR_MIPMAP_NEAREST; break;
+            case 9986: pcFilter = pc.FILTER_NEAREST_MIPMAP_LINEAR; break;
+            case 9987: pcFilter = pc.FILTER_LINEAR_MIPMAP_LINEAR; break;
+        }
+
+        return pcFilter;
+    }
+
+    function getWrap(wrap) {
+        var pcWrap = pc.ADDRESS_REPEAT;
+
+        switch (wrap) {
+            case 33071: pcWrap = pc.ADDRESS_CLAMP_TO_EDGE; break;
+            case 33648: pcWrap = pc.ADDRESS_MIRRORED_REPEAT; break;
+            case 10497: pcWrap = pc.ADDRESS_REPEAT; break;
+        }
+
+        return pcWrap;
+    }
+
     function translateImage(data, resources) {
         var texture = new pc.Texture(resources.device);
 
@@ -92,6 +119,32 @@
         return texture;
     }
 
+    function getTexture(index, resources) {
+        var gltf = resources.gltf;
+        var texture = gltf.textures[index];
+        var source = texture.source;
+        var pcTex = resources.textures[source];
+
+        if (texture.hasOwnProperty('sampler')) {
+            var sampler = texture.sampler;
+
+            if (sampler.hasOwnProperty('minFilter')) {
+                pcTex.minFilter = getFilter(sampler.minFilter);
+            }
+            if (sampler.hasOwnProperty('magFilter')) {
+                pcTex.magFilter = getFilter(sampler.magFilter);
+            }
+            if (sampler.hasOwnProperty('wrapS')) {
+                pcTex.addressU = getWrap(sampler.wrapS);
+            }
+            if (sampler.hasOwnProperty('wrapT')) {
+                pcTex.addressV = getWrap(sampler.wrapT);
+            }
+        }
+
+        return pcTex;
+    }
+
     function translateMaterial(data, resources) {
         var material = new pc.StandardMaterial();
 
@@ -112,7 +165,7 @@
                 material.opacity = 1;
             }
             if (pbrData.hasOwnProperty('baseColorTexture')) {
-                material.diffuseMap = resources.textures[pbrData.baseColorTexture.index];
+                material.diffuseMap = getTexture(pbrData.baseColorTexture.index, resources);
             }
             material.useMetalness = true;
             if (pbrData.hasOwnProperty('metallicFactor')) {
@@ -126,21 +179,21 @@
                 material.shininess = 0;
             }
             if (pbrData.hasOwnProperty('metallicRoughnessTexture')) {
-                material.metalnessMap = resources.textures[pbrData.metallicRoughnessTexture.index];
+                material.metalnessMap = getTexture(pbrData.metallicRoughnessTexture.index, resources);
                 material.metalnessMapChannel = 'b';
-                material.glossMap = resources.textures[pbrData.metallicRoughnessTexture.index];
+                material.glossMap = getTexture(pbrData.metallicRoughnessTexture.index, resources);
                 material.glossMapChannel = 'g';
             }
         }
 
         if (data.hasOwnProperty('normalTexture')) {
-            material.normalMap = resources.textures[data.normalTexture.index];
+            material.normalMap = getTexture(data.normalTexture.index, resources);
         }
         if (data.hasOwnProperty('occlusionTexture')) {
-            material.aoMap = resources.textures[data.occlusionTexture.index];
+            material.aoMap = getTexture(data.occlusionTexture.index, resources);
         }
         if (data.hasOwnProperty('emissiveTexture')) {
-            material.emissiveMap = resources.textures[data.emissiveTexture.index];
+            material.emissiveMap = getTexture(data.emissiveTexture.index, resources);
         }
         if (data.hasOwnProperty('emissiveFactor')) {
             material.emissive.r = data.emissiveFactor[0];

@@ -20,7 +20,9 @@
             // create a PlayCanvas application
             var canvas = document.getElementById('application');
 
-            var app = new pc.Application(canvas, { });
+            var app = new pc.Application(canvas, {
+                preferWebGl2: false
+            });
             app.start();
 
             // fill the available space at full resolution
@@ -45,7 +47,7 @@
             app.root.addChild(light);
 
             // set up initial positions and orientations
-            camera.setPosition(0, 0, 3);
+            camera.setPosition(0, 0, 15);
             light.setEulerAngles(45, 0, 0);
 
             var root;
