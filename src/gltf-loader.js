@@ -129,7 +129,9 @@
     }
 
     function translateTexture(data, resources) {
-        var texture = new pc.Texture(resources.device);
+        var texture = new pc.Texture(resources.device, {
+            flipY: false
+        });
 
         if (data.hasOwnProperty('name')) {
             texture.name = data.name;
