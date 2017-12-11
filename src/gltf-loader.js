@@ -205,11 +205,9 @@
                 if (!roughnessFloat) material.shininess = 100;
             }
         }
-
         if (data.hasOwnProperty('normalTexture')) {
             material.normalMap = resources.textures[data.normalTexture.index];
         }
-        console.log(data);
         if (data.hasOwnProperty('occlusionTexture')) {
             material.aoMap = resources.textures[data.occlusionTexture.index];
         }
