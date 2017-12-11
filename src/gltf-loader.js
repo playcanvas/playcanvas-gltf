@@ -162,6 +162,8 @@
         var material = new pc.StandardMaterial();
         material.chunks.glossTexPS = pc.shaderChunks.glossTexGltfPS;
         material.chunks.glossTexConstPS = pc.shaderChunks.glossTexConstGltfPS;
+        material.occludeSpecular = false; // GLTF dooesn't define how to occlude specular
+        var roughnessFloat;
 
         if (data.hasOwnProperty('name')) {
             material.name = data.name;
@@ -190,20 +192,24 @@
             }
             if (pbrData.hasOwnProperty('roughnessFactor')) {
                 material.shininess = 100 * (1 - pbrData.roughnessFactor);
+                roughnessFloat = true;
             } else {
-                material.shininess = 100;
+                material.shininess = 0;
+                roughnessFloat = false;
             }
             if (pbrData.hasOwnProperty('metallicRoughnessTexture')) {
                 material.metalnessMap = resources.textures[pbrData.metallicRoughnessTexture.index];
                 material.metalnessMapChannel = 'b';
                 material.glossMap = resources.textures[pbrData.metallicRoughnessTexture.index];
                 material.glossMapChannel = 'g';
+                if (!roughnessFloat) material.shininess = 100;
             }
         }
 
         if (data.hasOwnProperty('normalTexture')) {
             material.normalMap = resources.textures[data.normalTexture.index];
         }
+        console.log(data);
         if (data.hasOwnProperty('occlusionTexture')) {
             material.aoMap = resources.textures[data.occlusionTexture.index];
         }
