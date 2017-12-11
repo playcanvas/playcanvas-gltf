@@ -160,6 +160,8 @@
 
     function translateMaterial(data, resources) {
         var material = new pc.StandardMaterial();
+        material.chunks.glossTexPS = pc.shaderChunks.glossTexGltfPS;
+        material.chunks.glossTexConstPS = pc.shaderChunks.glossTexConstGltfPS;
 
         if (data.hasOwnProperty('name')) {
             material.name = data.name;
@@ -189,7 +191,7 @@
             if (pbrData.hasOwnProperty('roughnessFactor')) {
                 material.shininess = 100 * (1 - pbrData.roughnessFactor);
             } else {
-                material.shininess = 0;
+                material.shininess = 100;
             }
             if (pbrData.hasOwnProperty('metallicRoughnessTexture')) {
                 material.metalnessMap = resources.textures[pbrData.metallicRoughnessTexture.index];
@@ -572,6 +574,21 @@
     }
 
     function loadGltf(gltf, device, buffers) {
+
+        // Add GLTF shaders, if needed (roughness -> glossiness remap)
+        if (!pc.shaderChunks.glossTexGltfPS) {
+            pc.shaderChunks.glossTexGltfPS = "uniform sampler2D texture_glossMap;\
+                void getGlossiness() {\
+                dGlossiness = 1.0 - texture2D(texture_glossMap, $UV).$CH;\
+            }\n";
+
+            pc.shaderChunks.glossTexConstGltfPS = "uniform sampler2D texture_glossMap;\
+            uniform float material_shininess;\
+            void getGlossiness() {\
+                dGlossiness = 1.0 - material_shininess * texture2D(texture_glossMap, $UV).$CH;\
+            }\n";
+        }
+
         var resources = {
             gltf: gltf,
             device: device,
