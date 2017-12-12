@@ -1,4 +1,6 @@
 # playcanvas-gltf
+![gtTF viewer](/images/playcanvas-gltf-viewer.jpg?raw=true "glTF Viewer")
+
 This repo extends PlayCanvas to support glTF. It contains:
 
 * A loader script that can convert a glTF or glB file into a PlayCanvas hierarchy.
