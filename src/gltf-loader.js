@@ -164,6 +164,7 @@
         material.chunks.glossTexConstPS = pc.shaderChunks.glossTexConstGltfPS;
         material.occludeSpecular = false; // GLTF dooesn't define how to occlude specular
         var roughnessFloat;
+        var color;
 
         if (data.hasOwnProperty('name')) {
             material.name = data.name;
@@ -173,12 +174,13 @@
             var pbrData = data.pbrMetallicRoughness;
 
             if (pbrData.hasOwnProperty('baseColorFactor')) {
-                material.diffuse.r = pbrData.baseColorFactor[0];
-                material.diffuse.g = pbrData.baseColorFactor[1];
-                material.diffuse.b = pbrData.baseColorFactor[2];
-                material.opacity = pbrData.baseColorFactor[3];
+                color = pbrData.baseColorFactor;
+                material.diffuse.set(color[0], color[1], color[2]);
+                material.diffuseMapTint = true;
+                material.opacity = color[3];
             } else {
                 material.diffuse.set(1, 1, 1);
+                material.diffuseMapTint = false;
                 material.opacity = 1;
             }
             if (pbrData.hasOwnProperty('baseColorTexture')) {
@@ -211,17 +213,16 @@
         if (data.hasOwnProperty('occlusionTexture')) {
             material.aoMap = resources.textures[data.occlusionTexture.index];
         }
-        if (data.hasOwnProperty('emissiveTexture')) {
-            material.emissiveMap = resources.textures[data.emissiveTexture.index];
-        }
         if (data.hasOwnProperty('emissiveFactor')) {
-            material.emissive.r = data.emissiveFactor[0];
-            material.emissive.g = data.emissiveFactor[1];
-            material.emissive.b = data.emissiveFactor[2];
-            material.emissiveMapTint = data.hasOwnProperty('emissiveTexture');
+            color = data.emissiveFactor;
+            material.emissive.set(color[0], color[1], color[2]);
+            material.emissiveMapTint = true;
         } else {
             material.emissive.set(0, 0, 0);
             material.emissiveMapTint = false;
+        }
+        if (data.hasOwnProperty('emissiveTexture')) {
+            material.emissiveMap = resources.textures[data.emissiveTexture.index];
         }
         if (data.hasOwnProperty('alphaMode')) {
             switch (data.alphaMode) {
@@ -605,7 +606,18 @@
         resources.meshGroups = loadMeshes(gltf, resources);
         resources.entities = loadNodes(gltf, resources);
 
-        return resources.entities[0];
+        var root;
+        if (gltf.hasOwnProperty('scenes')) {
+            var sceneIndex = 0;
+            if (gltf.hasOwnProperty('scene')) {
+                sceneIndex = gltf.scene;
+            }
+            root = resources.entities[gltf.scenes[sceneIndex].nodes[0]];
+        } else {
+            root = resources.entities[0];
+        }
+
+        return root;
     }
 
     function loadGlb(glb, device) {
