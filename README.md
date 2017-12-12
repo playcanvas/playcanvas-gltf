@@ -8,7 +8,7 @@ The loader script returns a hierarchy of pc.Entity structures. It can be used wi
 
 To see an example of using the loader with the Engine, check out the viewer app in this repo.
 
-To use the loader with the Editor, simply add gltf-loader.js and monkey-patch.js into your project.
+To use the loader with the Editor, simply add gltf-loader.js into your project and call the following API:
 
 # API
 ```
