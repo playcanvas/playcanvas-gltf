@@ -133,21 +133,59 @@
                     fr.readAsArrayBuffer(file);
                 };
 
-                var i;
-                var dt = event.dataTransfer;
-                if (dt.items) {
-                    // Use DataTransferItemList interface to access the file(s)
-                    for (i = 0; i < dt.items.length; i++) {
-                        if (dt.items[i].kind == "file") {
-                            loadFile(dt.items[i].getAsFile());
+                var getFiles = function (success) {
+                    var foldersRequested = 0;
+                    var foldersCompleted = 0;
+                    var filesRequested = 0;
+                    var filesCompleted = 0;
+
+                    var files = {};
+
+                    var loadEntries = function (entries) {
+                        var entry = entries.pop();
+                        if (entry.isFile) {
+                            filesRequested++;
+                            entry.file(function (file) {
+                                files[entry.fullPath] = file;
+                                filesCompleted++;
+                                if ((foldersRequested === foldersCompleted) && (filesRequested === filesCompleted)) {
+                                    success(files);
+                                }
+                            });
+                            if (entries.length > 0) {
+                                loadEntries(entries);
+                            }
+                        } else if (entry.isDirectory) {
+                            foldersRequested++;
+                            var reader = entry.createReader();
+                            reader.readEntries(function (entries) {
+                                loadEntries(entries);
+                                foldersCompleted++;
+                                if ((foldersRequested === foldersCompleted) && (filesRequested === filesCompleted)) {
+                                    success(files);
+                                }
+                            });
                         }
+                    };
+
+                    var i;
+                    var items = event.dataTransfer.items;
+                    if (items) {
+                        var entries = [];
+                        for (i = 0; i < items.length; i++) {
+                            entries[i] = items[i].webkitGetAsEntry();
+                        }
+                        loadEntries(entries);
                     }
-                } else {
-                    // Use DataTransfer interface to access the file(s)
-                    for (i = 0; i < dt.files.length; i++) {
-                        loadFile(dt.files[i]);
-                    }  
-                }
+                };
+
+                getFiles(function (files) {
+                    for (var filename in files) {
+                        if (filename.endsWith('.gltf') || filename.endsWith('.glb')) {
+                            loadFile(files[filename]);
+                        }
+                    };
+                });
             }, false);
         </script>
     </body>
