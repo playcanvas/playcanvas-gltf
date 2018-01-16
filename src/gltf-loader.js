@@ -263,6 +263,8 @@
 
         if (data.hasOwnProperty('name')) {
             entity.name = data.name;
+        } else {
+            entity.name = 'Entity' + resources.counter++;
         }
 
         // Parse transformation properties
@@ -310,6 +312,32 @@
         }
 
         return entity;
+    }
+
+    function translateAnimation(data, resources) {
+        var animation = new pc.Animation();
+
+        if (data.hasOwnProperty('name')) {
+            animation.name = data.name;
+        }
+
+        // Handle channels
+        var channels = data.channels;
+        var samplers = data.samplers;
+
+        var nodes = [];
+        for (var i = 0; i < channels.length; i++) {
+            var channel = channels[i];
+            var target = channel.target;
+
+            var node = resources.entities[i];
+
+        }
+
+        // Handle samplers
+
+
+        return animation;
     }
 
     function getAccessorData(gltf, accessor, arrayBuffers) {
@@ -578,7 +606,20 @@
         return entities;
     }
 
-    function loadGltf(gltf, device, buffers) {
+    function loadAnimations(gltf, resources) {
+        // Create animations
+        var animations = [];
+
+        if (gltf.hasOwnProperty('animations')) {
+            gltf.animations.forEach(function (animation) {
+                animations.push(translateAnimation(animation, resources));
+            });
+        }
+
+        return animations;
+    }
+
+    function loadGltf(gltf, device, buffers, availableFiles) {
 
         // Add GLTF shaders, if needed (roughness -> glossiness remap)
         if (!pc.shaderChunks.glossTexGltfPS) {
@@ -595,6 +636,7 @@
         }
 
         var resources = {
+            counter: 0,
             gltf: gltf,
             device: device,
             defaultMaterial: translateMaterial({})
@@ -605,19 +647,23 @@
         resources.materials = loadMaterials(gltf, resources);
         resources.meshGroups = loadMeshes(gltf, resources);
         resources.entities = loadNodes(gltf, resources);
+        resources.animations = loadAnimations(gltf, resources);
 
-        var root;
+        var rootNodes = [];
         if (gltf.hasOwnProperty('scenes')) {
             var sceneIndex = 0;
             if (gltf.hasOwnProperty('scene')) {
                 sceneIndex = gltf.scene;
             }
-            root = resources.entities[gltf.scenes[sceneIndex].nodes[0]];
+            var nodes = gltf.scenes[sceneIndex].nodes;
+            for (var i = 0; i < nodes.length; i++) {
+                rootNodes.push(resources.entities[nodes[i]]);
+            }
         } else {
-            root = resources.entities[0];
+            rootNodes.push(resources.entities[0]);
         }
 
-        return root;
+        return rootNodes;
     }
 
     function loadGlb(glb, device) {
@@ -651,7 +697,6 @@
                 return null;
             }
 
-//            var buffer = new Uint8Array(glb, byteOffset + 8, chunkLength);
             var buffer = glb.slice(byteOffset + 8, byteOffset + 8 + chunkLength);
             buffers.push(buffer);
 
