@@ -398,6 +398,11 @@ OrbitCamera.prototype.focus = function (focusEntity) {
 
     this.distance = distance;
 
+    if (this.entity.camera) {
+        this.entity.camera.nearClip = distance * 0.002;
+        this.entity.camera.farClip = distance * 2;
+    }
+
     this._removeInertia();
 
     this._pivotPoint.copy(this._modelsAabb.center);
