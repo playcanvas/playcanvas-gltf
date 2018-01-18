@@ -597,7 +597,12 @@
             gltf.nodes.forEach(function (node, idx) {
                 if (node.hasOwnProperty('children')) {
                     node.children.forEach(function (childIdx) {
-                        entities[idx].addChild(entities[childIdx]);
+                        var child = entities[childIdx];
+                        if (!child.parent) {
+                            entities[idx].addChild(child);
+                        } else {
+                            console.warn('Child node ' + child.name + ' has more than one parent.');
+                        }
                     });
                 }
             });
