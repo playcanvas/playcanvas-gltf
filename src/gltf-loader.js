@@ -132,10 +132,8 @@
                     if (t.source === imageIndex) {
                         var texture = resources.textures[i];
                         if ((!isPowerOf2(image.width) || !isPowerOf2(image.width)) &&
-                            ((texture.addressU === pc.ADDRESS_REPEAT) || (texture.addressU === pc.ADDRESS_REPEAT) ||
-                             (texture.addressU === pc.ADDRESS_MIRRORED_REPEAT) || (texture.addressU === pc.ADDRESS_MIRRORED_REPEAT) ||
-                             (texturet.addressV === pc.ADDRESS_REPEAT) || (texture.addressV === pc.ADDRESS_REPEAT) ||
-                             (texture.addressV === pc.ADDRESS_MIRRORED_REPEAT) || (texture.addressV === pc.ADDRESS_MIRRORED_REPEAT) ||
+                            ((texture.addressU === pc.ADDRESS_REPEAT) || (texture.addressU === pc.ADDRESS_MIRRORED_REPEAT) ||
+                             (texture.addressV === pc.ADDRESS_REPEAT) || (texture.addressV === pc.ADDRESS_MIRRORED_REPEAT) ||
                              (texture.minFilter === pc.FILTER_LINEAR_MIPMAP_LINEAR) || (texture.minFilter === pc.FILTER_NEAREST_MIPMAP_LINEAR) ||
                              (texturet.minFilter === pc.FILTER_LINEAR_MIPMAP_NEAREST) || (texture.minFilter === pc.FILTER_NEAREST_MIPMAP_NEAREST))) {
                             var potImage = new Image();
