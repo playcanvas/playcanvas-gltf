@@ -442,6 +442,7 @@
                 var tangents = null;
                 var texCoord0 = null;
                 var texCoord1 = null;
+                var colors = null;
                 var indices = null;
 
                 // Grab typed arrays for all vertex data
@@ -473,6 +474,11 @@
                     accessor = gltf.accessors[primitive.attributes.TEXCOORD_1];
                     texCoord1 = getAccessorData(gltf, accessor, resources.arrayBuffers);
                     vertexDesc.push({ semantic: pc.SEMANTIC_TEXCOORD1, components: 2, type: pc.TYPE_FLOAT32 });
+                }
+                if (attributes.hasOwnProperty('COLOR_0')) {
+                    accessor = gltf.accessors[primitive.attributes.COLOR_0];
+                    colors = getAccessorData(gltf, accessor, resources.arrayBuffers);
+                    vertexDesc.push({ semantic: pc.SEMANTIC_COLOR, components: 4, type: pc.TYPE_FLOAT32 });
                 }
                 if (primitive.hasOwnProperty('indices')) {
                     accessor = gltf.accessors[primitive.indices];
@@ -533,6 +539,8 @@
                         dataView.setFloat32(offset + 0, texCoord0[k * 2 + 0], true);
                         dataView.setFloat32(offset + 4, texCoord0[k * 2 + 1], true);
                     }
+
+                    o += 8;
                 }
 
                 if (texCoord1 !== null) {
@@ -541,6 +549,20 @@
                         dataView.setFloat32(offset + 0, texCoord1[k * 2 + 0], true);
                         dataView.setFloat32(offset + 4, texCoord1[k * 2 + 1], true);
                     }
+
+                    o += 8;
+                }
+
+                if (colors !== null) {
+                    for (k = 0; k < numVertices; k++) {
+                        offset = k * vertexFormat.size + o;
+                        dataView.setFloat32(offset + 0,  colors[k * 4 + 0], true);
+                        dataView.setFloat32(offset + 4,  colors[k * 4 + 1], true);
+                        dataView.setFloat32(offset + 8,  colors[k * 4 + 2], true);
+                        dataView.setFloat32(offset + 12, colors[k * 4 + 3], true);
+                    }
+
+                    o += 16;
                 }
 
                 vertexBuffer.unlock();
