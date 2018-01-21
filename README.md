@@ -14,16 +14,19 @@ To use the loader with the Editor, simply add gltf-loader.js into your project a
 
 # API
 ```
-pc.Entity loadGlb(ArrayBuffer glb, pc.GraphicsDevice device);
+loadGlb(ArrayBuffer glb, pc.GraphicsDevice device, Function success);
 ```
-* glb - An ArrayBuffer holding the binary glb file data
-* device - The graphics device
-
+* glb - An ArrayBuffer holding the binary glb file data.
+* device - The graphics device.
+* success - Function called when the glb has successfully loaded. Called with an array of entities representing the root nodes of the glTF scene.
 ```
-pc.Entity loadGltf(Object gltf, pc.GraphicsDevice device);
+loadGltf(Object gltf, pc.GraphicsDevice device, ArrayBuffer buffers, File[] files, Function success);
 ```
-* gltf - The glTF root object
-* device - The graphics device
+* gltf - The glTF root object.
+* device - The graphics device.
+* buffers - Optionally preloaded ArrayBuffer objects holding glTF buffers.
+* files - A hash map of filenames to File objects containing images/buffers referenced by the glTF files.
+* success - Function called when the gltf has successfully loaded. Called with an array of entities representing the root nodes of the glTF scene.
 
 # glTF Viewer
-To load the glTF viewer, run a local web-server and load viewer/index.html. You can then drag a glb or gltf file onto the tab's client area to load it.
+To load the glTF viewer, run a local web-server and load viewer/index.html. You can then drag a glb or gltf file onto the tab's client area to load it. For non-embedded glTF files (with external buffer and image files), you need to drag the containing folder of the glTF file onto the viewer's client area.
