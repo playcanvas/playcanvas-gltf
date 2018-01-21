@@ -29,4 +29,4 @@ loadGltf(Object gltf, pc.GraphicsDevice device, ArrayBuffer buffers, File[] file
 * success - Function called when the gltf has successfully loaded. Called with an array of entities representing the root nodes of the glTF scene.
 
 # glTF Viewer
-To load the glTF viewer, run a local web-server and load viewer/index.html. You can then drag a glb or gltf file onto the tab's client area to load it.
+To load the glTF viewer, run a local web-server and load viewer/index.html. You can then drag a glb or gltf file onto the tab's client area to load it. For non-embedded glTF files (with external buffer and image files), you need to drag the containing folder of the glTF file onto the viewer's client area.
