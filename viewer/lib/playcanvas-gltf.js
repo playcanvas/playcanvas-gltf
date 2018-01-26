@@ -314,6 +314,8 @@
         return material;
     }
 
+    // Specification:
+    //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-node
     function translateNode(data, resources) {
         var entity = new pc.Entity();
 
@@ -331,27 +333,6 @@
             entity.setLocalScale(m.getScale());
         }
 
-        if (data.hasOwnProperty('mesh')) {
-            var meshGroup = resources.meshGroups[data.mesh];
-            if (meshGroup.length > 0) {
-                entity.addComponent('model');
-
-                var model = new pc.Model();
-                model.graph = new pc.Entity();
-                for (var i = 0; i < meshGroup.length; i++) {
-                    var material;
-                    if (meshGroup[i].materialIndex === undefined) {
-                        material = resources.defaultMaterial;
-                    } else {
-                        material = resources.materials[meshGroup[i].materialIndex];
-                    }
-                    model.meshInstances.push(new pc.MeshInstance(model.graph, meshGroup[i], material));
-                }
-
-                entity.model.model = model;
-            }
-        }
-
         if (data.hasOwnProperty('rotation')) {
             var r = data.rotation;
             entity.setLocalRotation(r[0], r[1], r[2], r[3]);
@@ -365,6 +346,65 @@
         if (data.hasOwnProperty('scale')) {
             var s = data.scale;
             entity.setLocalScale(s[0], s[1], s[2]);
+        }
+
+        if (data.hasOwnProperty('camera')) {
+            var gltf = resources.gltf;
+            var camera = gltf.cameras[data.camera];
+
+            var options = {};
+
+            if (camera.type === 'perspective') {
+                options.type = pc.PROJECTION_PERSPECTIVE;
+
+                if (camera.hasOwnProperty('perspective')) {
+                    var perspective = camera.perspective;
+                    if (perspective.hasOwnProperty('aspectRatio')) {
+                        options.aspectRatio = perspective.aspectRatio;
+                    }
+                    options.fov = perspective.yfov;
+                    if (perspective.hasOwnProperty('zfar')) {
+                        options.farClip = perspective.zfar;
+                    }
+                    options.nearClip = perspective.znear;
+                }
+            } else if (camera.type === 'orthographic') {
+                options.type = pc.PROJECTION_ORTHOGRAPHIC;
+
+                if (camera.hasOwnProperty('orthographic')) {
+                    var orthographic = camera.orthographic;
+
+                    options.aspectRatio = orthographic.xmag / orthographic.ymag;
+                    options.orthoHeight = orthographic.ymag * 0.5;
+                    options.farClip = orthographic.zfar;
+                    options.nearClip = orthographic.znear;
+                }
+            };
+
+            entity.addComponent('camera', options);
+
+            // Diable loaded cameras by default and leave it to the application to enable them
+            entity.camera.enabled = false;
+        }
+
+        if (data.hasOwnProperty('mesh')) {
+            var meshGroup = resources.meshGroups[data.mesh];
+            if (meshGroup.length > 0) {
+                var model = new pc.Model();
+                model.graph = new pc.Entity();
+                for (var i = 0; i < meshGroup.length; i++) {
+                    var material;
+                    if (meshGroup[i].materialIndex === undefined) {
+                        material = resources.defaultMaterial;
+                    } else {
+                        material = resources.materials[meshGroup[i].materialIndex];
+                    }
+                    model.meshInstances.push(new pc.MeshInstance(model.graph, meshGroup[i], material));
+                }
+
+                entity.addComponent('model');
+                entity.model.model = model;
+            }
         }
 
         return entity;
