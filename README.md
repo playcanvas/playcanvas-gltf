@@ -13,12 +13,18 @@ To see an example of using the loader with the Engine, check out the viewer app 
 To use the loader with the Editor, simply add gltf-loader.js into your project and call the following API:
 
 # API
+
+## loadGlb
+Parses an [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) holding a binary-encoded glTF scene.
 ```
 loadGlb(glb, device, success);
 ```
 * glb - An [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) holding the binary glb file data.
 * device - A [pc.GraphicsDevice](https://developer.playcanvas.com/en/api/pc.GraphicsDevice.html).
 * success - A [Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) called when the glb has successfully loaded. Called with an array of [pc.Entity](https://developer.playcanvas.com/en/api/pc.Entity.html) objects representing the root nodes of the glTF scene.
+
+## loadGltf
+Parses an in-memory Object hierarchy holding a glTF scene.
 ```
 loadGltf(gltf, device, success, options);
 ```
