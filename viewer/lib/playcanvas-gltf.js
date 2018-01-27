@@ -704,12 +704,9 @@
     }
 
     function parse(property, translator, resources) {
-        var gltf = resources.gltf;
-        resources[property] = [];
-
-        if (gltf.hasOwnProperty(property)) {
-            gltf[property].forEach(function (item) {
-                resources[property].push(translator(item, resources));
+        if (resources.gltf.hasOwnProperty(property)) {
+            resources[property] = resources.gltf[property].map(function (item) {
+                translator(item, resources);
             });
         }
     }
