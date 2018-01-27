@@ -703,76 +703,32 @@
         }
     }
 
-    function loadTextures(resources) {
+    function parse(property, translator, resources) {
         var gltf = resources.gltf;
-        resources.textures = [];
+        resources[property] = [];
 
-        if (gltf.hasOwnProperty('textures')) {
-            gltf.textures.forEach(function (texture) {
-                resources.textures.push(translateTexture(texture, resources));
+        if (gltf.hasOwnProperty(property)) {
+            gltf[property].forEach(function (item) {
+                resources[property].push(translator(item, resources));
             });
         }
     }
 
-    function loadImages(resources) {
+    function buildHierarchy(resources) {
         var gltf = resources.gltf;
-        resources.images = [];
-
-        if (gltf.hasOwnProperty('images')) {
-            gltf.images.forEach(function (image) {
-                resources.images.push(translateImage(image, resources));
-            });
-        }
-    }
-
-    function loadMaterials(resources) {
-        var gltf = resources.gltf;
-        resources.materials = [];
-
-        if (gltf.hasOwnProperty('materials')) {
-            gltf.materials.forEach(function (material) {
-                resources.materials.push(translateMaterial(material, resources));
-            });
-        }
-    }
-
-    function loadNodes(resources) {
-        var gltf = resources.gltf;
-        resources.entities = [];
-
-        if (gltf.hasOwnProperty('nodes')) {
-            gltf.nodes.forEach(function (node) {
-                resources.entities.push(translateNode(node, resources));
-            });
-
-            // Build hierarchy
-            gltf.nodes.forEach(function (node, idx) {
-                if (node.hasOwnProperty('children')) {
-                    node.children.forEach(function (childIdx) {
-                        var child = resources.entities[childIdx];
-                        if (!child.parent) {
-                            var parent = resources.entities[idx];
-                            parent.addChild(child);
-                        } else {
-                            console.warn('Child node ' + child.name + ' has more than one parent.');
-                        }
-                    });
-                }
-            });
-        }
-    }
-
-    function loadAnimations(gltf, resources) {
-        // Create animations
-        var animations = [];
-
-        if (gltf.hasOwnProperty('animations')) {
-            gltf.animations.forEach(function (animation) {
-                animations.push(translateAnimation(animation, resources));
-            });
-        }
-
-        return animations;
+        gltf.nodes.forEach(function (node, idx) {
+            if (node.hasOwnProperty('children')) {
+                node.children.forEach(function (childIdx) {
+                    var child = resources.nodes[childIdx];
+                    if (!child.parent) {
+                        var parent = resources.nodes[idx];
+                        parent.addChild(child);
+                    } else {
+                        console.warn('Child node ' + child.name + ' has more than one parent.');
+                    }
+                });
+            }
+        });
     }
 
     function loadGltf(gltf, device, buffers, availableFiles, success) {
@@ -786,12 +742,14 @@
         };
 
         loadBuffers(resources, function () {
-            loadTextures(resources);
-            loadImages(resources);
-            loadMaterials(resources);
+            parse('textures', translateTexture, resources);
+            parse('images', translateImage, resources);
+            parse('materials', translateMaterial, resources);
             loadMeshes(resources);
-            loadNodes(resources);
-            loadAnimations(resources);
+            parse('nodes', translateNode, resources);
+            parse('animations', translateAnimation, resources);
+
+            buildHierarchy(resources);
 
             var rootNodes = [];
             if (gltf.hasOwnProperty('scenes')) {
@@ -801,10 +759,10 @@
                 }
                 var nodes = gltf.scenes[sceneIndex].nodes;
                 for (var i = 0; i < nodes.length; i++) {
-                    rootNodes.push(resources.entities[nodes[i]]);
+                    rootNodes.push(resources.nodes[nodes[i]]);
                 }
             } else {
-                rootNodes.push(resources.entities[0]);
+                rootNodes.push(resources.nodes[0]);
             }
 
             success(rootNodes);
