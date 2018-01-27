@@ -137,20 +137,17 @@
         }, false);
 
         if (data.hasOwnProperty('uri')) {
-            if (isDataURI(data.uri)) {
+            if (resources.processUri) {
+                resources.processUri(data.uri, function(uri) {
+                    image.src = uri;
+                });
+            } else if (isDataURI(data.uri)) {
                 image.src = data.uri;
             } else {
-                for (filename in resources.files) {
-                    if (filename.endsWith(data.uri)) {
-                        var fr = new FileReader();
-                        fr.onload = function() {
-                            image.src = fr.result;
-                        };
-                        fr.readAsDataURL(resources.files[filename]);
-                    }
-                }
+                image.src = resources.basePath + data.uri;
             }
         }
+
         if (data.hasOwnProperty('bufferView')) {
             var gltf = resources.gltf;
             var buffers = resources.buffers;
@@ -665,7 +662,14 @@
             var numLoaded = 0;
             gltf.buffers.forEach(function (buffer, idx) {
                 if (buffer.hasOwnProperty('uri')) {
-                    if (isDataURI(buffer.uri)) {
+                    if (resources.processUri) {
+                        resources.processUri(buffer.uri, function(result) {
+                            resources.buffers[idx] = result;
+                            if (gltf.buffers.length === ++numLoaded) {
+                                success();
+                            }
+                        });
+                    } else if (isDataURI(buffer.uri)) {
                         // convert base64 to raw binary data held in a string
                         // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
                         var byteString = atob(buffer.uri.split(',')[1]);
@@ -685,18 +689,20 @@
                             success();
                         }
                     } else {
-                        for (filename in resources.files) {
-                            if (filename.endsWith(buffer.uri)) {
-                                var fr = new FileReader();
-                                fr.onload = function() {
-                                    resources.buffers[idx] = fr.result;
-                                    if (gltf.buffers.length === ++numLoaded) {
-                                        success();
-                                    }
-                                };
-                                fr.readAsArrayBuffer(resources.files[filename]);
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('GET', resources.basePath + buffer.uri, true);
+                        xhr.responseType = 'arraybuffer';
+                         
+                        xhr.onload = function(e) {
+                            // response is unsigned 8 bit integer
+                            resources.buffers[idx] = this.response;
+
+                            if (gltf.buffers.length === ++numLoaded) {
+                                success();
                             }
-                        }
+                        };
+                         
+                        xhr.send();
                     }
                 }
             });
@@ -706,7 +712,7 @@
     function parse(property, translator, resources) {
         if (resources.gltf.hasOwnProperty(property)) {
             resources[property] = resources.gltf[property].map(function (item) {
-                translator(item, resources);
+                return translator(item, resources);
             });
         }
     }
@@ -728,10 +734,15 @@
         });
     }
 
-    function loadGltf(gltf, device, buffers, availableFiles, success) {
+    function loadGltf(gltf, device, success, options) {
+        var buffers = options ? options.buffers : undefined;
+        var basePath = options ? options.basePath : undefined;
+        var processUri = options ? options.processUri : undefined;
+
         var resources = {
             buffers: buffers,
-            files: availableFiles,
+            basePath: basePath,
+            processUri: processUri,
             counter: 0,
             gltf: gltf,
             device: device,
@@ -806,9 +817,11 @@
         var decoder = new TextDecoder('utf-8');
         var json = decoder.decode(jsonData);
         json = JSON.parse(json);
-        
-        loadGltf(json, device, buffers, null, function (rootNodes) {
+
+        loadGltf(json, device, function (rootNodes) {
             success(rootNodes);
+        }, {
+            buffers: buffers
         });
     }
 

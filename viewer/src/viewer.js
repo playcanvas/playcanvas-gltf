@@ -102,6 +102,22 @@ function main() {
         };
 
         var loadFile = function (file, availableFiles) {
+            var processUri = function (uri, success) {
+                for (filename in availableFiles) {
+                    if (filename.endsWith(uri)) {
+                        var fr = new FileReader();
+                        fr.onload = function() {
+                            success(fr.result);
+                        };
+                        if (uri.endsWith('.bin')) {
+                            fr.readAsArrayBuffer(availableFiles[filename]);
+                        } else { // ...it's an image
+                            fr.readAsDataURL(availableFiles[filename]);
+                        }
+                    }
+                }
+            };
+
             var fr = new FileReader();
             fr.onload = function() {
                 var arrayBuffer = fr.result;
@@ -122,8 +138,10 @@ function main() {
                     var decoder = new TextDecoder('utf-8');
                     var json = decoder.decode(arrayBuffer);
                     var gltf = JSON.parse(json);
-                    loadGltf(gltf, app.graphicsDevice, null, availableFiles, function (roots) {
+                    loadGltf(gltf, app.graphicsDevice, function (roots) {
                         initScene(roots);
+                    }, {
+                        processUri: processUri
                     });
                 }
             };
