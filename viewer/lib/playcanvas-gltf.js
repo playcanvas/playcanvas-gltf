@@ -137,12 +137,12 @@
         }, false);
 
         if (data.hasOwnProperty('uri')) {
-            if (resources.processUri) {
+            if (isDataURI(data.uri)) {
+                image.src = data.uri;
+            } else if (resources.processUri) {
                 resources.processUri(data.uri, function(uri) {
                     image.src = uri;
                 });
-            } else if (isDataURI(data.uri)) {
-                image.src = data.uri;
             } else {
                 image.src = resources.basePath + data.uri;
             }
@@ -385,7 +385,7 @@
         }
 
         if (data.hasOwnProperty('mesh')) {
-            var meshGroup = resources.meshGroups[data.mesh];
+            var meshGroup = resources.meshes[data.mesh];
             if (meshGroup.length > 0) {
                 var model = new pc.Model();
                 model.graph = new pc.Entity();
@@ -455,200 +455,180 @@
         return data;
     }
 
-    function loadMeshes(resources) {
+    function translateMesh(data, resources) {
         var gltf = resources.gltf;
-        var i, j;
-        var mesh, meshes, numMeshes;
-        var primitive, primitives, numPrimitives;
-        var attribute, attributes, numAttributes;
-        var primType;
         var numVertices;
         var aabb;
-        var min, max;
         var vertexBuffer, vertexFormat;
         var vertexData, vertexDataF32;
         var bufferView, bufferViewIndex;
         var accessorByteOffset, bufferViewByteOffset;
+        var meshes = [];
+        var primitives = data.primitives;
 
-        var pcMeshGroups = [];
-        resources.meshGroups = pcMeshGroups;
-        var pcMeshes;
+        for (var i = 0; i < primitives.length; i++) {
+            var primitive = primitives[i];
+            var attributes = primitive.attributes;
 
-        meshes = gltf.meshes;
-        numMeshes = meshes.length;
+            var vertexDesc = [];
+            vertexDesc.push({ semantic: pc.SEMANTIC_POSITION, components: 3, type: pc.TYPE_FLOAT32 });
+            vertexDesc.push({ semantic: pc.SEMANTIC_NORMAL, components: 3, type: pc.TYPE_FLOAT32 });
+            vertexDesc.push({ semantic: pc.SEMANTIC_TANGENT, components: 4, type: pc.TYPE_FLOAT32 });
 
-        for (i = 0; i < numMeshes; i++) {
-            mesh = meshes[i];
-            primitives = mesh.primitives;
-            numPrimitives = primitives.length;
+            var positions = null;
+            var normals = null;
+            var tangents = null;
+            var texCoord0 = null;
+            var texCoord1 = null;
+            var colors = null;
+            var indices = null;
 
-            pcMeshes = [];
-
-            for (j = 0; j < numPrimitives; j++) {
-                primitive = primitives[j];
-
-                attributes = primitive.attributes;
-
-                var vertexDesc = [];
-                vertexDesc.push({ semantic: pc.SEMANTIC_POSITION, components: 3, type: pc.TYPE_FLOAT32 });
-                vertexDesc.push({ semantic: pc.SEMANTIC_NORMAL, components: 3, type: pc.TYPE_FLOAT32 });
-                vertexDesc.push({ semantic: pc.SEMANTIC_TANGENT, components: 4, type: pc.TYPE_FLOAT32 });
-
-                var positions = null;
-                var normals = null;
-                var tangents = null;
-                var texCoord0 = null;
-                var texCoord1 = null;
-                var colors = null;
-                var indices = null;
-
-                // Grab typed arrays for all vertex data
-                if (attributes.hasOwnProperty('POSITION')) {
-                    accessor = gltf.accessors[primitive.attributes.POSITION];
-                    positions = getAccessorData(gltf, accessor, resources.buffers);
-                    numVertices = accessor.count;
-                    min = new pc.Vec3(accessor.min);
-                    max = new pc.Vec3(accessor.max);
-                    aabb = new pc.BoundingBox(
-                        new pc.Vec3((max.x + min.x) / 2, (max.y + min.y) / 2, (max.z + min.z) / 2),
-                        new pc.Vec3((max.x - min.x) / 2, (max.y - min.y) / 2, (max.z - min.z) / 2)
-                    );
-                }
-                if (attributes.hasOwnProperty('NORMAL')) {
-                    accessor = gltf.accessors[primitive.attributes.NORMAL];
-                    normals = getAccessorData(gltf, accessor, resources.buffers);
-                }
-                if (attributes.hasOwnProperty('TANGENT')) {
-                    accessor = gltf.accessors[primitive.attributes.TANGENT];
-                    tangents = getAccessorData(gltf, accessor, resources.buffers);
-                }
-                if (attributes.hasOwnProperty('TEXCOORD_0')) {
-                    accessor = gltf.accessors[primitive.attributes.TEXCOORD_0];
-                    texCoord0 = getAccessorData(gltf, accessor, resources.buffers);
-                    vertexDesc.push({ semantic: pc.SEMANTIC_TEXCOORD0, components: 2, type: pc.TYPE_FLOAT32 });
-                }
-                if (attributes.hasOwnProperty('TEXCOORD_1')) {
-                    accessor = gltf.accessors[primitive.attributes.TEXCOORD_1];
-                    texCoord1 = getAccessorData(gltf, accessor, resources.buffers);
-                    vertexDesc.push({ semantic: pc.SEMANTIC_TEXCOORD1, components: 2, type: pc.TYPE_FLOAT32 });
-                }
-                if (attributes.hasOwnProperty('COLOR_0')) {
-                    accessor = gltf.accessors[primitive.attributes.COLOR_0];
-                    colors = getAccessorData(gltf, accessor, resources.buffers);
-                    vertexDesc.push({ semantic: pc.SEMANTIC_COLOR, components: 4, type: pc.TYPE_FLOAT32 });
-                }
-                if (primitive.hasOwnProperty('indices')) {
-                    accessor = gltf.accessors[primitive.indices];
-                    indices = getAccessorData(gltf, accessor, resources.buffers);
-                }
-
-                if (positions !== null && indices !== null && normals === null) {
-                    normals = pc.calculateNormals(positions, indices);
-                }
-                if (positions !== null && normals !== null && texCoord0 !== null && indices !== null && tangents === null) {
-                    tangents = pc.calculateTangents(positions, normals, texCoord0, indices);
-                }
-
-                vertexFormat = new pc.VertexFormat(resources.device, vertexDesc);
-                vertexBuffer = new pc.VertexBuffer(resources.device, vertexFormat, numVertices, pc.BUFFER_STATIC);
-                vertexData = vertexBuffer.lock();
-
-                var dataView = new DataView(vertexData);
-                var o = 0;
-
-                if (positions !== null) {
-                    for (k = 0; k < numVertices; k++) {
-                        offset = k * vertexFormat.size;
-                        dataView.setFloat32(offset + 0, positions[k * 3 + 0], true);
-                        dataView.setFloat32(offset + 4, positions[k * 3 + 1], true);
-                        dataView.setFloat32(offset + 8, positions[k * 3 + 2], true);
-                    }
-
-                    o += 12;
-                }
-
-                if (normals !== null) {
-                    for (k = 0; k < numVertices; k++) {
-                        offset = k * vertexFormat.size + o;
-                        dataView.setFloat32(offset + 0, normals[k * 3 + 0], true);
-                        dataView.setFloat32(offset + 4, normals[k * 3 + 1], true);
-                        dataView.setFloat32(offset + 8, normals[k * 3 + 2], true);
-                    }
-
-                    o += 12;
-                }
-
-                if (tangents !== null) {
-                    for (k = 0; k < numVertices; k++) {
-                        offset = k * vertexFormat.size + o;
-                        dataView.setFloat32(offset + 0,  tangents[k * 4 + 0], true);
-                        dataView.setFloat32(offset + 4,  tangents[k * 4 + 1], true);
-                        dataView.setFloat32(offset + 8,  tangents[k * 4 + 2], true);
-                        dataView.setFloat32(offset + 12, tangents[k * 4 + 3], true);
-                    }
-
-                    o += 16;
-                }
-
-                if (texCoord0 !== null) {
-                    for (k = 0; k < numVertices; k++) {
-                        offset = k * vertexFormat.size + o;
-                        dataView.setFloat32(offset + 0, texCoord0[k * 2 + 0], true);
-                        dataView.setFloat32(offset + 4, texCoord0[k * 2 + 1], true);
-                    }
-
-                    o += 8;
-                }
-
-                if (texCoord1 !== null) {
-                    for (k = 0; k < numVertices; k++) {
-                        offset = k * vertexFormat.size + o;
-                        dataView.setFloat32(offset + 0, texCoord1[k * 2 + 0], true);
-                        dataView.setFloat32(offset + 4, texCoord1[k * 2 + 1], true);
-                    }
-
-                    o += 8;
-                }
-
-                if (colors !== null) {
-                    for (k = 0; k < numVertices; k++) {
-                        offset = k * vertexFormat.size + o;
-                        dataView.setFloat32(offset + 0,  colors[k * 4 + 0], true);
-                        dataView.setFloat32(offset + 4,  colors[k * 4 + 1], true);
-                        dataView.setFloat32(offset + 8,  colors[k * 4 + 2], true);
-                        dataView.setFloat32(offset + 12, colors[k * 4 + 3], true);
-                    }
-
-                    o += 16;
-                }
-
-                vertexBuffer.unlock();
-
-                var pcMesh = new pc.Mesh();
-                pcMesh.vertexBuffer = vertexBuffer;
-                pcMesh.indexBuffer[0] = indexBuffer;
-                pcMesh.primitive[0].type = getPrimitiveType(primitive);
-                pcMesh.primitive[0].base = 0;
-
-                var indexBuffer = null;
-                pcMesh.primitive[0].indexed = (indices !== null);
-                if (indices !== null) {
-                    indexBuffer = new pc.IndexBuffer(resources.device, pc.INDEXFORMAT_UINT16, accessor.count, pc.USAGE_STATIC, indices);
-                    pcMesh.indexBuffer[0] = indexBuffer;
-                    pcMesh.primitive[0].count = indices.length;
-                } else {
-                    pcMesh.primitive[0].count = numVertices;
-                }
-
-                pcMesh.materialIndex = primitive.material;
-
-                pcMesh.aabb = aabb;
-
-                pcMeshes.push(pcMesh);
+            // Grab typed arrays for all vertex data
+            if (attributes.hasOwnProperty('POSITION')) {
+                accessor = gltf.accessors[primitive.attributes.POSITION];
+                positions = getAccessorData(gltf, accessor, resources.buffers);
+                numVertices = accessor.count;
+                var min = accessor.min;
+                var max = accessor.max;
+                aabb = new pc.BoundingBox(
+                    new pc.Vec3((max[0] + min[0]) / 2, (max[1] + min[1]) / 2, (max[2] + min[2]) / 2),
+                    new pc.Vec3((max[0] - min[0]) / 2, (max[1] - min[1]) / 2, (max[2] - min[2]) / 2)
+                );
+            }
+            if (attributes.hasOwnProperty('NORMAL')) {
+                accessor = gltf.accessors[primitive.attributes.NORMAL];
+                normals = getAccessorData(gltf, accessor, resources.buffers);
+            }
+            if (attributes.hasOwnProperty('TANGENT')) {
+                accessor = gltf.accessors[primitive.attributes.TANGENT];
+                tangents = getAccessorData(gltf, accessor, resources.buffers);
+            }
+            if (attributes.hasOwnProperty('TEXCOORD_0')) {
+                accessor = gltf.accessors[primitive.attributes.TEXCOORD_0];
+                texCoord0 = getAccessorData(gltf, accessor, resources.buffers);
+                vertexDesc.push({ semantic: pc.SEMANTIC_TEXCOORD0, components: 2, type: pc.TYPE_FLOAT32 });
+            }
+            if (attributes.hasOwnProperty('TEXCOORD_1')) {
+                accessor = gltf.accessors[primitive.attributes.TEXCOORD_1];
+                texCoord1 = getAccessorData(gltf, accessor, resources.buffers);
+                vertexDesc.push({ semantic: pc.SEMANTIC_TEXCOORD1, components: 2, type: pc.TYPE_FLOAT32 });
+            }
+            if (attributes.hasOwnProperty('COLOR_0')) {
+                accessor = gltf.accessors[primitive.attributes.COLOR_0];
+                colors = getAccessorData(gltf, accessor, resources.buffers);
+                vertexDesc.push({ semantic: pc.SEMANTIC_COLOR, components: 4, type: pc.TYPE_FLOAT32 });
+            }
+            if (primitive.hasOwnProperty('indices')) {
+                accessor = gltf.accessors[primitive.indices];
+                indices = getAccessorData(gltf, accessor, resources.buffers);
             }
 
-            pcMeshGroups.push(pcMeshes);
+            if (positions !== null && indices !== null && normals === null) {
+                normals = pc.calculateNormals(positions, indices);
+            }
+            if (positions !== null && normals !== null && texCoord0 !== null && indices !== null && tangents === null) {
+                tangents = pc.calculateTangents(positions, normals, texCoord0, indices);
+            }
+
+            vertexFormat = new pc.VertexFormat(resources.device, vertexDesc);
+            vertexBuffer = new pc.VertexBuffer(resources.device, vertexFormat, numVertices, pc.BUFFER_STATIC);
+            vertexData = vertexBuffer.lock();
+
+            var dataView = new DataView(vertexData);
+            var o = 0;
+
+            if (positions !== null) {
+                for (k = 0; k < numVertices; k++) {
+                    offset = k * vertexFormat.size;
+                    dataView.setFloat32(offset + 0, positions[k * 3 + 0], true);
+                    dataView.setFloat32(offset + 4, positions[k * 3 + 1], true);
+                    dataView.setFloat32(offset + 8, positions[k * 3 + 2], true);
+                }
+
+                o += 12;
+            }
+
+            if (normals !== null) {
+                for (k = 0; k < numVertices; k++) {
+                    offset = k * vertexFormat.size + o;
+                    dataView.setFloat32(offset + 0, normals[k * 3 + 0], true);
+                    dataView.setFloat32(offset + 4, normals[k * 3 + 1], true);
+                    dataView.setFloat32(offset + 8, normals[k * 3 + 2], true);
+                }
+
+                o += 12;
+            }
+
+            if (tangents !== null) {
+                for (k = 0; k < numVertices; k++) {
+                    offset = k * vertexFormat.size + o;
+                    dataView.setFloat32(offset + 0,  tangents[k * 4 + 0], true);
+                    dataView.setFloat32(offset + 4,  tangents[k * 4 + 1], true);
+                    dataView.setFloat32(offset + 8,  tangents[k * 4 + 2], true);
+                    dataView.setFloat32(offset + 12, tangents[k * 4 + 3], true);
+                }
+
+                o += 16;
+            }
+
+            if (texCoord0 !== null) {
+                for (k = 0; k < numVertices; k++) {
+                    offset = k * vertexFormat.size + o;
+                    dataView.setFloat32(offset + 0, texCoord0[k * 2 + 0], true);
+                    dataView.setFloat32(offset + 4, texCoord0[k * 2 + 1], true);
+                }
+
+                o += 8;
+            }
+
+            if (texCoord1 !== null) {
+                for (k = 0; k < numVertices; k++) {
+                    offset = k * vertexFormat.size + o;
+                    dataView.setFloat32(offset + 0, texCoord1[k * 2 + 0], true);
+                    dataView.setFloat32(offset + 4, texCoord1[k * 2 + 1], true);
+                }
+
+                o += 8;
+            }
+
+            if (colors !== null) {
+                for (k = 0; k < numVertices; k++) {
+                    offset = k * vertexFormat.size + o;
+                    dataView.setFloat32(offset + 0,  colors[k * 4 + 0], true);
+                    dataView.setFloat32(offset + 4,  colors[k * 4 + 1], true);
+                    dataView.setFloat32(offset + 8,  colors[k * 4 + 2], true);
+                    dataView.setFloat32(offset + 12, colors[k * 4 + 3], true);
+                }
+
+                o += 16;
+            }
+
+            vertexBuffer.unlock();
+
+            var mesh = new pc.Mesh();
+            mesh.vertexBuffer = vertexBuffer;
+            mesh.indexBuffer[0] = indexBuffer;
+            mesh.primitive[0].type = getPrimitiveType(primitive);
+            mesh.primitive[0].base = 0;
+
+            var indexBuffer = null;
+            mesh.primitive[0].indexed = (indices !== null);
+            if (indices !== null) {
+                indexBuffer = new pc.IndexBuffer(resources.device, pc.INDEXFORMAT_UINT16, accessor.count, pc.USAGE_STATIC, indices);
+                mesh.indexBuffer[0] = indexBuffer;
+                mesh.primitive[0].count = indices.length;
+            } else {
+                mesh.primitive[0].count = numVertices;
+            }
+
+            mesh.materialIndex = primitive.material;
+
+            mesh.aabb = aabb;
+
+            meshes.push(mesh);
         }
+
+        return meshes;
     }
 
     function loadBuffers(resources, success) {
@@ -662,14 +642,7 @@
             var numLoaded = 0;
             gltf.buffers.forEach(function (buffer, idx) {
                 if (buffer.hasOwnProperty('uri')) {
-                    if (resources.processUri) {
-                        resources.processUri(buffer.uri, function(result) {
-                            resources.buffers[idx] = result;
-                            if (gltf.buffers.length === ++numLoaded) {
-                                success();
-                            }
-                        });
-                    } else if (isDataURI(buffer.uri)) {
+                    if (isDataURI(buffer.uri)) {
                         // convert base64 to raw binary data held in a string
                         // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
                         var byteString = atob(buffer.uri.split(',')[1]);
@@ -688,6 +661,13 @@
                         if (gltf.buffers.length === ++numLoaded) {
                             success();
                         }
+                    } else if (resources.processUri) {
+                        resources.processUri(buffer.uri, function(result) {
+                            resources.buffers[idx] = result;
+                            if (gltf.buffers.length === ++numLoaded) {
+                                success();
+                            }
+                        });
                     } else {
                         var xhr = new XMLHttpRequest();
                         xhr.open('GET', resources.basePath + buffer.uri, true);
@@ -753,7 +733,7 @@
             parse('textures', translateTexture, resources);
             parse('images', translateImage, resources);
             parse('materials', translateMaterial, resources);
-            loadMeshes(resources);
+            parse('meshes', translateMesh, resources);
             parse('nodes', translateNode, resources);
             parse('animations', translateAnimation, resources);
 
