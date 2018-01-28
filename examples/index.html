@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no' />
+        <style>
+            body {
+                margin: 0;
+                overflow: hidden;
+            }
+        </style>
+        <script src='../viewer/lib/playcanvas-0.221.0.min.js'></script>
+        <script src='../viewer/lib/playcanvas-gltf.js'></script>
+    </head>
+    <body>
+        <script>
+            var canvas = document.createElement('canvas');
+            document.body.appendChild(canvas);
+
+            var app = new pc.Application(canvas, {});
+            app.start();
+
+            // fill the available space at full resolution
+            app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
+            app.setCanvasResolution(pc.RESOLUTION_AUTO);
+
+            // ensure canvas is resized when window changes size
+            window.addEventListener('resize', function() {
+                app.resizeCanvas();
+            });
+
+            // create camera entity
+            var camera = new pc.Entity('camera');
+            camera.addComponent('camera', {
+                clearColor: [ 0.1, 0.8, 0 ]
+            });
+            app.root.addChild(camera);
+            camera.setLocalPosition(0, 0, 3);
+
+            // create directional light entity
+            var light = new pc.Entity('light');
+            light.addComponent('light',);
+            app.root.addChild(light);
+            light.setEulerAngles(45, 0, 45);
+
+            // rotator script
+            var Rotate = pc.createScript('rotate');
+            Rotate.prototype.update = function (deltaTime) {
+                this.entity.rotate(0, deltaTime * 20, 0);
+            };
+
+            // glTF scene root that rotates
+            var gltfRoot = new pc.Entity();
+            gltfRoot.addComponent('script');
+            gltfRoot.script.create('rotate');
+            app.root.addChild(gltfRoot);
+
+            app.assets.loadFromUrl('assets/monkey/monkey.gltf', 'json', function (err, asset) {
+                var json = asset.resource;
+                var gltf = JSON.parse(json);
+                loadGltf(gltf, app.graphicsDevice, function (roots) {
+                    // add the loaded scene to the hierarchy
+                    roots.forEach(function (root) {
+                        gltfRoot.addChild(root);
+                    });
+                }, {
+                    basePath: 'assets/monkey/'
+                });
+            });
+        </script>
+    </body>
+</html>
