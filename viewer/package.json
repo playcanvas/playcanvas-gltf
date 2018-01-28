@@ -9,6 +9,7 @@
     "electron-packager": "^10.1.0"
   },
   "scripts": {
-    "package-win": "electron-packager . --overwrite --platform=win32 --arch=x64 --electron-version=1.8.1 --asar  --icon=icons/gltf-viewer.ico"
+    "package-win": "electron-packager . --overwrite --platform=win32 --arch=x64 --electron-version=1.8.1 --asar  --icon=icons/gltf-viewer.ico",
+    "package-mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --electron-version=1.8.1 --asar  --icon=icons/gltf-viewer.icns"
   }
 }
