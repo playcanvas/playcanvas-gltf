@@ -90,6 +90,28 @@
         return !!s.match(regex);
     }
 
+    function getAccessorData(gltf, accessor, buffers) {
+        var bufferView = gltf.bufferViews[accessor.bufferView];
+        var arrayBuffer = buffers[bufferView.buffer];
+        var accessorByteOffset = accessor.hasOwnProperty('byteOffset') ? accessor.byteOffset : 0;
+        var bufferViewByteOffset = bufferView.hasOwnProperty('byteOffset') ? bufferView.byteOffset : 0;
+        var byteOffset = accessorByteOffset + bufferViewByteOffset;
+        var length = accessor.count * getAccessorTypeSize(accessor.type);
+
+        var data = null;
+
+        switch (accessor.componentType) {
+            case 5120: data = new Int8Array(arrayBuffer, byteOffset, length); break;
+            case 5121: data = new Uint8Array(arrayBuffer, byteOffset, length); break;
+            case 5122: data = new Int16Array(arrayBuffer, byteOffset, length); break;
+            case 5123: data = new Uint16Array(arrayBuffer, byteOffset, length); break;
+            case 5125: data = new Uint32Array(arrayBuffer, byteOffset, length); break;
+            case 5126: data = new Float32Array(arrayBuffer, byteOffset, length); break;
+        }
+
+        return data;
+    }
+
     function resampleImage(image) {
         var srcW = image.width;
         var srcH = image.height;
@@ -105,7 +127,7 @@
         context.drawImage(image, 0, 0, srcW, srcH, 0, 0, dstW, dstH);
 
         return canvas.toDataURL();
-    };
+    }
 
     function translateImage(data, resources) {
         var image = new Image();
@@ -113,27 +135,26 @@
             var gltf = resources.gltf;
 
             var imageIndex = resources.images.indexOf(image);
-            for (var i = 0; i < gltf.textures.length; i++) {
-                var t = gltf.textures[i];
-                if (t.hasOwnProperty('source')) {
-                    if (t.source === imageIndex) {
-                        var texture = resources.textures[i];
+            gltf.textures.forEach(function (texture) {
+                if (texture.hasOwnProperty('source')) {
+                    if (texture.source === imageIndex) {
+                        var t = resources.textures[i];
                         if ((!isPowerOf2(image.width) || !isPowerOf2(image.width)) &&
-                            ((texture.addressU === pc.ADDRESS_REPEAT) || (texture.addressU === pc.ADDRESS_MIRRORED_REPEAT) ||
-                             (texture.addressV === pc.ADDRESS_REPEAT) || (texture.addressV === pc.ADDRESS_MIRRORED_REPEAT) ||
-                             (texture.minFilter === pc.FILTER_LINEAR_MIPMAP_LINEAR) || (texture.minFilter === pc.FILTER_NEAREST_MIPMAP_LINEAR) ||
-                             (texturet.minFilter === pc.FILTER_LINEAR_MIPMAP_NEAREST) || (texture.minFilter === pc.FILTER_NEAREST_MIPMAP_NEAREST))) {
+                            ((t.addressU === pc.ADDRESS_REPEAT) || (t.addressU === pc.ADDRESS_MIRRORED_REPEAT) ||
+                             (t.addressV === pc.ADDRESS_REPEAT) || (t.addressV === pc.ADDRESS_MIRRORED_REPEAT) ||
+                             (t.minFilter === pc.FILTER_LINEAR_MIPMAP_LINEAR) || (t.minFilter === pc.FILTER_NEAREST_MIPMAP_LINEAR) ||
+                             (t.minFilter === pc.FILTER_LINEAR_MIPMAP_NEAREST) || (t.minFilter === pc.FILTER_NEAREST_MIPMAP_NEAREST))) {
                             var potImage = new Image();
                             potImage.addEventListener('load', function () {
-                                texture.setSource(potImage);
+                                t.setSource(potImage);
                             });
                             potImage.src = resampleImage(image);
                         } else {
-                            texture.setSource(image);
+                            t.setSource(image);
                         }
                     }
                 }
-            }
+            });
         }, false);
 
         if (data.hasOwnProperty('uri')) {
@@ -376,7 +397,7 @@
                     options.farClip = orthographic.zfar;
                     options.nearClip = orthographic.znear;
                 }
-            };
+            }
 
             entity.addComponent('camera', options);
 
@@ -408,51 +429,28 @@
     }
 
     function translateAnimation(data, resources) {
+        var gltf = resources.gltf;
         var animation = new pc.Animation();
 
         if (data.hasOwnProperty('name')) {
             animation.name = data.name;
         }
 
-        // Handle channels
+        // parrse animation data
         var channels = data.channels;
         var samplers = data.samplers;
 
-        var nodes = [];
         for (var i = 0; i < channels.length; i++) {
             var channel = channels[i];
-            var target = channel.target;
+            var sampler = samplers[channel.sampler];
 
-            var node = resources.entities[i];
+            var times = getAccessorData(gltf, gltf.accessors[channel.input], resources.buffers);
+            var values = getAccessorData(gltf, gltf.accessors[channel.output], resources.buffers);
+
 
         }
-
-        // Handle samplers
-
 
         return animation;
-    }
-
-    function getAccessorData(gltf, accessor, buffers) {
-        var bufferView = gltf.bufferViews[accessor.bufferView];
-        var arrayBuffer = buffers[bufferView.buffer];
-        var accessorByteOffset = accessor.hasOwnProperty('byteOffset') ? accessor.byteOffset : 0;
-        var bufferViewByteOffset = bufferView.hasOwnProperty('byteOffset') ? bufferView.byteOffset : 0;
-        var byteOffset = accessorByteOffset + bufferViewByteOffset;
-        var length = accessor.count * getAccessorTypeSize(accessor.type);
-
-        var data = null;
-
-        switch (accessor.componentType) {
-            case 5120: data = new Int8Array(arrayBuffer, byteOffset, length); break;
-            case 5121: data = new Uint8Array(arrayBuffer, byteOffset, length); break;
-            case 5122: data = new Int16Array(arrayBuffer, byteOffset, length); break;
-            case 5123: data = new Uint16Array(arrayBuffer, byteOffset, length); break;
-            case 5125: data = new Uint32Array(arrayBuffer, byteOffset, length); break;
-            case 5126: data = new Float32Array(arrayBuffer, byteOffset, length); break;
-        }
-
-        return data;
     }
 
     function translateMesh(data, resources) {
