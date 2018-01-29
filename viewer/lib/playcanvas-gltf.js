@@ -258,7 +258,11 @@
                 material.opacity = 1;
             }
             if (pbrData.hasOwnProperty('baseColorTexture')) {
-                material.diffuseMap = resources.textures[pbrData.baseColorTexture.index];
+                var baseColorTexture = pbrData.baseColorTexture;
+                material.diffuseMap = resources.textures[baseColorTexture.index];
+                if (baseColorTexture.hasOwnProperty('texCoord')) {
+                    material.diffuseMapUv = baseColorTexture.texCoord;
+                }
             }
             material.useMetalness = true;
             if (pbrData.hasOwnProperty('metallicFactor')) {
@@ -274,18 +278,35 @@
                 roughnessFloat = false;
             }
             if (pbrData.hasOwnProperty('metallicRoughnessTexture')) {
-                material.metalnessMap = resources.textures[pbrData.metallicRoughnessTexture.index];
+                var metallicRoughnessTexture = pbrData.metallicRoughnessTexture;
+                material.metalnessMap = resources.textures[metallicRoughnessTexture.index];
                 material.metalnessMapChannel = 'b';
-                material.glossMap = resources.textures[pbrData.metallicRoughnessTexture.index];
+                material.glossMap = resources.textures[metallicRoughnessTexture.index];
                 material.glossMapChannel = 'g';
                 if (!roughnessFloat) material.shininess = 100;
+                if (metallicRoughnessTexture.hasOwnProperty('texCoord')) {
+                    material.glossMapUv = metallicRoughnessTexture.texCoord;
+                    material.metalnessMapUv = metallicRoughnessTexture.texCoord;
+                }
             }
         }
         if (data.hasOwnProperty('normalTexture')) {
-            material.normalMap = resources.textures[data.normalTexture.index];
+            var normalTexture = data.normalTexture;
+            material.normalMap = resources.textures[normalTexture.index];
+            if (normalTexture.hasOwnProperty('texCoord')) {
+                material.normalMapUv = normalTexture.texCoord;
+            }
+            if (normalTexture.hasOwnProperty('scale')) {
+                material.bumpiness = normalTexture.scale;
+            }
         }
         if (data.hasOwnProperty('occlusionTexture')) {
-            material.aoMap = resources.textures[data.occlusionTexture.index];
+            var occlusionTexture = data.occlusionTexture;
+            material.aoMap = resources.textures[occlusionTexture.index];
+            if (occlusionTexture.hasOwnProperty('texCoord')) {
+                material.aoMapUv = occlusionTexture.texCoord;
+            }
+            // TODO: support 'strength'
         }
         if (data.hasOwnProperty('emissiveFactor')) {
             color = data.emissiveFactor;
