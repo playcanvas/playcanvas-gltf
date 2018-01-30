@@ -135,10 +135,10 @@
             var gltf = resources.gltf;
 
             var imageIndex = resources.images.indexOf(image);
-            gltf.textures.forEach(function (texture) {
+            gltf.textures.forEach(function (texture, idx) {
                 if (texture.hasOwnProperty('source')) {
                     if (texture.source === imageIndex) {
-                        var t = resources.textures[i];
+                        var t = resources.textures[idx];
                         if ((!isPowerOf2(image.width) || !isPowerOf2(image.width)) &&
                             ((t.addressU === pc.ADDRESS_REPEAT) || (t.addressU === pc.ADDRESS_MIRRORED_REPEAT) ||
                              (t.addressV === pc.ADDRESS_REPEAT) || (t.addressV === pc.ADDRESS_MIRRORED_REPEAT) ||
@@ -438,7 +438,12 @@
                     } else {
                         material = resources.materials[meshGroup[i].materialIndex];
                     }
-                    model.meshInstances.push(new pc.MeshInstance(model.graph, meshGroup[i], material));
+                    var meshInstance = new pc.MeshInstance(model.graph, meshGroup[i], material);
+                    if (meshGroup[i].morph) {
+                        var morphInstance = new pc.MorphInstance(meshGroup[i].morph);
+                        meshInstance.morphInstance = morphInstance;
+                    }
+                    model.meshInstances.push(meshInstance);
                 }
 
                 entity.addComponent('model');
@@ -457,7 +462,7 @@
             animation.name = data.name;
         }
 
-        // parrse animation data
+        // parse animation data
         var channels = data.channels;
         var samplers = data.samplers;
 
@@ -465,8 +470,8 @@
             var channel = channels[i];
             var sampler = samplers[channel.sampler];
 
-            var times = getAccessorData(gltf, gltf.accessors[channel.input], resources.buffers);
-            var values = getAccessorData(gltf, gltf.accessors[channel.output], resources.buffers);
+//            var times = getAccessorData(gltf, gltf.accessors[channel.input], resources.buffers);
+//            var values = getAccessorData(gltf, gltf.accessors[channel.output], resources.buffers);
 
 
         }
@@ -657,6 +662,29 @@
             mesh.materialIndex = primitive.material;
 
             mesh.aabb = aabb;
+
+            if (primitive.hasOwnProperty('targets')) {
+                var targets = [];
+                primitive.targets.forEach(function (target) {
+                    var options = {};
+                    if (target.hasOwnProperty('POSITION')) {
+                        accessor = gltf.accessors[target.POSITION];
+                        options.deltaPositions = getAccessorData(gltf, accessor, resources.buffers);
+                    }
+                    if (target.hasOwnProperty('NORMAL')) {
+                        accessor = gltf.accessors[target.NORMAL];
+                        options.deltaNormals = getAccessorData(gltf, accessor, resources.buffers);
+                    }
+                    if (target.hasOwnProperty('TANGENT')) {
+                        accessor = gltf.accessors[target.TANGENT];
+                        options.deltaTangents = getAccessorData(gltf, accessor, resources.buffers);
+                    }
+
+                    targets.push(new pc.MorphTarget(options));
+                });
+
+                mesh.morph = new pc.Morph(targets);
+            }
 
             meshes.push(mesh);
         }
