@@ -1,4 +1,72 @@
 (function () {
+    function AnimKey(time, value) {
+        this.time = time;
+        this.value = value;
+    }
+
+    function AnimCurve() {
+        this.keys = [];
+    }
+
+    AnimCurve.prototype.addKey = function (key) {
+        this.keys.push(key);
+        this.keys.sort(function (a, b) {
+            return a.time - b.time;
+        });
+    }
+
+    AnimCurve.prototype.evaluate = function (time) {
+        var keys = this.keys;
+        for (var i = 0; i < keys.length - 1; i++) {
+            var k0 = keys[i];
+            var k1 = keys[i + 1];
+
+            if (time > k0.time && time < k1.time) {
+                var interval = k1.time - k0.time;
+                var delta = time - k0.time;
+                var value = pc.math.lerp(k0.value, k1.value, delta / interval);
+                return value;
+            }
+        }
+
+        return 0;
+    };
+
+    var Anim;
+
+    function initAnim() {
+        if (Anim) return;
+
+        Anim = pc.createScript('anim');
+
+        Anim.prototype.initialize = function () {
+            this.time = 0;
+        };
+
+        Anim.prototype.update = function (dt) {
+            this.time += dt;
+            var numKeys = this.curves[0].keys.length;
+            var duration = (this.curves[0].keys[numKeys - 1]).time;
+            if (this.time > duration) {
+                this.time = 0;
+            }
+
+            if (this.entity.model) {
+                var meshInstances = this.entity.model.meshInstances;
+                for (var i = 0; i < meshInstances.length; i++) {
+                    var morphInstance = meshInstances[i].morphInstance;
+                    if (morphInstance) {
+                        for (var j = 0; j < this.curves.length; j++) {
+                            var curve = this.curves[j];
+                            var value = curve.evaluate(this.time);
+                            morphInstance.setWeight(j, value);
+                        }
+                    }
+                }
+            }
+        };
+    }
+
     // Math utility functions
     function nearestPow2(n) {
       return Math.pow(2, Math.round(Math.log(n) / Math.log(2))); 
@@ -440,8 +508,11 @@
                     }
                     var meshInstance = new pc.MeshInstance(model.graph, meshGroup[i], material);
                     if (meshGroup[i].morph) {
-                        var morphInstance = new pc.MorphInstance(meshGroup[i].morph);
-                        meshInstance.morphInstance = morphInstance;
+                        meshInstance.morphInstance = new pc.MorphInstance(meshGroup[i].morph);
+
+                        // HACK: need to force calculation of the morph's AABB due to a bug
+                        // in the engine. This is a private function and will be rmoved!
+                        meshInstance.morphInstance.updateBounds(meshInstance.mesh);
                     }
                     model.meshInstances.push(meshInstance);
                 }
@@ -470,10 +541,31 @@
             var channel = channels[i];
             var sampler = samplers[channel.sampler];
 
-//            var times = getAccessorData(gltf, gltf.accessors[channel.input], resources.buffers);
-//            var values = getAccessorData(gltf, gltf.accessors[channel.output], resources.buffers);
+            var times = getAccessorData(gltf, gltf.accessors[sampler.input], resources.buffers);
+            var values = getAccessorData(gltf, gltf.accessors[sampler.output], resources.buffers);
 
+            var target = channel.target;
+            var path = target.path;
 
+            var curves = [];
+
+            if (path === 'weights') {
+                var numCurves = values.length / times.length;
+                for (var j = 0; j < numCurves; j++) {
+                    curves[j] = new AnimCurve();
+                    for (var k = 0; k < times.length; k++) {
+                        var time = times[k];
+                        var value = values[numCurves * k + j];
+                        var key = new AnimKey(time, value);
+                        curves[j].addKey(key);
+                    }
+                }
+            }
+
+            var entity = resources.nodes[target.node];
+            entity.addComponent('script');
+            entity.script.create('anim');
+            entity.script.anim.curves = curves;
         }
 
         return animation;
@@ -776,6 +868,8 @@
     }
 
     function loadGltf(gltf, device, success, options) {
+        initAnim();
+
         var buffers = options ? options.buffers : undefined;
         var basePath = options ? options.basePath : undefined;
         var processUri = options ? options.processUri : undefined;
