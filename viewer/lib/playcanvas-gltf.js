@@ -573,24 +573,10 @@
 
     function translateMesh(data, resources) {
         var gltf = resources.gltf;
-        var numVertices;
-        var aabb;
-        var vertexBuffer, vertexFormat;
-        var vertexData, vertexDataF32;
-        var bufferView, bufferViewIndex;
-        var accessorByteOffset, bufferViewByteOffset;
         var meshes = [];
-        var primitives = data.primitives;
 
-        for (var i = 0; i < primitives.length; i++) {
-            var primitive = primitives[i];
+        data.primitives.forEach(function (primitive) {
             var attributes = primitive.attributes;
-
-            var vertexDesc = [];
-            vertexDesc.push({ semantic: pc.SEMANTIC_POSITION, components: 3, type: pc.TYPE_FLOAT32 });
-            vertexDesc.push({ semantic: pc.SEMANTIC_NORMAL, components: 3, type: pc.TYPE_FLOAT32 });
-            vertexDesc.push({ semantic: pc.SEMANTIC_TANGENT, components: 4, type: pc.TYPE_FLOAT32 });
-
             var positions = null;
             var normals = null;
             var tangents = null;
@@ -598,6 +584,14 @@
             var texCoord1 = null;
             var colors = null;
             var indices = null;
+            var numVertices;
+            var aabb;
+
+            var vertexDesc = [
+                { semantic: pc.SEMANTIC_POSITION, components: 3, type: pc.TYPE_FLOAT32 },
+                { semantic: pc.SEMANTIC_NORMAL, components: 3, type: pc.TYPE_FLOAT32 },
+                { semantic: pc.SEMANTIC_TANGENT, components: 4, type: pc.TYPE_FLOAT32 }
+            ];
 
             // Grab typed arrays for all vertex data
             if (attributes.hasOwnProperty('POSITION')) {
@@ -646,9 +640,9 @@
                 tangents = pc.calculateTangents(positions, normals, texCoord0, indices);
             }
 
-            vertexFormat = new pc.VertexFormat(resources.device, vertexDesc);
-            vertexBuffer = new pc.VertexBuffer(resources.device, vertexFormat, numVertices, pc.BUFFER_STATIC);
-            vertexData = vertexBuffer.lock();
+            var vertexFormat = new pc.VertexFormat(resources.device, vertexDesc);
+            var vertexBuffer = new pc.VertexBuffer(resources.device, vertexFormat, numVertices, pc.BUFFER_STATIC);
+            var vertexData = vertexBuffer.lock();
 
             var dataView = new DataView(vertexData);
             var o = 0;
@@ -779,7 +773,7 @@
             }
 
             meshes.push(mesh);
-        }
+        });
 
         return meshes;
     }
