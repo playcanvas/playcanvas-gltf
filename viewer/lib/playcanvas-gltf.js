@@ -284,7 +284,7 @@
     function translateMaterial(data, resources) {
         var material = new pc.StandardMaterial();
 
-        material.chunks.glossMapPS = [
+        material.chunks.glossPS = [
             "#ifdef MAPFLOAT",
             "uniform float material_shininess;",
             "#endif",
@@ -314,8 +314,8 @@
 
         // glTF dooesn't define how to occlude specular
         material.occludeSpecular = false;
-        material.diffuseMapTint = true;
-        material.diffuseMapVertexColor = true;
+        material.diffuseTint = true;
+        material.diffuseVertexColor = true;
 
         var roughnessFloat;
         var color;
@@ -570,9 +570,11 @@
             }
 
             var entity = resources.nodes[target.node];
-            entity.addComponent('script');
-            entity.script.create('anim');
-            entity.script.anim.curves = curves;
+            if (!entity.script) {
+                entity.addComponent('script');
+                entity.script.create('anim');
+                entity.script.anim.curves = curves;
+            }
         });
     }
 
