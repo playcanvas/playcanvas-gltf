@@ -24,7 +24,14 @@
             if (time > k0.time && time < k1.time) {
                 var interval = k1.time - k0.time;
                 var delta = time - k0.time;
-                var value = pc.math.lerp(k0.value, k1.value, delta / interval);
+                var value;
+                if (k0.value instanceof pc.Quat) {
+                    value = new pc.Quat().slerp(k0.value, k1.value, delta / interval);
+                } else if (k0.value instanceof pc.Vec3) {
+                    value = new pc.Vec3().lerp(k0.value, k1.value, delta / interval);
+                } else {
+                    value = pc.math.lerp(k0.value, k1.value, delta / interval);
+                }
                 return value;
             }
         }
@@ -62,6 +69,17 @@
                             morphInstance.setWeight(j, value);
                         }
                     }
+                }
+            }
+
+            for (var j = 0; j < this.curves.length; j++) {
+                var curve = this.curves[j];
+                var value = curve.evaluate(this.time);
+                if (value instanceof pc.Quat) {
+                    this.entity.setLocalRotation(value);
+                }
+                if (value instanceof pc.Vec3) {
+                    this.entity.setLocalPosition(value);
                 }
             }
         };
@@ -550,30 +568,54 @@
 
             var times = getAccessorData(gltf, gltf.accessors[sampler.input], resources.buffers);
             var values = getAccessorData(gltf, gltf.accessors[sampler.output], resources.buffers);
+            var time, value, key;
 
             var target = channel.target;
             var path = target.path;
 
-            var curves = [];
+            var curve;
+            var i, j;
+
+            // Ensure an animation script is added to the entity
+            var entity = resources.nodes[target.node];
+            if (!entity.script ) {
+                entity.addComponent('script');
+            }
+            if (!entity.script.anim) {
+                entity.script.create('anim');
+                entity.script.anim.curves = [];
+            }
 
             if (path === 'weights') {
                 var numCurves = values.length / times.length;
-                for (var i = 0; i < numCurves; i++) {
-                    curves[i] = new AnimCurve();
-                    for (var j = 0; j < times.length; j++) {
-                        var time = times[j];
-                        var value = values[numCurves * j + i];
-                        var key = new AnimKey(time, value);
-                        curves[i].addKey(key);
+                for (i = 0; i < numCurves; i++) {
+                    curve = new AnimCurve();
+                    for (j = 0; j < times.length; j++) {
+                        time = times[j];
+                        value = values[numCurves * j + i];
+                        key = new AnimKey(time, value);
+                        curve.keys.push(key);
                     }
-                }
-            }
 
-            var entity = resources.nodes[target.node];
-            if (!entity.script) {
-                entity.addComponent('script');
-                entity.script.create('anim');
-                entity.script.anim.curves = curves;
+                    entity.script.anim.curves.push(curve);
+                }
+            } else { // translation, rotation or scale
+                curve = new AnimCurve();
+                for (i = 0; i < times.length; i++) {
+                    time = times[i];
+                    if (path === 'translation') {
+                        value = new pc.Vec3(values[3 * i + 0], values[3 * i + 1], values[3 * i + 2]);
+                    } else if (path === 'rotation') {
+                        value = new pc.Quat(values[4 * i + 0], values[4 * i + 1], values[4 * i + 2], values[4 * i + 3]);
+                    }
+                    key = new AnimKey(time, value);
+                    curve.keys.push(key);
+                }
+                curve.keys.sort(function (a, b) {
+                    return a.time - b.time;
+                });
+
+                entity.script.anim.curves.push(curve);
             }
         });
     }
