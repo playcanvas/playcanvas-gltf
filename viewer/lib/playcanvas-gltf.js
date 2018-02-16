@@ -633,6 +633,8 @@
             var texCoord1 = null;
             var colors = null;
             var indices = null;
+            var joints = null;
+            var weights = null;
             var numVertices;
             var aabb;
 
@@ -676,6 +678,16 @@
                 accessor = gltf.accessors[primitive.attributes.COLOR_0];
                 colors = getAccessorData(gltf, accessor, resources.buffers);
                 vertexDesc.push({ semantic: pc.SEMANTIC_COLOR, components: 4, type: pc.TYPE_FLOAT32 });
+            }
+            if (attributes.hasOwnProperty('JOINTS_0')) {
+                accessor = gltf.accessors[primitive.attributes.JOINTS_0];
+                joints = getAccessorData(gltf, accessor, resources.buffers);
+                vertexDesc.push({ semantic: pc.SEMANTIC_BLENDINDICES, components: 4, type: pc.TYPE_UINT8 });
+            }
+            if (attributes.hasOwnProperty('WEIGHTS_0')) {
+                accessor = gltf.accessors[primitive.attributes.WEIGHTS_0];
+                weights = getAccessorData(gltf, accessor, resources.buffers);
+                vertexDesc.push({ semantic: pc.SEMANTIC_BLENDWEIGHT, components: 4, type: pc.TYPE_FLOAT32 });
             }
             if (primitive.hasOwnProperty('indices')) {
                 accessor = gltf.accessors[primitive.indices];
@@ -762,6 +774,30 @@
                 o += 16;
             }
 
+            if (joints !== null) {
+                for (k = 0; k < numVertices; k++) {
+                    offset = k * vertexFormat.size + o;
+                    dataView.setUint8(offset + 0,  joints[k + 0], true);
+                    dataView.setUint8(offset + 1,  joints[k + 1], true);
+                    dataView.setUint8(offset + 2,  joints[k + 2], true);
+                    dataView.setUint8(offset + 3, joints[k + 3], true);
+                }
+
+                o += 16;
+            }
+
+            if (weights !== null) {
+                for (k = 0; k < numVertices; k++) {
+                    offset = k * vertexFormat.size + o;
+                    dataView.setFloat32(offset + 0,  weights[k * 4 + 0], true);
+                    dataView.setFloat32(offset + 4,  weights[k * 4 + 1], true);
+                    dataView.setFloat32(offset + 8,  weights[k * 4 + 2], true);
+                    dataView.setFloat32(offset + 12, weights[k * 4 + 3], true);
+                }
+
+                o += 16;
+            }
+
             vertexBuffer.unlock();
 
             var mesh = new pc.Mesh();
@@ -826,6 +862,26 @@
         });
 
         return meshes;
+    }
+
+    function translateSkin(data, resources) {
+        var gltf = resources.gltf;
+
+        var inverseBindMatrices = data.inverseBindMatrices;
+        var joints = data.joints;
+        var skeleton = data.skeleton;
+
+        var ibp = [];
+        var boneNames = [];
+        var ibmData = getAccessorData(gltf, gltf.accessors[inverseBindMatrices], resources.buffers);
+
+        for (var i = 0; i < joints.length; i++) {
+            var bindMatrix = new pc.Mat4(ibmData.slice(i * 16, i * 16 + 16));
+            ibp.push(bindMatrix);
+            boneNames.push(resources.nodes[joints[i]].name);
+        }
+
+        return new pc.Skin(resources.device, ibp, boneNames);
     }
 
     function loadBuffers(resources, success) {
@@ -933,6 +989,7 @@
             parse('images', translateImage, resources);
             parse('materials', translateMaterial, resources);
             parse('meshes', translateMesh, resources);
+            parse('skins', translateSkin, resources);
             parse('nodes', translateNode, resources);
             parse('animations', translateAnimation, resources);
 
