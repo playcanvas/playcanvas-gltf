@@ -637,6 +637,89 @@
             var weights = null;
             var numVertices;
             var aabb;
+            var i;
+
+            if (primitive.hasOwnProperty('extensions')) {
+                var extensions = primitive.extensions;
+                if (extensions.hasOwnProperty('KHR_draco_mesh_compression')) {
+                    var extDraco = extensions.KHR_draco_mesh_compression;
+
+                    var bufferView = gltf.bufferViews[extDraco.bufferView];
+                    var arrayBuffer = resources.buffers[bufferView.buffer];
+
+                    var decoderModule = DracoDecoderModule();
+                    var buffer = new decoderModule.DecoderBuffer();
+                    buffer.Init(new Int8Array(arrayBuffer), arrayBuffer.byteLength);
+
+                    var decoder = new decoderModule.Decoder();
+                    var geometryType = decoder.GetEncodedGeometryType(buffer);
+
+                    var outputGeometry, status;
+                    switch (geometryType) {
+                        case decoderModule.INVALID_GEOMETRY_TYPE:
+                            console.error('Invalid geometry type');
+                            break;
+                        case decoderModule.POINT_CLOUD:
+                            outputGeometry = new decoderModule.PointCloud();
+                            status = decoder.DecodeBufferToPointCloud(buffer, outputGeometry);
+                            break;
+                        case decoderModule.TRIANGULAR_MESH:
+                            outputGeometry = new decoderModule.Mesh();
+                            status = decoder.DecodeBufferToMesh(buffer, outputGeometry);
+                            break;
+                    }
+
+                    if (!status.ok() || outputGeometry.ptr == 0) {
+                        var errorMsg = status.error_msg();
+                        console.error(errorMsg);
+                    }
+
+                    var numPoints = outputGeometry.num_points();
+                    var numAttributes = outputGeometry.num_attributes();
+                    var numFaces = outputGeometry.num_faces();
+                    var attribute, attributeId;
+
+                    // POSITIONS
+                    var extractAttribute = function (attributeType) {
+                        var attributeId = decoder.GetAttributeId(outputGeometry, attributeType);
+                        if (attributeId !== -1) {
+                            var attribute = decoder.GetAttribute(outputGeometry, attributeId);
+                            var attributeData = new decoderModule.DracoFloat32Array();
+                            decoder.GetAttributeFloatForAllPoints(outputGeometry, attribute, attributeData);
+                            var numValues = numPoints * attribute.num_components();
+
+                            var values = new Float32Array(numValues);
+                            for (i = 0; i < numValues; i++) {
+                                values[i] = attributeData.GetValue(i);
+                            }
+
+                            decoderModule.destroy(attributeData);
+                            return values;
+                        }
+                        return null;
+                    };
+
+                    positions = extractAttribute(decoderModule.POSITION);
+                    normals   = extractAttribute(decoderModule.NORMAL);
+                    texCoord0 = extractAttribute(decoderModule.TEX_COORD);
+
+                    if (geometryType == decoderModule.TRIANGULAR_MESH) {
+                        var face = new decoderModule.DracoInt32Array();
+                        indices = new Uint16Array(numFaces * 3);
+                        for (i = 0; i < numFaces; ++i) {
+                            decoder.GetFaceFromMesh(outputGeometry, i, face);
+                            indices[i * 3]     = face.GetValue(0);
+                            indices[i * 3 + 1] = face.GetValue(1);
+                            indices[i * 3 + 2] = face.GetValue(2);
+                        }
+                        decoderModule.destroy(face);
+                    }
+
+                    decoderModule.destroy(outputGeometry);
+                    decoderModule.destroy(decoder);
+                    decoderModule.destroy(buffer);
+                }
+            }
 
             var vertexDesc = [
                 { semantic: pc.SEMANTIC_POSITION, components: 3, type: pc.TYPE_FLOAT32 },
@@ -646,9 +729,13 @@
 
             // Grab typed arrays for all vertex data
             if (attributes.hasOwnProperty('POSITION')) {
+                if (positions === null) {
+                    accessor = gltf.accessors[primitive.attributes.POSITION];
+                    positions = getAccessorData(gltf, accessor, resources.buffers);
+                }
+
+                numVertices = positions.length / 3;
                 accessor = gltf.accessors[primitive.attributes.POSITION];
-                positions = getAccessorData(gltf, accessor, resources.buffers);
-                numVertices = accessor.count;
                 var min = accessor.min;
                 var max = accessor.max;
                 aabb = new pc.BoundingBox(
@@ -656,7 +743,8 @@
                     new pc.Vec3((max[0] - min[0]) / 2, (max[1] - min[1]) / 2, (max[2] - min[2]) / 2)
                 );
             }
-            if (attributes.hasOwnProperty('NORMAL')) {
+
+            if (attributes.hasOwnProperty('NORMAL') && normals === null) {
                 accessor = gltf.accessors[primitive.attributes.NORMAL];
                 normals = getAccessorData(gltf, accessor, resources.buffers);
             }
@@ -665,10 +753,13 @@
                 tangents = getAccessorData(gltf, accessor, resources.buffers);
             }
             if (attributes.hasOwnProperty('TEXCOORD_0')) {
-                accessor = gltf.accessors[primitive.attributes.TEXCOORD_0];
-                texCoord0 = getAccessorData(gltf, accessor, resources.buffers);
+                if (texCoord0 === null) {
+                    accessor = gltf.accessors[primitive.attributes.TEXCOORD_0];
+                    texCoord0 = getAccessorData(gltf, accessor, resources.buffers);
+                }
                 vertexDesc.push({ semantic: pc.SEMANTIC_TEXCOORD0, components: 2, type: pc.TYPE_FLOAT32 });
             }
+
             if (attributes.hasOwnProperty('TEXCOORD_1')) {
                 accessor = gltf.accessors[primitive.attributes.TEXCOORD_1];
                 texCoord1 = getAccessorData(gltf, accessor, resources.buffers);
@@ -689,7 +780,7 @@
                 weights = getAccessorData(gltf, accessor, resources.buffers);
                 vertexDesc.push({ semantic: pc.SEMANTIC_BLENDWEIGHT, components: 4, type: pc.TYPE_FLOAT32 });
             }
-            if (primitive.hasOwnProperty('indices')) {
+            if (primitive.hasOwnProperty('indices') && indices === null) {
                 accessor = gltf.accessors[primitive.indices];
                 indices = getAccessorData(gltf, accessor, resources.buffers);
             }
@@ -823,7 +914,7 @@
                         indexFormat = pc.INDEXFORMAT_UINT32;
                         break;
                 }
-                indexBuffer = new pc.IndexBuffer(resources.device, indexFormat, accessor.count, pc.USAGE_STATIC, indices);
+                indexBuffer = new pc.IndexBuffer(resources.device, indexFormat, accessor.count, pc.BUFFER_STATIC, indices);
                 mesh.indexBuffer[0] = indexBuffer;
                 mesh.primitive[0].count = indices.length;
             } else {
