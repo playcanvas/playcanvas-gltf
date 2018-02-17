@@ -651,7 +651,7 @@
 
                     var decoderModule = DracoDecoderModule();
                     var buffer = new decoderModule.DecoderBuffer();
-                    buffer.Init(uint8Buffer, arrayBuffer.byteLength);
+                    buffer.Init(uint8Buffer, uint8Buffer.length);
 
                     var decoder = new decoderModule.Decoder();
                     var geometryType = decoder.GetEncodedGeometryType(buffer);
