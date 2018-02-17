@@ -874,7 +874,7 @@
                     dataView.setUint8(offset + 3, joints[k + 3], true);
                 }
 
-                o += 16;
+                o += 4;
             }
 
             if (weights !== null) {
@@ -969,7 +969,7 @@
         for (var i = 0; i < joints.length; i++) {
             var bindMatrix = new pc.Mat4(ibmData.slice(i * 16, i * 16 + 16));
             ibp.push(bindMatrix);
-            boneNames.push(resources.nodes[joints[i]].name);
+            boneNames.push(""); // resources.nodes[joints[i]].name
         }
 
         return new pc.Skin(resources.device, ibp, boneNames);
