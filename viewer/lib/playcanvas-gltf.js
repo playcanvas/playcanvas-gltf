@@ -649,7 +649,7 @@
                     var byteOffset = bufferView.hasOwnProperty('byteOffset') ? bufferView.byteOffset : 0;
                     var uint8Buffer = new Int8Array(arrayBuffer, byteOffset, bufferView.byteLength);
 
-                    var decoderModule = DracoDecoderModule();
+                    var decoderModule = resources.decoderModule;
                     var buffer = new decoderModule.DecoderBuffer();
                     buffer.Init(uint8Buffer, uint8Buffer.length);
 
@@ -1089,6 +1089,13 @@
             device: device,
             defaultMaterial: translateMaterial({})
         };
+
+        if (gltf.hasOwnProperty('extensionsUsed')) {
+            var extensionsUsed = gltf.extensionsUsed;
+            if (extensionsUsed.indexOf('KHR_draco_mesh_compression') !== -1) {
+                resources.decoderModule = DracoDecoderModule();
+            }
+        }
 
         loadBuffers(resources, function () {
             parse('textures', translateTexture, resources);
