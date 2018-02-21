@@ -663,9 +663,9 @@
             var texCoord0 = null;
             var texCoord1 = null;
             var colors = null;
-            var indices = null;
             var joints = null;
             var weights = null;
+            var indices = null;
 
             var i;
 
@@ -772,7 +772,6 @@
                 accessor = gltf.accessors[primitive.attributes.POSITION];
                 positions = getAccessorData(gltf, accessor, resources.buffers);
             }
-
             if (attributes.hasOwnProperty('NORMAL') && normals === null) {
                 accessor = gltf.accessors[primitive.attributes.NORMAL];
                 normals = getAccessorData(gltf, accessor, resources.buffers);
@@ -963,7 +962,7 @@
                         indexFormat = pc.INDEXFORMAT_UINT32;
                         break;
                 }
-                var numIndices = indices.length; // accessor.count
+                var numIndices = indices.length;
                 indexBuffer = new pc.IndexBuffer(resources.device, indexFormat, numIndices, pc.BUFFER_STATIC, indices);
                 mesh.indexBuffer[0] = indexBuffer;
                 mesh.primitive[0].count = indices.length;
