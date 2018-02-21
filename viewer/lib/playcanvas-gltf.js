@@ -539,8 +539,11 @@
             if (node.hasOwnProperty('mesh')) {
                 var meshGroup = resources.meshes[node.mesh];
                 if (meshGroup.length > 0) {
-                    var model = new pc.Model();
-                    model.graph = new pc.Entity();
+                    var entity = new pc.Entity();
+                    var meshInstances = [];
+                    var skinInstances = [];
+                    var morphInstances = [];
+
                     for (var i = 0; i < meshGroup.length; i++) {
                         var material;
                         if (meshGroup[i].materialIndex === undefined) {
@@ -549,29 +552,38 @@
                             material = resources.materials[meshGroup[i].materialIndex];
                         }
 
-                        var meshInstance = new pc.MeshInstance(model.graph, meshGroup[i], material);
-                        if (meshGroup[i].morph) {
-                            meshInstance.morphInstance = new pc.MorphInstance(meshGroup[i].morph);
+                        var meshInstance = new pc.MeshInstance(entity, meshGroup[i], material);
+                        meshInstances.push(meshInstance);
 
+                        if (meshGroup[i].morph) {
+                            var morphInstance = new pc.MorphInstance(meshGroup[i].morph);
+                            meshInstance.morphInstance = morphInstance;
                             // HACK: need to force calculation of the morph's AABB due to a bug
                             // in the engine. This is a private function and will be removed!
-                            meshInstance.morphInstance.updateBounds(meshInstance.mesh);
+                            morphInstance.updateBounds(meshInstance.mesh);
+
+                            morphInstances.push(morphInstance);
                         }
-                        model.meshInstances.push(meshInstance);
 
                         if (node.hasOwnProperty('skin')) {
                             var skin = resources.skins[node.skin];
                             meshGroup[i].skin = skin;
-                            var skinInstance = new pc.SkinInstance(skin, skin.skeleton);
+
+                            var skinInstance = new pc.SkinInstance(skin);
                             skinInstance.bones = skin.bones;
                             meshInstance.skinInstance = skinInstance;
-                            model.skinInstances = [ skinInstance ];
+
+                            skinInstances.push(skinInstance);
                         }
                     }
 
-                    model.getGraph().syncHierarchy();
+                    var model = new pc.Model();
+                    model.graph = entity;
+                    model.meshInstances = meshInstances;
+                    model.morphInstances = morphInstances;
+                    model.skinInstances = skinInstances;
 
-                    var entity = resources.nodes[idx];
+                    entity = resources.nodes[idx];
                     entity.addComponent('model');
                     entity.model.model = model;
                 }
