@@ -310,60 +310,59 @@
         return texture;
     }
 
+    var glossChunk = [
+        "#ifdef MAPFLOAT",
+        "uniform float material_shininess;",
+        "#endif",
+        "",
+        "#ifdef MAPTEXTURE",
+        "uniform sampler2D texture_glossMap;",
+        "#endif",
+        "",
+        "void getGlossiness() {",
+        "    dGlossiness = 1.0;",
+        "",
+        "    #ifdef MAPFLOAT",
+        "        dGlossiness *= material_shininess;",
+        "    #endif",
+        "",
+        "    #ifdef MAPTEXTURE",
+        "        dGlossiness *= 1.0 - texture2D(texture_glossMap, $UV).$CH;",
+        "    #endif",
+        "",
+        "    #ifdef MAPVERTEX",
+        "        dGlossiness *= 1.0 - saturate(vVertexColor.$VC);",
+        "    #endif",
+        "",
+        "    dGlossiness += 0.0000001;",
+        "}"
+    ].join('\n');
+
+    // Specification:
+    //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#material
     function translateMaterial(data, resources) {
         var material = new pc.StandardMaterial();
-
-        material.chunks.glossPS = [
-            "#ifdef MAPFLOAT",
-            "uniform float material_shininess;",
-            "#endif",
-            "",
-            "#ifdef MAPTEXTURE",
-            "uniform sampler2D texture_glossMap;",
-            "#endif",
-            "",
-            "void getGlossiness() {",
-            "    dGlossiness = 1.0;",
-            "",
-            "    #ifdef MAPFLOAT",
-            "        dGlossiness *= material_shininess;",
-            "    #endif",
-            "",
-            "    #ifdef MAPTEXTURE",
-            "        dGlossiness *= 1.0 - texture2D(texture_glossMap, $UV).$CH;",
-            "    #endif",
-            "",
-            "    #ifdef MAPVERTEX",
-            "        dGlossiness *= 1.0 - saturate(vVertexColor.$VC);",
-            "    #endif",
-            "",
-            "    dGlossiness += 0.0000001;",
-            "}"
-        ].join('\n');
 
         // glTF dooesn't define how to occlude specular
         material.occludeSpecular = false;
         material.diffuseTint = true;
         material.diffuseVertexColor = true;
-
-        var roughnessFloat;
-        var color;
+        material.chunks.glossPS = glossChunk;
 
         if (data.hasOwnProperty('name')) {
             material.name = data.name;
         }
 
+        var color;
         if (data.hasOwnProperty('pbrMetallicRoughness')) {
             var pbrData = data.pbrMetallicRoughness;
 
             if (pbrData.hasOwnProperty('baseColorFactor')) {
                 color = pbrData.baseColorFactor;
                 material.diffuse.set(color[0], color[1], color[2]);
-                material.diffuseMapTint = true;
                 material.opacity = color[3];
             } else {
                 material.diffuse.set(1, 1, 1);
-                material.diffuseMapTint = false;
                 material.opacity = 1;
             }
             if (pbrData.hasOwnProperty('baseColorTexture')) {
@@ -381,10 +380,8 @@
             }
             if (pbrData.hasOwnProperty('roughnessFactor')) {
                 material.shininess = 100 * (1 - pbrData.roughnessFactor);
-                roughnessFloat = true;
             } else {
                 material.shininess = 0;
-                roughnessFloat = false;
             }
             if (pbrData.hasOwnProperty('metallicRoughnessTexture')) {
                 var metallicRoughnessTexture = pbrData.metallicRoughnessTexture;
@@ -392,7 +389,9 @@
                 material.metalnessMapChannel = 'b';
                 material.glossMap = resources.textures[metallicRoughnessTexture.index];
                 material.glossMapChannel = 'g';
-                if (!roughnessFloat) material.shininess = 100;
+                if (!pbrData.hasOwnProperty('roughnessFactor')) {
+                    material.shininess = 100;
+                }
                 if (metallicRoughnessTexture.hasOwnProperty('texCoord')) {
                     material.glossMapUv = metallicRoughnessTexture.texCoord;
                     material.metalnessMapUv = metallicRoughnessTexture.texCoord;
@@ -420,10 +419,10 @@
         if (data.hasOwnProperty('emissiveFactor')) {
             color = data.emissiveFactor;
             material.emissive.set(color[0], color[1], color[2]);
-            material.emissiveMapTint = true;
+            material.emissiveTint = true;
         } else {
             material.emissive.set(0, 0, 0);
-            material.emissiveMapTint = false;
+            material.emissiveTint = false;
         }
         if (data.hasOwnProperty('emissiveTexture')) {
             material.emissiveMap = resources.textures[data.emissiveTexture.index];
@@ -464,6 +463,9 @@
 
     // Specification:
     //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#node
+    var tempMat = new pc.Mat4();
+    var tempVec = new pc.Vec3();
+
     function translateNode(data, resources) {
         var entity = new pc.Entity();
 
@@ -471,10 +473,13 @@
 
         // Parse transformation properties
         if (data.hasOwnProperty('matrix')) {
-            var m = new pc.Mat4(data.matrix);
-            entity.setLocalPosition(m.getTranslation());
-            entity.setLocalEulerAngles(m.getEulerAngles());
-            entity.setLocalScale(m.getScale());
+            tempMat.data.set(data.matrix);
+            tempMat.getTranslation(tempVec);
+            entity.setLocalPosition(tempVec);
+            tempMat.getEulerAngles(tempVec);
+            entity.setLocalEulerAngles(tempVec);
+            tempMat.getScale(tempVec);
+            entity.setLocalScale(tempVec);
         }
 
         if (data.hasOwnProperty('rotation')) {
@@ -985,11 +990,8 @@
 
             var mesh = new pc.Mesh();
             mesh.vertexBuffer = vertexBuffer;
-            mesh.indexBuffer[0] = indexBuffer;
             mesh.primitive[0].type = getPrimitiveType(primitive);
             mesh.primitive[0].base = 0;
-
-            var indexBuffer = null;
             mesh.primitive[0].indexed = (indices !== null);
             if (indices !== null) {
                 accessor = gltf.accessors[primitive.indices];
@@ -1007,7 +1009,7 @@
                         break;
                 }
                 var numIndices = indices.length;
-                indexBuffer = new pc.IndexBuffer(resources.device, indexFormat, numIndices, pc.BUFFER_STATIC, indices);
+                var indexBuffer = new pc.IndexBuffer(resources.device, indexFormat, numIndices, pc.BUFFER_STATIC, indices);
                 mesh.indexBuffer[0] = indexBuffer;
                 mesh.primitive[0].count = indices.length;
             } else {
