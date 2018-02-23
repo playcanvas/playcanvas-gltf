@@ -856,97 +856,129 @@
             var vertexBuffer = new pc.VertexBuffer(resources.device, vertexFormat, numVertices, pc.BUFFER_STATIC);
             var vertexData = vertexBuffer.lock();
 
-            var dataView = new DataView(vertexData);
-            var o = 0;
+            var vertexDataF32 = new Float32Array(vertexData);
+            var vertexDataU8  = new Uint8Array(vertexData);
 
+            var getAttribute = function (semantic) {
+                return vertexFormat.elements.find(function (element) {
+                    return element.name === semantic;
+                });
+            }
+
+            var dstIndex, srcIndex;
+            var attr, dstOffset, dstStride;
             if (positions !== null) {
-                for (i = 0; i < numVertices; i++) {
-                    offset = i * vertexFormat.size;
-                    dataView.setFloat32(offset + 0, positions[i * 3 + 0], true);
-                    dataView.setFloat32(offset + 4, positions[i * 3 + 1], true);
-                    dataView.setFloat32(offset + 8, positions[i * 3 + 2], true);
-                }
+                attr = getAttribute(pc.SEMANTIC_POSITION);
+                dstOffset = attr.offset / 4;
+                dstStride = attr.stride / 4;
 
-                o += 12;
+                for (i = 0; i < numVertices; i++) {
+                    dstIndex = dstOffset + i * dstStride;
+                    srcIndex = i * 3;
+                    vertexDataF32[dstIndex]     = positions[srcIndex];
+                    vertexDataF32[dstIndex + 1] = positions[srcIndex + 1];
+                    vertexDataF32[dstIndex + 2] = positions[srcIndex + 2];
+                }
             }
 
             if (normals !== null) {
-                for (i = 0; i < numVertices; i++) {
-                    offset = i * vertexFormat.size + o;
-                    dataView.setFloat32(offset + 0, normals[i * 3 + 0], true);
-                    dataView.setFloat32(offset + 4, normals[i * 3 + 1], true);
-                    dataView.setFloat32(offset + 8, normals[i * 3 + 2], true);
-                }
+                attr = getAttribute(pc.SEMANTIC_NORMAL);
+                dstOffset = attr.offset / 4;
+                dstStride = attr.stride / 4;
 
-                o += 12;
+                for (i = 0; i < numVertices; i++) {
+                    dstIndex = dstOffset + i * dstStride;
+                    srcIndex = i * 3;
+                    vertexDataF32[dstIndex]     = normals[srcIndex];
+                    vertexDataF32[dstIndex + 1] = normals[srcIndex + 1];
+                    vertexDataF32[dstIndex + 2] = normals[srcIndex + 2];
+                }
             }
 
             if (tangents !== null) {
-                for (i = 0; i < numVertices; i++) {
-                    offset = i * vertexFormat.size + o;
-                    dataView.setFloat32(offset + 0,  tangents[i * 4 + 0], true);
-                    dataView.setFloat32(offset + 4,  tangents[i * 4 + 1], true);
-                    dataView.setFloat32(offset + 8,  tangents[i * 4 + 2], true);
-                    dataView.setFloat32(offset + 12, tangents[i * 4 + 3], true);
-                }
+                attr = getAttribute(pc.SEMANTIC_TANGENT);
+                dstOffset = attr.offset / 4;
+                dstStride = attr.stride / 4;
 
-                o += 16;
+                for (i = 0; i < numVertices; i++) {
+                    dstIndex = dstOffset + i * dstStride;
+                    srcIndex = i * 4;
+                    vertexDataF32[dstIndex]     = tangents[srcIndex];
+                    vertexDataF32[dstIndex + 1] = tangents[srcIndex + 1];
+                    vertexDataF32[dstIndex + 2] = tangents[srcIndex + 2];
+                    vertexDataF32[dstIndex + 3] = tangents[srcIndex + 3];
+                }
             }
 
             if (texCoord0 !== null) {
-                for (i = 0; i < numVertices; i++) {
-                    offset = i * vertexFormat.size + o;
-                    dataView.setFloat32(offset + 0, texCoord0[i * 2 + 0], true);
-                    dataView.setFloat32(offset + 4, texCoord0[i * 2 + 1], true);
-                }
+                attr = getAttribute(pc.SEMANTIC_TEXCOORD0);
+                dstOffset = attr.offset / 4;
+                dstStride = attr.stride / 4;
 
-                o += 8;
+                for (i = 0; i < numVertices; i++) {
+                    dstIndex = dstOffset + i * dstStride;
+                    srcIndex = i * 2;
+                    vertexDataF32[dstIndex]     = texCoord0[srcIndex];
+                    vertexDataF32[dstIndex + 1] = texCoord0[srcIndex + 1];
+                }
             }
 
             if (texCoord1 !== null) {
-                for (i = 0; i < numVertices; i++) {
-                    offset = i * vertexFormat.size + o;
-                    dataView.setFloat32(offset + 0, texCoord1[i * 2 + 0], true);
-                    dataView.setFloat32(offset + 4, texCoord1[i * 2 + 1], true);
-                }
+                attr = getAttribute(pc.SEMANTIC_TEXCOORD1);
+                dstOffset = attr.offset / 4;
+                dstStride = attr.stride / 4;
 
-                o += 8;
+                for (i = 0; i < numVertices; i++) {
+                    dstIndex = dstOffset + i * dstStride;
+                    srcIndex = i * 2;
+                    vertexDataF32[dstIndex]     = texCoord1[srcIndex];
+                    vertexDataF32[dstIndex + 1] = texCoord1[srcIndex + 1];
+                }
             }
 
             if (colors !== null) {
-                for (i = 0; i < numVertices; i++) {
-                    offset = i * vertexFormat.size + o;
-                    dataView.setFloat32(offset + 0,  colors[i * 4 + 0], true);
-                    dataView.setFloat32(offset + 4,  colors[i * 4 + 1], true);
-                    dataView.setFloat32(offset + 8,  colors[i * 4 + 2], true);
-                    dataView.setFloat32(offset + 12, colors[i * 4 + 3], true);
-                }
+                attr = getAttribute(pc.SEMANTIC_COLOR);
+                dstOffset = attr.offset / 4;
+                dstStride = attr.stride / 4;
 
-                o += 16;
+                for (i = 0; i < numVertices; i++) {
+                    dstIndex = dstOffset + i * dstStride;
+                    srcIndex = i * 4;
+                    vertexDataF32[dstIndex]     = colors[srcIndex];
+                    vertexDataF32[dstIndex + 1] = colors[srcIndex + 1];
+                    vertexDataF32[dstIndex + 2] = colors[srcIndex + 2];
+                    vertexDataF32[dstIndex + 3] = colors[srcIndex + 3];
+                }
             }
 
             if (joints !== null) {
-                for (i = 0; i < numVertices; i++) {
-                    offset = i * vertexFormat.size + o;
-                    dataView.setUint8(offset + 0, joints[i * 4 + 0], true);
-                    dataView.setUint8(offset + 1, joints[i * 4 + 1], true);
-                    dataView.setUint8(offset + 2, joints[i * 4 + 2], true);
-                    dataView.setUint8(offset + 3, joints[i * 4 + 3], true);
-                }
+                attr = getAttribute(pc.SEMANTIC_BLENDINDICES);
+                dstOffset = attr.offset;
+                dstStride = attr.stride;
 
-                o += 4;
+                for (i = 0; i < numVertices; i++) {
+                    dstIndex = dstOffset + i * dstStride;
+                    srcIndex = i * 4;
+                    vertexDataU8[dstIndex]     = joints[srcIndex];
+                    vertexDataU8[dstIndex + 1] = joints[srcIndex + 1];
+                    vertexDataU8[dstIndex + 2] = joints[srcIndex + 2];
+                    vertexDataU8[dstIndex + 3] = joints[srcIndex + 3];
+                }
             }
 
             if (weights !== null) {
-                for (i = 0; i < numVertices; i++) {
-                    offset = i * vertexFormat.size + o;
-                    dataView.setFloat32(offset + 0,  weights[i * 4 + 0], true);
-                    dataView.setFloat32(offset + 4,  weights[i * 4 + 1], true);
-                    dataView.setFloat32(offset + 8,  weights[i * 4 + 2], true);
-                    dataView.setFloat32(offset + 12, weights[i * 4 + 3], true);
-                }
+                attr = getAttribute(pc.SEMANTIC_BLENDWEIGHT);
+                dstOffset = attr.offset / 4;
+                dstStride = attr.stride / 4;
 
-                o += 16;
+                for (i = 0; i < numVertices; i++) {
+                    dstIndex = dstOffset + i * dstStride;
+                    srcIndex = i * 4;
+                    vertexDataF32[dstIndex]     = weights[srcIndex];
+                    vertexDataF32[dstIndex + 1] = weights[srcIndex + 1];
+                    vertexDataF32[dstIndex + 2] = weights[srcIndex + 2];
+                    vertexDataF32[dstIndex + 3] = weights[srcIndex + 3];
+                }
             }
 
             vertexBuffer.unlock();
