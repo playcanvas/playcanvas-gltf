@@ -226,7 +226,7 @@
         return canvas.toDataURL();
     }
 
-    function translateImage(data, resources) {
+    function translateImage(data, resources, success) {
         var image = new Image();
         image.addEventListener('load', function () {
             var gltf = resources.gltf;
@@ -252,6 +252,11 @@
                     }
                 }
             });
+
+            resources.imagesLoaded++;
+            if (resources.imagesLoaded === gltf.images.length) {
+                success();
+            }
         }, false);
 
         if (data.hasOwnProperty('uri')) {
@@ -1157,10 +1162,22 @@
         }
     }
 
-    function parse(property, translator, resources) {
+    function parse(property, translator, resources, success) {
+        if (success) {
+            if (!resources.gltf.hasOwnProperty(property)) {
+                success();
+                return;
+            }
+
+            if (resources.gltf[property].length === 0) {
+                success();
+                return;
+            }
+        }
+
         if (resources.gltf.hasOwnProperty(property)) {
             resources[property] = resources.gltf[property].map(function (item) {
-                return translator(item, resources);
+                return translator(item, resources, success);
             });
         }
     }
@@ -1182,6 +1199,25 @@
         });
     }
 
+    function getRoots(resources) {
+        var gltf = resources.gltf;
+        var rootNodes = [];
+        if (gltf.hasOwnProperty('scenes')) {
+            var sceneIndex = 0;
+            if (gltf.hasOwnProperty('scene')) {
+                sceneIndex = gltf.scene;
+            }
+            var nodes = gltf.scenes[sceneIndex].nodes;
+            for (var i = 0; i < nodes.length; i++) {
+                rootNodes.push(resources.nodes[nodes[i]]);
+            }
+        } else {
+            rootNodes.push(resources.nodes[0]);
+        }
+
+        return rootNodes;
+    }
+
     function loadGltf(gltf, device, success, options) {
         initAnim();
 
@@ -1191,6 +1227,7 @@
 
         var resources = {
             buffers: buffers,
+            imagesLoaded: 0,
             basePath: basePath,
             processUri: processUri,
             counter: 0,
@@ -1208,31 +1245,18 @@
 
         loadBuffers(resources, function () {
             parse('textures', translateTexture, resources);
-            parse('images', translateImage, resources);
-            parse('materials', translateMaterial, resources);
-            parse('meshes', translateMesh, resources);
-            parse('nodes', translateNode, resources);
-            parse('skins', translateSkin, resources);
-            parse('animations', translateAnimation, resources);
+            parse('images', translateImage, resources, function () {
+                parse('materials', translateMaterial, resources);
+                parse('meshes', translateMesh, resources);
+                parse('nodes', translateNode, resources);
+                parse('skins', translateSkin, resources);
+                parse('animations', translateAnimation, resources);
 
-            buildHierarchy(resources);
-            createModels(resources);
+                buildHierarchy(resources);
+                createModels(resources);
 
-            var rootNodes = [];
-            if (gltf.hasOwnProperty('scenes')) {
-                var sceneIndex = 0;
-                if (gltf.hasOwnProperty('scene')) {
-                    sceneIndex = gltf.scene;
-                }
-                var nodes = gltf.scenes[sceneIndex].nodes;
-                for (var i = 0; i < nodes.length; i++) {
-                    rootNodes.push(resources.nodes[nodes[i]]);
-                }
-            } else {
-                rootNodes.push(resources.nodes[0]);
-            }
-
-            success(rootNodes);
+                success(getRoots(resources));
+            });
         });
     }
 
