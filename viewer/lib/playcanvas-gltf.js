@@ -13,7 +13,7 @@
         this.keys.sort(function (a, b) {
             return a.time - b.time;
         });
-    }
+    };
 
     AnimCurve.prototype.evaluate = function (time) {
         var keys = this.keys;
@@ -57,6 +57,9 @@
         };
 
         Anim.prototype.update = function (dt) {
+            var i, j;
+            var curve, value;
+
             this.time += dt;
             var numKeys = this.curves[0].keys.length;
             var duration = (this.curves[0].keys[numKeys - 1]).time;
@@ -66,21 +69,21 @@
 
             if (this.entity.model) {
                 var meshInstances = this.entity.model.meshInstances;
-                for (var i = 0; i < meshInstances.length; i++) {
+                for (i = 0; i < meshInstances.length; i++) {
                     var morphInstance = meshInstances[i].morphInstance;
                     if (morphInstance) {
-                        for (var j = 0; j < this.curves.length; j++) {
-                            var curve = this.curves[j];
-                            var value = curve.evaluate(this.time);
+                        for (j = 0; j < this.curves.length; j++) {
+                            curve = this.curves[j];
+                            value = curve.evaluate(this.time);
                             morphInstance.setWeight(j, value);
                         }
                     }
                 }
             }
 
-            for (var j = 0; j < this.curves.length; j++) {
-                var curve = this.curves[j];
-                var value = curve.evaluate(this.time);
+            for (i = 0; i < this.curves.length; i++) {
+                curve = this.curves[i];
+                value = curve.evaluate(this.time);
                 switch (curve.target) {
                     case 'translation':
                         this.entity.setLocalPosition(value);
@@ -121,22 +124,6 @@
         }
 
         return primType;
-    }
-
-    function getAccessorComponentType(accessor) {
-        var pcType = pc.TYPE_FLOAT32;
-
-        switch (accessor.componentType) {
-            case 5120: pcType = pc.TYPE_INT8; break;
-            case 5121: pcType = pc.TYPE_UINT8; break;
-            case 5122: pcType = pc.TYPE_INT16; break;
-            case 5123: pcType = pc.TYPE_UINT16; break;
-            // The glTF spec doesn't mention signed ints. Bug?
-            case 5125: pcType = pc.TYPE_UINT32; break;
-            case 5126: pcType = pc.TYPE_FLOAT32; break;
-        }
-
-        return pcType;
     }
 
     function getAccessorTypeSize(type) {
@@ -730,9 +717,7 @@
                     }
 
                     var numPoints = outputGeometry.num_points();
-                    var numAttributes = outputGeometry.num_attributes();
                     var numFaces = outputGeometry.num_faces();
-                    var attribute, attributeId;
 
                     if (extDraco.hasOwnProperty('attributes')) {
                         var extractAttribute = function (uniqueId) {
@@ -750,23 +735,23 @@
                             return values;
                         };
 
-                        var attributes = extDraco.attributes;
-                        if (attributes.hasOwnProperty('POSITION'))
-                            positions = extractAttribute(attributes.POSITION);
-                        if (attributes.hasOwnProperty('NORMAL'))
-                            normals   = extractAttribute(attributes.NORMAL);
-                        if (attributes.hasOwnProperty('TANGENT'))
-                            tangents  = extractAttribute(attributes.TANGENT);
-                        if (attributes.hasOwnProperty('COLOR'))
-                            colors    = extractAttribute(attributes.COLOR);
-                        if (attributes.hasOwnProperty('TEXCOORD_0'))
-                            texCoord0 = extractAttribute(attributes.TEXCOORD_0);
-                        if (attributes.hasOwnProperty('TEXCOORD_1'))
-                            texCoord1 = extractAttribute(attributes.TEXCOORD_1);
-                        if (attributes.hasOwnProperty('JOINTS_0'))
-                            joints = extractAttribute(attributes.JOINTS_0);
-                        if (attributes.hasOwnProperty('WEIGHTS_0'))
-                            weights = extractAttribute(attributes.WEIGHTS_0);
+                        var dracoAttribs = extDraco.attributes;
+                        if (dracoAttribs.hasOwnProperty('POSITION'))
+                            positions = extractAttribute(dracoAttribs.POSITION);
+                        if (dracoAttribs.hasOwnProperty('NORMAL'))
+                            normals   = extractAttribute(dracoAttribs.NORMAL);
+                        if (dracoAttribs.hasOwnProperty('TANGENT'))
+                            tangents  = extractAttribute(dracoAttribs.TANGENT);
+                        if (dracoAttribs.hasOwnProperty('COLOR'))
+                            colors    = extractAttribute(dracoAttribs.COLOR);
+                        if (dracoAttribs.hasOwnProperty('TEXCOORD_0'))
+                            texCoord0 = extractAttribute(dracoAttribs.TEXCOORD_0);
+                        if (dracoAttribs.hasOwnProperty('TEXCOORD_1'))
+                            texCoord1 = extractAttribute(dracoAttribs.TEXCOORD_1);
+                        if (dracoAttribs.hasOwnProperty('JOINTS_0'))
+                            joints = extractAttribute(dracoAttribs.JOINTS_0);
+                        if (dracoAttribs.hasOwnProperty('WEIGHTS_0'))
+                            weights = extractAttribute(dracoAttribs.WEIGHTS_0);
                     }
 
                     if (geometryType == decoderModule.TRIANGULAR_MESH) {
@@ -873,7 +858,7 @@
                 return vertexFormat.elements.find(function (element) {
                     return element.name === semantic;
                 });
-            }
+            };
 
             var dstIndex, srcIndex;
             var attr, dstOffset, dstStride;
@@ -1230,7 +1215,6 @@
             imagesLoaded: 0,
             basePath: basePath,
             processUri: processUri,
-            counter: 0,
             gltf: gltf,
             device: device,
             defaultMaterial: translateMaterial({})
