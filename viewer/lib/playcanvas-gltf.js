@@ -742,16 +742,16 @@
                             normals   = extractAttribute(dracoAttribs.NORMAL);
                         if (dracoAttribs.hasOwnProperty('TANGENT'))
                             tangents  = extractAttribute(dracoAttribs.TANGENT);
-                        if (dracoAttribs.hasOwnProperty('COLOR'))
-                            colors    = extractAttribute(dracoAttribs.COLOR);
                         if (dracoAttribs.hasOwnProperty('TEXCOORD_0'))
                             texCoord0 = extractAttribute(dracoAttribs.TEXCOORD_0);
                         if (dracoAttribs.hasOwnProperty('TEXCOORD_1'))
                             texCoord1 = extractAttribute(dracoAttribs.TEXCOORD_1);
+                        if (dracoAttribs.hasOwnProperty('COLOR_0'))
+                            colors    = extractAttribute(dracoAttribs.COLOR_0);
                         if (dracoAttribs.hasOwnProperty('JOINTS_0'))
-                            joints = extractAttribute(dracoAttribs.JOINTS_0);
+                            joints    = extractAttribute(dracoAttribs.JOINTS_0);
                         if (dracoAttribs.hasOwnProperty('WEIGHTS_0'))
-                            weights = extractAttribute(dracoAttribs.WEIGHTS_0);
+                            weights   = extractAttribute(dracoAttribs.WEIGHTS_0);
                     }
 
                     if (geometryType == decoderModule.TRIANGULAR_MESH) {
