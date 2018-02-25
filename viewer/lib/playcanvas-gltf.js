@@ -196,6 +196,77 @@
         return data;
     }
 
+    // Specification:
+    //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#animation
+    function translateAnimation(data, resources) {
+        var gltf = resources.gltf;
+
+        if (data.hasOwnProperty('name')) {
+
+        }
+
+        // parse animation data
+        data.channels.forEach(function (channel) {
+            var sampler = data.samplers[channel.sampler];
+
+            var times = getAccessorData(gltf, gltf.accessors[sampler.input], resources.buffers);
+            var values = getAccessorData(gltf, gltf.accessors[sampler.output], resources.buffers);
+            var time, value, key;
+
+            var target = channel.target;
+            var path = target.path;
+
+            var curve;
+            var i, j;
+
+            // Ensure an animation script is added to the entity
+            var entity = resources.nodes[target.node];
+            if (!entity.script ) {
+                entity.addComponent('script');
+            }
+            if (!entity.script.anim) {
+                entity.script.create('anim');
+                entity.script.anim.curves = [];
+            }
+
+            if (path === 'weights') {
+                var numCurves = values.length / times.length;
+                for (i = 0; i < numCurves; i++) {
+                    curve = new AnimCurve();
+                    curve.target = path;
+                    for (j = 0; j < times.length; j++) {
+                        time = times[j];
+                        value = values[numCurves * j + i];
+                        key = new AnimKey(time, value);
+                        curve.keys.push(key);
+                    }
+
+                    entity.script.anim.curves.push(curve);
+                }
+            } else { // translation, rotation or scale
+                curve = new AnimCurve();
+                curve.target = path;
+                for (i = 0; i < times.length; i++) {
+                    time = times[i];
+                    if ((path === 'translation') || (path === 'scale')) {
+                        value = new pc.Vec3(values[3 * i + 0], values[3 * i + 1], values[3 * i + 2]);
+                    } else if (path === 'rotation') {
+                        value = new pc.Quat(values[4 * i + 0], values[4 * i + 1], values[4 * i + 2], values[4 * i + 3]);
+                    }
+                    key = new AnimKey(time, value);
+                    curve.keys.push(key);
+                }
+                curve.keys.sort(function (a, b) {
+                    return a.time - b.time;
+                });
+
+                entity.script.anim.curves.push(curve);
+            }
+        });
+    }
+
+    // Specification:
+    //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#image
     function resampleImage(image) {
         var srcW = image.width;
         var srcH = image.height;
@@ -272,36 +343,8 @@
         return image;
     }
 
-    function translateTexture(data, resources) {
-        var texture = new pc.Texture(resources.device, {
-            flipY: false
-        });
-
-        if (data.hasOwnProperty('name')) {
-            texture.name = data.name;
-        }
-
-        if (data.hasOwnProperty('sampler')) {
-            var gltf = resources.gltf;
-            var sampler = gltf.samplers[data.sampler];
-
-            if (sampler.hasOwnProperty('minFilter')) {
-                texture.minFilter = getFilter(sampler.minFilter);
-            }
-            if (sampler.hasOwnProperty('magFilter')) {
-                texture.magFilter = getFilter(sampler.magFilter);
-            }
-            if (sampler.hasOwnProperty('wrapS')) {
-                texture.addressU = getWrap(sampler.wrapS);
-            }
-            if (sampler.hasOwnProperty('wrapT')) {
-                texture.addressV = getWrap(sampler.wrapT);
-            }
-        }
-
-        return texture;
-    }
-
+    // Specification:
+    //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#material
     var glossChunk = [
         "#ifdef MAPFLOAT",
         "uniform float material_shininess;",
@@ -330,8 +373,6 @@
         "}"
     ].join('\n');
 
-    // Specification:
-    //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#material
     function translateMaterial(data, resources) {
         var material = new pc.StandardMaterial();
 
@@ -451,210 +492,6 @@
         material.update();
 
         return material;
-    }
-
-    // Specification:
-    //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#node
-    var tempMat = new pc.Mat4();
-    var tempVec = new pc.Vec3();
-
-    function translateNode(data, resources) {
-        var entity = new pc.Entity();
-
-        entity.name = data.hasOwnProperty('name') ? data.name : "";
-
-        // Parse transformation properties
-        if (data.hasOwnProperty('matrix')) {
-            tempMat.data.set(data.matrix);
-            tempMat.getTranslation(tempVec);
-            entity.setLocalPosition(tempVec);
-            tempMat.getEulerAngles(tempVec);
-            entity.setLocalEulerAngles(tempVec);
-            tempMat.getScale(tempVec);
-            entity.setLocalScale(tempVec);
-        }
-
-        if (data.hasOwnProperty('rotation')) {
-            var r = data.rotation;
-            entity.setLocalRotation(r[0], r[1], r[2], r[3]);
-        }
-
-        if (data.hasOwnProperty('translation')) {
-            var t = data.translation;
-            entity.setLocalPosition(t[0], t[1], t[2]);
-        }
-
-        if (data.hasOwnProperty('scale')) {
-            var s = data.scale;
-            entity.setLocalScale(s[0], s[1], s[2]);
-        }
-
-        if (data.hasOwnProperty('camera')) {
-            var gltf = resources.gltf;
-            var camera = gltf.cameras[data.camera];
-
-            var options = {};
-
-            if (camera.type === 'perspective') {
-                options.type = pc.PROJECTION_PERSPECTIVE;
-
-                if (camera.hasOwnProperty('perspective')) {
-                    var perspective = camera.perspective;
-                    if (perspective.hasOwnProperty('aspectRatio')) {
-                        options.aspectRatio = perspective.aspectRatio;
-                    }
-                    options.fov = perspective.yfov;
-                    if (perspective.hasOwnProperty('zfar')) {
-                        options.farClip = perspective.zfar;
-                    }
-                    options.nearClip = perspective.znear;
-                }
-            } else if (camera.type === 'orthographic') {
-                options.type = pc.PROJECTION_ORTHOGRAPHIC;
-
-                if (camera.hasOwnProperty('orthographic')) {
-                    var orthographic = camera.orthographic;
-
-                    options.aspectRatio = orthographic.xmag / orthographic.ymag;
-                    options.orthoHeight = orthographic.ymag * 0.5;
-                    options.farClip = orthographic.zfar;
-                    options.nearClip = orthographic.znear;
-                }
-            }
-
-            entity.addComponent('camera', options);
-
-            // Diable loaded cameras by default and leave it to the application to enable them
-            entity.camera.enabled = false;
-        }
-
-        return entity;
-    }
-
-    function createModels(resources) {
-        resources.gltf.nodes.forEach(function (node, idx) {
-            if (node.hasOwnProperty('mesh')) {
-                var meshGroup = resources.meshes[node.mesh];
-                if (meshGroup.length > 0) {
-                    var entity = new pc.Entity();
-                    var meshInstances = [];
-                    var skinInstances = [];
-                    var morphInstances = [];
-
-                    for (var i = 0; i < meshGroup.length; i++) {
-                        var material;
-                        if (meshGroup[i].materialIndex === undefined) {
-                            material = resources.defaultMaterial;
-                        } else {
-                            material = resources.materials[meshGroup[i].materialIndex];
-                        }
-
-                        var meshInstance = new pc.MeshInstance(entity, meshGroup[i], material);
-                        meshInstances.push(meshInstance);
-
-                        if (meshGroup[i].morph) {
-                            var morphInstance = new pc.MorphInstance(meshGroup[i].morph);
-                            meshInstance.morphInstance = morphInstance;
-                            // HACK: need to force calculation of the morph's AABB due to a bug
-                            // in the engine. This is a private function and will be removed!
-                            morphInstance.updateBounds(meshInstance.mesh);
-
-                            morphInstances.push(morphInstance);
-                        }
-
-                        if (node.hasOwnProperty('skin')) {
-                            var skin = resources.skins[node.skin];
-                            meshGroup[i].skin = skin;
-
-                            var skinInstance = new pc.SkinInstance(skin);
-                            skinInstance.bones = skin.bones;
-                            meshInstance.skinInstance = skinInstance;
-
-                            skinInstances.push(skinInstance);
-                        }
-                    }
-
-                    var model = new pc.Model();
-                    model.graph = entity;
-                    model.meshInstances = meshInstances;
-                    model.morphInstances = morphInstances;
-                    model.skinInstances = skinInstances;
-
-                    entity = resources.nodes[idx];
-                    entity.addComponent('model');
-                    entity.model.model = model;
-                }
-            }
-        });
-    }
-
-    // Specification:
-    //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#animation
-    function translateAnimation(data, resources) {
-        var gltf = resources.gltf;
-
-        if (data.hasOwnProperty('name')) {
-
-        }
-
-        // parse animation data
-        data.channels.forEach(function (channel) {
-            var sampler = data.samplers[channel.sampler];
-
-            var times = getAccessorData(gltf, gltf.accessors[sampler.input], resources.buffers);
-            var values = getAccessorData(gltf, gltf.accessors[sampler.output], resources.buffers);
-            var time, value, key;
-
-            var target = channel.target;
-            var path = target.path;
-
-            var curve;
-            var i, j;
-
-            // Ensure an animation script is added to the entity
-            var entity = resources.nodes[target.node];
-            if (!entity.script ) {
-                entity.addComponent('script');
-            }
-            if (!entity.script.anim) {
-                entity.script.create('anim');
-                entity.script.anim.curves = [];
-            }
-
-            if (path === 'weights') {
-                var numCurves = values.length / times.length;
-                for (i = 0; i < numCurves; i++) {
-                    curve = new AnimCurve();
-                    curve.target = path;
-                    for (j = 0; j < times.length; j++) {
-                        time = times[j];
-                        value = values[numCurves * j + i];
-                        key = new AnimKey(time, value);
-                        curve.keys.push(key);
-                    }
-
-                    entity.script.anim.curves.push(curve);
-                }
-            } else { // translation, rotation or scale
-                curve = new AnimCurve();
-                curve.target = path;
-                for (i = 0; i < times.length; i++) {
-                    time = times[i];
-                    if ((path === 'translation') || (path === 'scale')) {
-                        value = new pc.Vec3(values[3 * i + 0], values[3 * i + 1], values[3 * i + 2]);
-                    } else if (path === 'rotation') {
-                        value = new pc.Quat(values[4 * i + 0], values[4 * i + 1], values[4 * i + 2], values[4 * i + 3]);
-                    }
-                    key = new AnimKey(time, value);
-                    curve.keys.push(key);
-                }
-                curve.keys.sort(function (a, b) {
-                    return a.time - b.time;
-                });
-
-                entity.script.anim.curves.push(curve);
-            }
-        });
     }
 
     // Specification:
@@ -1056,6 +893,84 @@
     }
 
     // Specification:
+    //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#node
+    var tempMat = new pc.Mat4();
+    var tempVec = new pc.Vec3();
+
+    function translateNode(data, resources) {
+        var entity = new pc.Entity();
+
+        entity.name = data.hasOwnProperty('name') ? data.name : "";
+
+        // Parse transformation properties
+        if (data.hasOwnProperty('matrix')) {
+            tempMat.data.set(data.matrix);
+            tempMat.getTranslation(tempVec);
+            entity.setLocalPosition(tempVec);
+            tempMat.getEulerAngles(tempVec);
+            entity.setLocalEulerAngles(tempVec);
+            tempMat.getScale(tempVec);
+            entity.setLocalScale(tempVec);
+        }
+
+        if (data.hasOwnProperty('rotation')) {
+            var r = data.rotation;
+            entity.setLocalRotation(r[0], r[1], r[2], r[3]);
+        }
+
+        if (data.hasOwnProperty('translation')) {
+            var t = data.translation;
+            entity.setLocalPosition(t[0], t[1], t[2]);
+        }
+
+        if (data.hasOwnProperty('scale')) {
+            var s = data.scale;
+            entity.setLocalScale(s[0], s[1], s[2]);
+        }
+
+        if (data.hasOwnProperty('camera')) {
+            var gltf = resources.gltf;
+            var camera = gltf.cameras[data.camera];
+
+            var options = {};
+
+            if (camera.type === 'perspective') {
+                options.type = pc.PROJECTION_PERSPECTIVE;
+
+                if (camera.hasOwnProperty('perspective')) {
+                    var perspective = camera.perspective;
+                    if (perspective.hasOwnProperty('aspectRatio')) {
+                        options.aspectRatio = perspective.aspectRatio;
+                    }
+                    options.fov = perspective.yfov;
+                    if (perspective.hasOwnProperty('zfar')) {
+                        options.farClip = perspective.zfar;
+                    }
+                    options.nearClip = perspective.znear;
+                }
+            } else if (camera.type === 'orthographic') {
+                options.type = pc.PROJECTION_ORTHOGRAPHIC;
+
+                if (camera.hasOwnProperty('orthographic')) {
+                    var orthographic = camera.orthographic;
+
+                    options.aspectRatio = orthographic.xmag / orthographic.ymag;
+                    options.orthoHeight = orthographic.ymag * 0.5;
+                    options.farClip = orthographic.zfar;
+                    options.nearClip = orthographic.znear;
+                }
+            }
+
+            entity.addComponent('camera', options);
+
+            // Diable loaded cameras by default and leave it to the application to enable them
+            entity.camera.enabled = false;
+        }
+
+        return entity;
+    }
+
+    // Specification:
     //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#skin
     function translateSkin(data, resources) {
         var gltf = resources.gltf;
@@ -1095,6 +1010,38 @@
         }
 
         return skin;
+    }
+
+    // Specification:
+    //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#texture
+    function translateTexture(data, resources) {
+        var texture = new pc.Texture(resources.device, {
+            flipY: false
+        });
+
+        if (data.hasOwnProperty('name')) {
+            texture.name = data.name;
+        }
+
+        if (data.hasOwnProperty('sampler')) {
+            var gltf = resources.gltf;
+            var sampler = gltf.samplers[data.sampler];
+
+            if (sampler.hasOwnProperty('minFilter')) {
+                texture.minFilter = getFilter(sampler.minFilter);
+            }
+            if (sampler.hasOwnProperty('magFilter')) {
+                texture.magFilter = getFilter(sampler.magFilter);
+            }
+            if (sampler.hasOwnProperty('wrapS')) {
+                texture.addressU = getWrap(sampler.wrapS);
+            }
+            if (sampler.hasOwnProperty('wrapT')) {
+                texture.addressV = getWrap(sampler.wrapT);
+            }
+        }
+
+        return texture;
     }
 
     function loadBuffers(resources, success) {
@@ -1188,6 +1135,63 @@
                         console.warn('Child node ' + child.name + ' has more than one parent.');
                     }
                 });
+            }
+        });
+    }
+
+    function createModels(resources) {
+        resources.gltf.nodes.forEach(function (node, idx) {
+            if (node.hasOwnProperty('mesh')) {
+                var meshGroup = resources.meshes[node.mesh];
+                if (meshGroup.length > 0) {
+                    var entity = new pc.Entity();
+                    var meshInstances = [];
+                    var skinInstances = [];
+                    var morphInstances = [];
+
+                    for (var i = 0; i < meshGroup.length; i++) {
+                        var material;
+                        if (meshGroup[i].materialIndex === undefined) {
+                            material = resources.defaultMaterial;
+                        } else {
+                            material = resources.materials[meshGroup[i].materialIndex];
+                        }
+
+                        var meshInstance = new pc.MeshInstance(entity, meshGroup[i], material);
+                        meshInstances.push(meshInstance);
+
+                        if (meshGroup[i].morph) {
+                            var morphInstance = new pc.MorphInstance(meshGroup[i].morph);
+                            meshInstance.morphInstance = morphInstance;
+                            // HACK: need to force calculation of the morph's AABB due to a bug
+                            // in the engine. This is a private function and will be removed!
+                            morphInstance.updateBounds(meshInstance.mesh);
+
+                            morphInstances.push(morphInstance);
+                        }
+
+                        if (node.hasOwnProperty('skin')) {
+                            var skin = resources.skins[node.skin];
+                            meshGroup[i].skin = skin;
+
+                            var skinInstance = new pc.SkinInstance(skin);
+                            skinInstance.bones = skin.bones;
+                            meshInstance.skinInstance = skinInstance;
+
+                            skinInstances.push(skinInstance);
+                        }
+                    }
+
+                    var model = new pc.Model();
+                    model.graph = entity;
+                    model.meshInstances = meshInstances;
+                    model.morphInstances = morphInstances;
+                    model.skinInstances = skinInstances;
+
+                    entity = resources.nodes[idx];
+                    entity.addComponent('model');
+                    entity.model.model = model;
+                }
             }
         });
     }
