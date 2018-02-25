@@ -1131,12 +1131,12 @@
             if (node.hasOwnProperty('children')) {
                 node.children.forEach(function (childIdx) {
                     var child = resources.nodes[childIdx];
-                    if (!child.parent) {
-                        var parent = resources.nodes[idx];
-                        parent.addChild(child);
-                    } else {
-                        console.warn('Child node ' + child.name + ' has more than one parent.');
+                    // If this triggers, a node in the glTF has more than one parent which is wrong
+                    if (child.parent) {
+                        child.parent.removeChild(child);
                     }
+                    var parent = resources.nodes[idx];
+                    parent.addChild(child);
                 });
             }
         });
