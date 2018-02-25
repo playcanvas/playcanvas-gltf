@@ -169,9 +169,8 @@
         return pcWrap;
     }
 
-    function isDataURI(s) {
-        var regex = /^data:.+\/(.+);base64,(.*)$/;
-        return !!s.match(regex);
+    function isDataURI(uri) {
+        return /^data:.*,.*$/i.test(uri);
     }
 
     function getAccessorData(gltf, accessor, buffers) {
