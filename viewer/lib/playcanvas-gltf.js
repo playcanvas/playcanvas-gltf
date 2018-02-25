@@ -1046,7 +1046,10 @@
 
     function loadBuffers(resources, success) {
         // buffers already loaded so early out
-        if (resources.buffers) success();
+        if (resources.buffers) {
+            success();
+            return;
+        }
 
         var gltf = resources.gltf;
         resources.buffers = [];
