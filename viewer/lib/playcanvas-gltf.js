@@ -812,11 +812,21 @@
                 indices = getAccessorData(gltf, accessor, resources.buffers);
             }
 
-            if (positions !== null && indices !== null && normals === null) {
-                normals = pc.calculateNormals(positions, indices);
+            var numVertices = positions.length / 3;
+
+            var dummyIndices;
+            if (positions !== null && normals === null) {
+                // pc.calculateNormals needs indices so generate some
+                if (indices === null) {
+                    dummyIndices = new Uint16Array(numVertices);
+                    for (i = 0; i < numVertices; i++) {
+                        dummyIndices[i] = i;
+                    }
+                }
+                normals = pc.calculateNormals(positions, (indices === null) ? dummyIndices : indices);
             }
-            if (positions !== null && normals !== null && texCoord0 !== null && indices !== null && tangents === null) {
-                tangents = pc.calculateTangents(positions, normals, texCoord0, indices);
+            if (positions !== null && normals !== null && texCoord0 !== null && tangents === null) {
+                tangents = pc.calculateTangents(positions, normals, texCoord0, (indices === null) ? dummyIndices : indices);
             }
 
             var vertexDesc = [];
@@ -844,8 +854,6 @@
             if (weights) {
                 vertexDesc.push({ semantic: pc.SEMANTIC_BLENDWEIGHT, components: 4, type: pc.TYPE_FLOAT32 });
             }
-
-            var numVertices = positions.length / 3;
 
             var vertexFormat = new pc.VertexFormat(resources.device, vertexDesc);
             var vertexBuffer = new pc.VertexBuffer(resources.device, vertexFormat, numVertices, pc.BUFFER_STATIC);
