@@ -23,6 +23,19 @@ loadGlb(glb, device, success);
 * device - A [pc.GraphicsDevice](https://developer.playcanvas.com/en/api/pc.GraphicsDevice.html).
 * success - A [Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) called when the glb has successfully loaded. Called with an array of [pc.Entity](https://developer.playcanvas.com/en/api/pc.Entity.html) objects representing the root nodes of the glTF scene.
 
+### Example
+```javascript
+app.assets.loadFromUrl('assets/monkey/monkey.glb', 'binary', function (err, asset) {
+    var glb = asset.resource;
+    loadGltf(glb, app.graphicsDevice, function (roots) {
+        // add the loaded scene to the hierarchy
+        roots.forEach(function (root) {
+            app.root.addChild(root);
+        });
+    });
+});
+```
+
 ## loadGltf
 Parses an in-memory Object hierarchy holding a glTF scene.
 ```
@@ -36,5 +49,21 @@ loadGltf(gltf, device, success, options);
 * options.basePath - A [String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) set to the relative path of the glTF file.
 * options.processUri - A [Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) that provides custom loading behavior for URIs encountered during the loading process.
 
+### Example
+```javascript
+app.assets.loadFromUrl('assets/monkey/monkey.gltf', 'json', function (err, asset) {
+    var json = asset.resource;
+    var gltf = JSON.parse(json);
+    loadGltf(gltf, app.graphicsDevice, function (roots) {
+        // add the loaded scene to the hierarchy
+        roots.forEach(function (root) {
+            app.root.addChild(root);
+        });
+    }, {
+        basePath: 'assets/monkey/'
+    });
+});
+```
+
 # glTF Viewer
-To load the glTF viewer, run a local web-server and load viewer/index.html. You can then drag a glb or gltf file onto the tab's client area to load it. For non-embedded glTF files (with external buffer and image files), you need to drag the containing folder of the glTF file onto the viewer's client area.
+To load the glTF viewer, run a local web-server and load viewer/index.html. You can then drag a glb or gltf file onto the tab's client area to load it. For non-embedded glTF files (with external buffer and image files), you need to drag the containing folder of the glTF file onto the viewer's client area. Binaries for the viewer can be found [here](https://github.com/playcanvas/playcanvas-gltf/releases).
