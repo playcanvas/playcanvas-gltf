@@ -27,7 +27,7 @@ loadGlb(glb, device, success);
 ```javascript
 app.assets.loadFromUrl('assets/monkey/monkey.glb', 'binary', function (err, asset) {
     var glb = asset.resource;
-    loadGltf(glb, app.graphicsDevice, function (roots) {
+    loadGlb(glb, app.graphicsDevice, function (roots) {
         // add the loaded scene to the hierarchy
         roots.forEach(function (root) {
             app.root.addChild(root);
