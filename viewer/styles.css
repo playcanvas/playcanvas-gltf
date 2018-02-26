@@ -1,4 +1,11 @@
 body {
+	background-color: #AAAAAA;
 	margin: 0;
 	overflow: hidden;
+}
+
+.dropzone {
+	font-family: Arial, Helvetica, sans-serif;
+	text-align: center;
+	font-size: large;
 }

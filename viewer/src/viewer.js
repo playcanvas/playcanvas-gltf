@@ -1,4 +1,4 @@
-function main() {
+function Viewer() {
     var canvas = document.createElement('canvas');
     document.body.appendChild(canvas);
 
@@ -84,6 +84,57 @@ function main() {
         app.scene.setSkybox(cubemapAsset.resources);
     });
 
+    this.app = app;
+    this.camera = camera;
+    this.gltfRoot = gltfRoot;
+}
+
+Viewer.prototype.unloadScene = function () {
+    // empty the current scene
+    var gltfRoot = this.gltfRoot;
+    while (gltfRoot.children.length > 0) {
+        var child = gltfRoot.children[0];
+        gltfRoot.removeChild(child);
+        child.destroy();
+    }
+};
+
+Viewer.prototype.initializeScene = function (roots) {
+    // add the loaded scene to the hierarchy
+    var gltfRoot = this.gltfRoot;
+    roots.forEach(function (root) {
+        gltfRoot.addChild(root);
+    });
+
+    // focus the camera on the newly loaded scene
+    this.camera.script.orbitCamera.focusEntity = gltfRoot;
+};
+
+Viewer.prototype.loadGlb = function (arrayBuffer) {
+    this.unloadScene();
+
+    loadGlb(arrayBuffer, this.app.graphicsDevice, function (roots) {
+        this.initializeScene(roots);
+    }.bind(this));
+};
+
+Viewer.prototype.loadGltf = function (arrayBuffer, processUri) {
+    this.unloadScene();
+
+    var decoder = new TextDecoder('utf-8');
+    var json = decoder.decode(arrayBuffer);
+    var gltf = JSON.parse(json);
+    loadGltf(gltf, this.app.graphicsDevice, function (roots) {
+        this.initializeScene(roots);
+    }.bind(this), {
+        processUri: processUri
+    });
+};
+
+
+function main() {
+    var viewer;
+
     // handle dropped GLB/GLTF files
     document.addEventListener('dragover', function (event) {
         event.preventDefault();
@@ -91,15 +142,11 @@ function main() {
     document.addEventListener('drop', function (event) {
         event.preventDefault();
 
-        var initScene = function (roots) {
-            // add the loaded scene to the hierarchy
-            roots.forEach(function (root) {
-                gltfRoot.addChild(root);
-            });
+        var dropzone = document.getElementById('dropzone');
+        dropzone.style.display = 'none';
 
-            // focus the camera on the newly loaded scene
-            camera.script.orbitCamera.focusEntity = gltfRoot;
-        };
+        if (!viewer)
+            viewer = new Viewer();
 
         var loadFile = function (file, availableFiles) {
             var processUri = function (uri, success) {
@@ -123,26 +170,10 @@ function main() {
                 var arrayBuffer = fr.result;
                 var extension = file.name.split('.').pop();
 
-                // empty the current scene
-                while (gltfRoot.children.length > 0) {
-                    var child = gltfRoot.children[0];
-                    gltfRoot.removeChild(child);
-                    child.destroy();
-                }
-
                 if (extension === 'glb') {
-                    loadGlb(arrayBuffer, app.graphicsDevice, function (roots) {
-                        initScene(roots);
-                    });
+                    viewer.loadGlb(arrayBuffer);
                 } else if (extension === 'gltf') {
-                    var decoder = new TextDecoder('utf-8');
-                    var json = decoder.decode(arrayBuffer);
-                    var gltf = JSON.parse(json);
-                    loadGltf(gltf, app.graphicsDevice, function (roots) {
-                        initScene(roots);
-                    }, {
-                        processUri: processUri
-                    });
+                    viewer.loadGltf(arrayBuffer, processUri);
                 }
             };
             fr.readAsArrayBuffer(file);

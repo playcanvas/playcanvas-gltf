@@ -2,7 +2,7 @@
   "name": "gltf-viewer",
   "productName": "glTF Viewer",
   "description": "glTF 2.0 file viewer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "main.js",
   "devDependencies": {
     "electron": "^1.8.1",
