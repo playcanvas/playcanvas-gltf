@@ -285,6 +285,7 @@
 
     function translateImage(data, resources, success) {
         var image = new Image();
+
         image.addEventListener('load', function () {
             var gltf = resources.gltf;
 
@@ -321,9 +322,11 @@
                 image.src = data.uri;
             } else if (resources.processUri) {
                 resources.processUri(data.uri, function(uri) {
+                    image.crossOrigin = "anonymous";
                     image.src = uri;
                 });
             } else {
+                image.crossOrigin = "anonymous";
                 image.src = resources.basePath + data.uri;
             }
         }
