@@ -399,9 +399,15 @@
             }
             if (pbrData.hasOwnProperty('baseColorTexture')) {
                 var baseColorTexture = pbrData.baseColorTexture;
-                material.diffuseMap = resources.textures[baseColorTexture.index];
+                var texture = resources.textures[baseColorTexture.index];
+
+                material.diffuseMap = texture;
+                material.diffuseMapChannel = 'rgb';
+                material.opacityMap = texture;
+                material.opacityMapChannel = 'a';
                 if (baseColorTexture.hasOwnProperty('texCoord')) {
                     material.diffuseMapUv = baseColorTexture.texCoord;
+                    material.opacityMapUv = baseColorTexture.texCoord;
                 }
             }
             material.useMetalness = true;
@@ -463,6 +469,11 @@
             switch (data.alphaMode) {
                 case 'MASK':
                     material.blendType = pc.BLEND_NONE;
+                    if (data.hasOwnProperty('alphaCutoff')) {
+                        material.alphaTest = data.alphaCutoff;
+                    } else {
+                        material.alphaTest = 0.5;
+                    }
                     break;
                 case 'BLEND':
                     material.blendType = pc.BLEND_NORMAL;
@@ -474,11 +485,6 @@
             }
         } else {
             material.blendType = pc.BLEND_NONE;
-        }
-        if (data.hasOwnProperty('alphaCutoff')) {
-            material.alphaTest = data.alphaCutoff;
-        } else {
-            material.alphaTest = 0.5;
         }
         if (data.hasOwnProperty('doubleSided')) {
             material.twoSidedLighting = data.doubleSided;
