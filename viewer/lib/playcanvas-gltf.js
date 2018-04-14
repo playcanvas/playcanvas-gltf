@@ -364,17 +364,19 @@
         "void getGlossiness() {",
         "    dGlossiness = 1.0;",
         "",
-        "    #ifdef MAPFLOAT",
-        "        dGlossiness *= material_shininess;",
-        "    #endif",
+        "#ifdef MAPFLOAT",
+        "    dGlossiness *= material_shininess;",
+        "#endif",
         "",
-        "    #ifdef MAPTEXTURE",
-        "        dGlossiness *= 1.0 - texture2D(texture_glossMap, $UV).$CH;",
-        "    #endif",
+        "#ifdef MAPTEXTURE",
+        "    dGlossiness *= texture2D(texture_glossMap, $UV).$CH;",
+        "#endif",
         "",
-        "    #ifdef MAPVERTEX",
-        "        dGlossiness *= 1.0 - saturate(vVertexColor.$VC);",
-        "    #endif",
+        "#ifdef MAPVERTEX",
+        "    dGlossiness *= saturate(vVertexColor.$VC);",
+        "#endif",
+        "",
+        "    dGlossiness = 1.0 - dGlossiness;",
         "",
         "    dGlossiness += 0.0000001;",
         "}"
@@ -384,7 +386,7 @@
         var material = new pc.StandardMaterial();
 
         // glTF dooesn't define how to occlude specular
-        material.occludeSpecular = false;
+        material.occludeSpecular = true;
         material.diffuseTint = true;
         material.diffuseVertexColor = true;
         material.chunks.glossPS = glossChunk;
@@ -425,9 +427,9 @@
                 material.metalness = 1;
             }
             if (pbrData.hasOwnProperty('roughnessFactor')) {
-                material.shininess = 100 * (1 - pbrData.roughnessFactor);
+                material.shininess = 100 * pbrData.roughnessFactor;
             } else {
-                material.shininess = 0;
+                material.shininess = 100;
             }
             if (pbrData.hasOwnProperty('metallicRoughnessTexture')) {
                 var metallicRoughnessTexture = pbrData.metallicRoughnessTexture;
@@ -435,9 +437,6 @@
                 material.metalnessMapChannel = 'b';
                 material.glossMap = resources.textures[metallicRoughnessTexture.index];
                 material.glossMapChannel = 'g';
-                if (!pbrData.hasOwnProperty('roughnessFactor')) {
-                    material.shininess = 100;
-                }
                 if (metallicRoughnessTexture.hasOwnProperty('texCoord')) {
                     material.glossMapUv = metallicRoughnessTexture.texCoord;
                     material.metalnessMapUv = metallicRoughnessTexture.texCoord;
@@ -457,6 +456,7 @@
         if (data.hasOwnProperty('occlusionTexture')) {
             var occlusionTexture = data.occlusionTexture;
             material.aoMap = resources.textures[occlusionTexture.index];
+            material.aoMapChannel = 'r';
             if (occlusionTexture.hasOwnProperty('texCoord')) {
                 material.aoMapUv = occlusionTexture.texCoord;
             }
