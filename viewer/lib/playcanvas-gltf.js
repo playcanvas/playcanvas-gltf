@@ -1266,7 +1266,7 @@
         }, {
             buffers: buffers
         });
-    } 
+    }
 
     window.loadGltf = loadGltf;
     window.loadGlb = loadGlb;
