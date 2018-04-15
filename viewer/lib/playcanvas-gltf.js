@@ -120,8 +120,7 @@
 
     // Specification:
     //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#animation
-    function translateAnimationW2(data, resources) 
-    {
+    function translateAnimation(data, resources) {
         var clip = new AnimationClip(); 
         if(data.hasOwnProperty('name'))
             clip.name = data.name;
@@ -129,8 +128,7 @@
         var gltf = resources.gltf;  
         var animComponent = null;
 
-        data.channels.forEach(function (channel) 
-        {
+        data.channels.forEach(function (channel) {
             var sampler = data.samplers[channel.sampler]; 
             var times = getAccessorData(gltf, gltf.accessors[sampler.input], resources.buffers);
             var values = getAccessorData(gltf, gltf.accessors[sampler.output], resources.buffers);
@@ -145,8 +143,7 @@
             if (!itsRoot.script)  
                 itsRoot.addComponent('script'); 
 
-            if (!itsRoot.script.anim) 
-            {
+            if (!itsRoot.script.anim) {
                 itsRoot.script.create('anim');
                 itsRoot.script.anim.animComponent = new AnimationComponent();  
                 AnimationSession.app = itsRoot.script.anim.app;
@@ -166,22 +163,19 @@
             }*/
 
 
-            if (path === 'weights') 
-            {
+            if (path === 'weights') {
                 var numCurves = values.length / times.length;
-                for (var i = 0; i < numCurves; i++) 
-                { 
+                for (var i = 0; i < numCurves; i++) { 
                     var curve = new AnimationCurve();
                     var keyType = AnimationKeyableType.NUM;
                     curve.keyableType = keyType; 
                     curve.addTarget(entity, path, i);
-                    if(sampler.interpolation === "CUBIC")
+                    if (sampler.interpolation === "CUBIC")
                         curve.type = AnimationCurveType.CUBIC;
-                    else if(sampler.interpolation === "STEP")
+                    else if (sampler.interpolation === "STEP")
                         curve.type = AnimationCurveType.STEP;
 
-                    for (var j = 0; j < times.length; j++) 
-                    {
+                    for (var j = 0; j < times.length; j++) {
                         time = times[j];
                         value = values[numCurves * j + i]; 
                         curve.insertKey(keyType, time, value);
@@ -189,17 +183,23 @@
                     //entity.script.anim.
                     clip.addCurve(curve);
                 }  
-            } 
-            else 
-            { 
+            } else { 
                 // translation, rotation or scale 
                 var keyType = AnimationKeyableType.NUM;
                 var targetPath = path;
-                switch(path)
-                {
-                    case "translation": keyType = AnimationKeyableType.VEC; targetPath = "localPosition"; break;
-                    case "scale": keyType = AnimationKeyableType.VEC; targetPath = "localScale"; break;
-                    case "rotation": keyType = AnimationKeyableType.QUAT; targetPath = "localRotation"; break;
+                switch(path) {
+                    case "translation":
+                        keyType = AnimationKeyableType.VEC;
+                        targetPath = "localPosition";
+                        break;
+                    case "scale":
+                        keyType = AnimationKeyableType.VEC;
+                        targetPath = "localScale";
+                        break;
+                    case "rotation":
+                        keyType = AnimationKeyableType.QUAT;
+                        targetPath = "localRotation";
+                        break;
                 } 
                 var curve = new AnimationCurve();
                 curve.keyableType = keyType;  
@@ -209,8 +209,7 @@
                 else if(sampler.interpolation === "STEP")
                     curve.type = AnimationCurveType.STEP;
 
-                for (i = 0; i < times.length; i++) 
-                {
+                for (i = 0; i < times.length; i++) {
                     time = times[i];
                     if ((path === 'translation') || (path === 'scale'))  
                         value = new pc.Vec3(values[3 * i + 0], values[3 * i + 1], values[3 * i + 2]); 
@@ -227,80 +226,6 @@
             animComponent.addClip(clip);
         return clip;
     }
-
-
-    // Original Implementation
-    function translateAnimation(data, resources) {
-        var gltf = resources.gltf;
-
-//        var clip = new AnimClip();
-
-        if (data.hasOwnProperty('name')) {
-//            clip.name = data.name;
-        }
-
-        // parse animation data
-        data.channels.forEach(function (channel) {
-            var sampler = data.samplers[channel.sampler];
-
-            var times = getAccessorData(gltf, gltf.accessors[sampler.input], resources.buffers);
-            var values = getAccessorData(gltf, gltf.accessors[sampler.output], resources.buffers);
-            var time, value, key;
-
-            var target = channel.target;
-            var path = target.path;
-
-            var curve;
-            var i, j;
-
-            // Ensure an animation script is added to the entity
-            var entity = resources.nodes[target.node];
-            if (!entity.script ) {
-                entity.addComponent('script');
-            }
-            if (!entity.script.anim) {
-                entity.script.create('anim');
-                entity.script.anim.curves = [];
-            }
-
-            if (path === 'weights') {
-                var numCurves = values.length / times.length;
-                for (i = 0; i < numCurves; i++) {
-                    curve = new AnimCurve();
-                    curve.target = path;
-                    for (j = 0; j < times.length; j++) {
-                        time = times[j];
-                        value = values[numCurves * j + i];
-                        key = new AnimKey(time, value);
-                        curve.keys.push(key);
-                    }
-
-                    entity.script.anim.curves.push(curve);
-                }
-            } else { // translation, rotation or scale
-                curve = new AnimCurve();
-                curve.target = path;
-                for (i = 0; i < times.length; i++) {
-                    time = times[i];
-                    if ((path === 'translation') || (path === 'scale')) {
-                        value = new pc.Vec3(values[3 * i + 0], values[3 * i + 1], values[3 * i + 2]);
-                    } else if (path === 'rotation') {
-                        value = new pc.Quat(values[4 * i + 0], values[4 * i + 1], values[4 * i + 2], values[4 * i + 3]);
-                    }
-                    key = new AnimKey(time, value);
-                    curve.keys.push(key);
-                }
-                curve.keys.sort(function (a, b) {
-                    return a.time - b.time;
-                });
-
-                entity.script.anim.curves.push(curve);
-            }
-        });
-    }
-
-
-
 
     // Specification:
     //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#image
@@ -397,17 +322,19 @@
         "void getGlossiness() {",
         "    dGlossiness = 1.0;",
         "",
-        "    #ifdef MAPFLOAT",
-        "        dGlossiness *= material_shininess;",
-        "    #endif",
+        "#ifdef MAPFLOAT",
+        "    dGlossiness *= material_shininess;",
+        "#endif",
         "",
-        "    #ifdef MAPTEXTURE",
-        "        dGlossiness *= 1.0 - texture2D(texture_glossMap, $UV).$CH;",
-        "    #endif",
+        "#ifdef MAPTEXTURE",
+        "    dGlossiness *= texture2D(texture_glossMap, $UV).$CH;",
+        "#endif",
         "",
-        "    #ifdef MAPVERTEX",
-        "        dGlossiness *= 1.0 - saturate(vVertexColor.$VC);",
-        "    #endif",
+        "#ifdef MAPVERTEX",
+        "    dGlossiness *= saturate(vVertexColor.$VC);",
+        "#endif",
+        "",
+        "    dGlossiness = 1.0 - dGlossiness;",
         "",
         "    dGlossiness += 0.0000001;",
         "}"
@@ -417,7 +344,7 @@
         var material = new pc.StandardMaterial();
 
         // glTF dooesn't define how to occlude specular
-        material.occludeSpecular = false;
+        material.occludeSpecular = true;
         material.diffuseTint = true;
         material.diffuseVertexColor = true;
         material.chunks.glossPS = glossChunk;
@@ -458,9 +385,9 @@
                 material.metalness = 1;
             }
             if (pbrData.hasOwnProperty('roughnessFactor')) {
-                material.shininess = 100 * (1 - pbrData.roughnessFactor);
+                material.shininess = 100 * pbrData.roughnessFactor;
             } else {
-                material.shininess = 0;
+                material.shininess = 100;
             }
             if (pbrData.hasOwnProperty('metallicRoughnessTexture')) {
                 var metallicRoughnessTexture = pbrData.metallicRoughnessTexture;
@@ -468,9 +395,6 @@
                 material.metalnessMapChannel = 'b';
                 material.glossMap = resources.textures[metallicRoughnessTexture.index];
                 material.glossMapChannel = 'g';
-                if (!pbrData.hasOwnProperty('roughnessFactor')) {
-                    material.shininess = 100;
-                }
                 if (metallicRoughnessTexture.hasOwnProperty('texCoord')) {
                     material.glossMapUv = metallicRoughnessTexture.texCoord;
                     material.metalnessMapUv = metallicRoughnessTexture.texCoord;
@@ -490,6 +414,7 @@
         if (data.hasOwnProperty('occlusionTexture')) {
             var occlusionTexture = data.occlusionTexture;
             material.aoMap = resources.textures[occlusionTexture.index];
+            material.aoMapChannel = 'r';
             if (occlusionTexture.hasOwnProperty('texCoord')) {
                 material.aoMapUv = occlusionTexture.texCoord;
             }
@@ -1299,7 +1224,7 @@
                 parse('meshes', translateMesh, resources);
                 parse('nodes', translateNode, resources);
                 parse('skins', translateSkin, resources);
-                parse('animations', translateAnimationW2, resources);
+                parse('animations', translateAnimation, resources);
 
                 buildHierarchy(resources);
                 createModels(resources);
