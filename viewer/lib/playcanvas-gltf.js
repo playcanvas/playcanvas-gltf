@@ -137,9 +137,9 @@
             var target = channel.target;
             var path = target.path;
 
-            //animation for the same root, organized in one AnimationComponent
+            // Animation for the same root, organized in one AnimationComponent
             var entity = resources.nodes[target.node];
-            var itsRoot = resources.nodes[0];//entity.root;
+            var itsRoot = resources.nodes[0]; //entity.root;
             if (!itsRoot.script)  
                 itsRoot.addComponent('script'); 
 
@@ -150,18 +150,6 @@
                 itsRoot.script.anim.animComponent.curClip = clip.name; 
             }  
             animComponent = itsRoot.script.anim.animComponent; 
-
-            /*if (!entity.script)  
-                entity.addComponent('script'); 
-
-            if (!entity.script.anim) 
-            {
-                entity.script.create('anim');
-                entity.script.anim.clip = new AnimationClip(); 
-                if(data.hasOwnProperty('name')) 
-                    entity.script.anim.clip.name = data.name;
-            }*/
-
 
             if (path === 'weights') {
                 var numCurves = values.length / times.length;
@@ -180,7 +168,6 @@
                         value = values[numCurves * j + i]; 
                         curve.insertKey(keyType, time, value);
                     }
-                    //entity.script.anim.
                     clip.addCurve(curve);
                 }  
             } else { 
@@ -217,7 +204,6 @@
                         value = new pc.Quat(values[4 * i + 0], values[4 * i + 1], values[4 * i + 2], values[4 * i + 3]); 
                     curve.insertKey(keyType, time, value);
                 } 
-                //entity.script.anim.
                 clip.addCurve(curve); 
             }
         }); 
@@ -1284,5 +1270,4 @@
 
     window.loadGltf = loadGltf;
     window.loadGlb = loadGlb;
-
 }());
