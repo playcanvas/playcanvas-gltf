@@ -1,30 +1,30 @@
-(function () { 
+(function () {
 
-    var Anim;  
+    var Anim;
     function initAnim() {
-        if (Anim) return; 
+        if (Anim) return;
         Anim = pc.createScript('anim');
 
-        Anim.prototype.initialize = function () { 
-            if(!this.animComponent || this.animComponent.clipCount() ===0 ||  
-                !this.animComponent.getCurrentClip()) 
-                return; 
+        Anim.prototype.initialize = function () {
+            if(!this.animComponent || this.animComponent.clipCount() === 0 ||
+                !this.animComponent.getCurrentClip())
+                return;
 
-            this.animComponent.getCurrentClip().resetSession(); 
+            this.animComponent.getCurrentClip().resetSession();
         };
 
         Anim.prototype.update = function (dt) {
-            if(!this.animComponent || this.animComponent.clipCount() ===0 ||  
-                !this.animComponent.getCurrentClip()) 
-                return; 
+            if(!this.animComponent || this.animComponent.clipCount() === 0 ||
+                !this.animComponent.getCurrentClip())
+                return;
 
-            this.animComponent.getCurrentClip().session.onTimer(dt); 
+            this.animComponent.getCurrentClip().session.onTimer(dt);
         };
     }
 
     // Math utility functions
     function nearestPow2(n) {
-      return Math.pow(2, Math.round(Math.log(n) / Math.log(2))); 
+        return Math.pow(2, Math.round(Math.log(n) / Math.log(2)));
     }
 
     function isPowerOf2(n) {
@@ -121,58 +121,60 @@
     // Specification:
     //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#animation
     function translateAnimation(data, resources) {
-        var clip = new AnimationClip(); 
+        var clip = new AnimationClip();
         if(data.hasOwnProperty('name'))
             clip.name = data.name;
 
-        var gltf = resources.gltf;  
+        var gltf = resources.gltf;
         var animComponent = null;
 
         data.channels.forEach(function (channel) {
-            var sampler = data.samplers[channel.sampler]; 
+            var sampler = data.samplers[channel.sampler];
             var times = getAccessorData(gltf, gltf.accessors[sampler.input], resources.buffers);
             var values = getAccessorData(gltf, gltf.accessors[sampler.output], resources.buffers);
-            var time, value, key;
+            var time, value;
 
             var target = channel.target;
             var path = target.path;
+            var curve, keyType;
+            var i, j;
 
             // Animation for the same root, organized in one AnimationComponent
             var entity = resources.nodes[target.node];
-            var itsRoot = resources.nodes[0]; //entity.root;
-            if (!itsRoot.script)  
-                itsRoot.addComponent('script'); 
+            var itsRoot = resources.nodes[0]; // entity.root;
+            if (!itsRoot.script)
+                itsRoot.addComponent('script');
 
             if (!itsRoot.script.anim) {
                 itsRoot.script.create('anim');
-                itsRoot.script.anim.animComponent = new AnimationComponent();  
+                itsRoot.script.anim.animComponent = new AnimationComponent();
                 AnimationSession.app = itsRoot.script.anim.app;
-                itsRoot.script.anim.animComponent.curClip = clip.name; 
-            }  
-            animComponent = itsRoot.script.anim.animComponent; 
+                itsRoot.script.anim.animComponent.curClip = clip.name;
+            }
+            animComponent = itsRoot.script.anim.animComponent;
 
             if (path === 'weights') {
                 var numCurves = values.length / times.length;
-                for (var i = 0; i < numCurves; i++) { 
-                    var curve = new AnimationCurve();
-                    var keyType = AnimationKeyableType.NUM;
-                    curve.keyableType = keyType; 
+                for (i = 0; i < numCurves; i++) {
+                    curve = new AnimationCurve();
+                    keyType = AnimationKeyableType.NUM;
+                    curve.keyableType = keyType;
                     curve.addTarget(entity, path, i);
                     if (sampler.interpolation === "CUBIC")
                         curve.type = AnimationCurveType.CUBIC;
                     else if (sampler.interpolation === "STEP")
                         curve.type = AnimationCurveType.STEP;
 
-                    for (var j = 0; j < times.length; j++) {
+                    for (j = 0; j < times.length; j++) {
                         time = times[j];
-                        value = values[numCurves * j + i]; 
+                        value = values[numCurves * j + i];
                         curve.insertKey(keyType, time, value);
                     }
                     clip.addCurve(curve);
-                }  
-            } else { 
-                // translation, rotation or scale 
-                var keyType = AnimationKeyableType.NUM;
+                }
+            } else {
+                // translation, rotation or scale
+                keyType = AnimationKeyableType.NUM;
                 var targetPath = path;
                 switch(path) {
                     case "translation":
@@ -187,10 +189,10 @@
                         keyType = AnimationKeyableType.QUAT;
                         targetPath = "localRotation";
                         break;
-                } 
-                var curve = new AnimationCurve();
-                curve.keyableType = keyType;  
-                curve.setTarget(entity, targetPath); 
+                }
+                curve = new AnimationCurve();
+                curve.keyableType = keyType;
+                curve.setTarget(entity, targetPath);
                 if(sampler.interpolation === "CUBIC")
                     curve.type = AnimationCurveType.CUBIC;
                 else if(sampler.interpolation === "STEP")
@@ -198,15 +200,15 @@
 
                 for (i = 0; i < times.length; i++) {
                     time = times[i];
-                    if ((path === 'translation') || (path === 'scale'))  
-                        value = new pc.Vec3(values[3 * i + 0], values[3 * i + 1], values[3 * i + 2]); 
-                    else if (path === 'rotation')  
-                        value = new pc.Quat(values[4 * i + 0], values[4 * i + 1], values[4 * i + 2], values[4 * i + 3]); 
+                    if ((path === 'translation') || (path === 'scale'))
+                        value = new pc.Vec3(values[3 * i + 0], values[3 * i + 1], values[3 * i + 2]);
+                    else if (path === 'rotation')
+                        value = new pc.Quat(values[4 * i + 0], values[4 * i + 1], values[4 * i + 2], values[4 * i + 3]);
                     curve.insertKey(keyType, time, value);
-                } 
-                clip.addCurve(curve); 
+                }
+                clip.addCurve(curve);
             }
-        }); 
+        });
 
         if(animComponent)
             animComponent.addClip(clip);
@@ -287,7 +289,7 @@
             var arrayBuffer = buffers[bufferView.buffer];
             var byteOffset = bufferView.hasOwnProperty('byteOffset') ? bufferView.byteOffset : 0;
             var imageBuffer = arrayBuffer.slice(byteOffset, byteOffset + bufferView.byteLength);
-            var blob = new Blob([ imageBuffer ], { type: data.mimeType });
+            var blob = new Blob([imageBuffer], { type: data.mimeType });
             image.src = URL.createObjectURL(blob);
         }
 
@@ -1228,7 +1230,7 @@
         if (magic !== 0x46546C67) {
             console.error("Invalid magic number found in glb header. Expected 0x46546C67, found 0x" + magic.toString(16));
             return null;
-        } 
+        }
         var version = dataView.getUint32(4, true);
         var length = dataView.getUint32(8, true);
 
@@ -1238,7 +1240,7 @@
         if (chunkType !== 0x4E4F534A) {
             console.error("Invalid chunk type found in glb file. Expected 0x4E4F534A, found 0x" + chunkType.toString(16));
             return null;
-        } 
+        }
         var jsonData = new Uint8Array(glb, 20, chunkLength);
 
         var buffers = [];
