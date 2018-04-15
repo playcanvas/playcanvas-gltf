@@ -1,110 +1,30 @@
 (function () {
-    function AnimKey(time, value) {
-        this.time = time;
-        this.value = value;
-    }
-
-    function AnimCurve() {
-        this.keys = [];
-    }
-
-    AnimCurve.prototype.addKey = function (key) {
-        this.keys.push(key);
-        this.keys.sort(function (a, b) {
-            return a.time - b.time;
-        });
-    };
-
-    AnimCurve.prototype.evaluate = function (time) {
-        var keys = this.keys;
-
-        // If the current time is before the first keyframe, return the first key's value
-        if (time <= keys[0].time) return keys[0].value;
-
-        for (var i = 0; i < keys.length - 1; i++) {
-            var k0 = keys[i];
-            var k1 = keys[i + 1];
-
-            if (time === k0.time) return k0.value;
-            if (time === k1.time) return k1.value;
-            if (time > k0.time && time < k1.time) {
-                var interval = k1.time - k0.time;
-                var delta = time - k0.time;
-                var alpha = delta / interval;
-                var value;
-                if (k0.value instanceof pc.Quat) {
-                    value = new pc.Quat().slerp(k0.value, k1.value, alpha);
-                } else if (k0.value instanceof pc.Vec3) {
-                    value = new pc.Vec3().lerp(k0.value, k1.value, alpha);
-                } else {
-                    value = pc.math.lerp(k0.value, k1.value, alpha);
-                }
-                return value;
-            }
-        }
-
-        return 0;
-    };
 
     var Anim;
-
     function initAnim() {
         if (Anim) return;
-
         Anim = pc.createScript('anim');
 
         Anim.prototype.initialize = function () {
-            this.time = 0;
+            if(!this.animComponent || this.animComponent.clipCount() === 0 ||
+                !this.animComponent.getCurrentClip())
+                return;
+
+            this.animComponent.getCurrentClip().resetSession();
         };
 
         Anim.prototype.update = function (dt) {
-            var i, j;
-            var curve, value;
+            if(!this.animComponent || this.animComponent.clipCount() === 0 ||
+                !this.animComponent.getCurrentClip())
+                return;
 
-            var numKeys = this.curves[0].keys.length;
-            var duration = (this.curves[0].keys[numKeys - 1]).time;
-
-            this.time += dt;
-            // loop
-            while (this.time > duration) {
-                this.time -= duration;
-            }
-
-            if (this.entity.model) {
-                var meshInstances = this.entity.model.meshInstances;
-                for (i = 0; i < meshInstances.length; i++) {
-                    var morphInstance = meshInstances[i].morphInstance;
-                    if (morphInstance) {
-                        for (j = 0; j < this.curves.length; j++) {
-                            curve = this.curves[j];
-                            value = curve.evaluate(this.time);
-                            morphInstance.setWeight(j, value);
-                        }
-                    }
-                }
-            }
-
-            for (i = 0; i < this.curves.length; i++) {
-                curve = this.curves[i];
-                value = curve.evaluate(this.time);
-                switch (curve.target) {
-                    case 'translation':
-                        this.entity.setLocalPosition(value);
-                        break;
-                    case 'rotation':
-                        this.entity.setLocalRotation(value);
-                        break;
-                    case 'scale':
-                        this.entity.setLocalScale(value);
-                        break;
-                }
-            }
+            this.animComponent.getCurrentClip().session.onTimer(dt);
         };
     }
 
     // Math utility functions
     function nearestPow2(n) {
-      return Math.pow(2, Math.round(Math.log(n) / Math.log(2))); 
+        return Math.pow(2, Math.round(Math.log(n) / Math.log(2)));
     }
 
     function isPowerOf2(n) {
@@ -201,72 +121,98 @@
     // Specification:
     //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#animation
     function translateAnimation(data, resources) {
+        var clip = new AnimationClip();
+        if(data.hasOwnProperty('name'))
+            clip.name = data.name;
+
         var gltf = resources.gltf;
+        var animComponent = null;
 
-//        var clip = new AnimClip();
-
-        if (data.hasOwnProperty('name')) {
-//            clip.name = data.name;
-        }
-
-        // parse animation data
         data.channels.forEach(function (channel) {
             var sampler = data.samplers[channel.sampler];
-
             var times = getAccessorData(gltf, gltf.accessors[sampler.input], resources.buffers);
             var values = getAccessorData(gltf, gltf.accessors[sampler.output], resources.buffers);
-            var time, value, key;
+            var time, value;
 
             var target = channel.target;
             var path = target.path;
-
-            var curve;
+            var curve, keyType;
             var i, j;
 
-            // Ensure an animation script is added to the entity
+            // Animation for the same root, organized in one AnimationComponent
             var entity = resources.nodes[target.node];
-            if (!entity.script ) {
-                entity.addComponent('script');
+            var itsRoot = resources.nodes[0]; // entity.root;
+            if (!itsRoot.script)
+                itsRoot.addComponent('script');
+
+            if (!itsRoot.script.anim) {
+                itsRoot.script.create('anim');
+                itsRoot.script.anim.animComponent = new AnimationComponent();
+                AnimationSession.app = itsRoot.script.anim.app;
+                itsRoot.script.anim.animComponent.curClip = clip.name;
             }
-            if (!entity.script.anim) {
-                entity.script.create('anim');
-                entity.script.anim.curves = [];
-            }
+            animComponent = itsRoot.script.anim.animComponent;
 
             if (path === 'weights') {
                 var numCurves = values.length / times.length;
                 for (i = 0; i < numCurves; i++) {
-                    curve = new AnimCurve();
-                    curve.target = path;
+                    curve = new AnimationCurve();
+                    keyType = AnimationKeyableType.NUM;
+                    curve.keyableType = keyType;
+                    curve.addTarget(entity, path, i);
+                    if (sampler.interpolation === "CUBIC")
+                        curve.type = AnimationCurveType.CUBIC;
+                    else if (sampler.interpolation === "STEP")
+                        curve.type = AnimationCurveType.STEP;
+
                     for (j = 0; j < times.length; j++) {
                         time = times[j];
                         value = values[numCurves * j + i];
-                        key = new AnimKey(time, value);
-                        curve.keys.push(key);
+                        curve.insertKey(keyType, time, value);
                     }
-
-                    entity.script.anim.curves.push(curve);
+                    clip.addCurve(curve);
                 }
-            } else { // translation, rotation or scale
-                curve = new AnimCurve();
-                curve.target = path;
+            } else {
+                // translation, rotation or scale
+                keyType = AnimationKeyableType.NUM;
+                var targetPath = path;
+                switch(path) {
+                    case "translation":
+                        keyType = AnimationKeyableType.VEC;
+                        targetPath = "localPosition";
+                        break;
+                    case "scale":
+                        keyType = AnimationKeyableType.VEC;
+                        targetPath = "localScale";
+                        break;
+                    case "rotation":
+                        keyType = AnimationKeyableType.QUAT;
+                        targetPath = "localRotation";
+                        break;
+                }
+                curve = new AnimationCurve();
+                curve.keyableType = keyType;
+                curve.setTarget(entity, targetPath);
+                if(sampler.interpolation === "CUBIC")
+                    curve.type = AnimationCurveType.CUBIC;
+                else if(sampler.interpolation === "STEP")
+                    curve.type = AnimationCurveType.STEP;
+
                 for (i = 0; i < times.length; i++) {
                     time = times[i];
-                    if ((path === 'translation') || (path === 'scale')) {
+                    if ((path === 'translation') || (path === 'scale'))
                         value = new pc.Vec3(values[3 * i + 0], values[3 * i + 1], values[3 * i + 2]);
-                    } else if (path === 'rotation') {
+                    else if (path === 'rotation')
                         value = new pc.Quat(values[4 * i + 0], values[4 * i + 1], values[4 * i + 2], values[4 * i + 3]);
-                    }
-                    key = new AnimKey(time, value);
-                    curve.keys.push(key);
+                    curve.insertKey(keyType, time, value);
                 }
-                curve.keys.sort(function (a, b) {
-                    return a.time - b.time;
-                });
-
-                entity.script.anim.curves.push(curve);
+                clip.addCurve(curve);
             }
         });
+
+        if(animComponent)
+            animComponent.addClip(clip);
+        return clip;
     }
 
     // Specification:
@@ -343,7 +289,7 @@
             var arrayBuffer = buffers[bufferView.buffer];
             var byteOffset = bufferView.hasOwnProperty('byteOffset') ? bufferView.byteOffset : 0;
             var imageBuffer = arrayBuffer.slice(byteOffset, byteOffset + bufferView.byteLength);
-            var blob = new Blob([ imageBuffer ], { type: data.mimeType });
+            var blob = new Blob([imageBuffer], { type: data.mimeType });
             image.src = URL.createObjectURL(blob);
         }
 
@@ -1284,7 +1230,7 @@
         if (magic !== 0x46546C67) {
             console.error("Invalid magic number found in glb header. Expected 0x46546C67, found 0x" + magic.toString(16));
             return null;
-        } 
+        }
         var version = dataView.getUint32(4, true);
         var length = dataView.getUint32(8, true);
 
@@ -1294,7 +1240,7 @@
         if (chunkType !== 0x4E4F534A) {
             console.error("Invalid chunk type found in glb file. Expected 0x4E4F534A, found 0x" + chunkType.toString(16));
             return null;
-        } 
+        }
         var jsonData = new Uint8Array(glb, 20, chunkLength);
 
         var buffers = [];
