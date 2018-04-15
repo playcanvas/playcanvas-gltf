@@ -1,104 +1,24 @@
-(function () {
-    function AnimKey(time, value) {
-        this.time = time;
-        this.value = value;
-    }
+(function () { 
 
-    function AnimCurve() {
-        this.keys = [];
-    }
-
-    AnimCurve.prototype.addKey = function (key) {
-        this.keys.push(key);
-        this.keys.sort(function (a, b) {
-            return a.time - b.time;
-        });
-    };
-
-    AnimCurve.prototype.evaluate = function (time) {
-        var keys = this.keys;
-
-        // If the current time is before the first keyframe, return the first key's value
-        if (time <= keys[0].time) return keys[0].value;
-
-        for (var i = 0; i < keys.length - 1; i++) {
-            var k0 = keys[i];
-            var k1 = keys[i + 1];
-
-            if (time === k0.time) return k0.value;
-            if (time === k1.time) return k1.value;
-            if (time > k0.time && time < k1.time) {
-                var interval = k1.time - k0.time;
-                var delta = time - k0.time;
-                var alpha = delta / interval;
-                var value;
-                if (k0.value instanceof pc.Quat) {
-                    value = new pc.Quat().slerp(k0.value, k1.value, alpha);
-                } else if (k0.value instanceof pc.Vec3) {
-                    value = new pc.Vec3().lerp(k0.value, k1.value, alpha);
-                } else {
-                    value = pc.math.lerp(k0.value, k1.value, alpha);
-                }
-                return value;
-            }
-        }
-
-        return 0;
-    };
-
-    var Anim;
-
+    var Anim;  
     function initAnim() {
-        if (Anim) return;
-
+        if (Anim) return; 
         Anim = pc.createScript('anim');
 
-        Anim.prototype.initialize = function () {
-            this.time = 0;
+        Anim.prototype.initialize = function () { 
+            if(!this.animComponent || this.animComponent.clipCount() ===0 ||  
+                !this.animComponent.getCurrentClip()) 
+                return; 
+
+            this.animComponent.getCurrentClip().resetSession(); 
         };
 
         Anim.prototype.update = function (dt) {
-            var i, j;
-            var curve, value;
+            if(!this.animComponent || this.animComponent.clipCount() ===0 ||  
+                !this.animComponent.getCurrentClip()) 
+                return; 
 
-            var numKeys = this.curves[0].keys.length;
-            var duration = (this.curves[0].keys[numKeys - 1]).time;
-
-            this.time += dt;
-            // loop
-            while (this.time > duration) {
-                this.time -= duration;
-            }
-
-            if (this.entity.model) {
-                var meshInstances = this.entity.model.meshInstances;
-                for (i = 0; i < meshInstances.length; i++) {
-                    var morphInstance = meshInstances[i].morphInstance;
-                    if (morphInstance) {
-                        for (j = 0; j < this.curves.length; j++) {
-                            curve = this.curves[j];
-                            value = curve.evaluate(this.time);
-                            morphInstance.setWeight(j, value);
-                        }
-                    }
-                }
-            }
-
-            for (i = 0; i < this.curves.length; i++) {
-                curve = this.curves[i];
-                value = curve.evaluate(this.time);
-                switch (curve.target) {
-                    case 'translation':
-                        this.entity.setLocalPosition(value);
-                        break;
-                    case 'rotation':
-                        this.entity.setLocalRotation(value);
-                        break;
-                    case 'scale':
-                        this.entity.setLocalScale(value);
-                        break;
-                }
-            }
+            this.animComponent.getCurrentClip().session.onTimer(dt); 
         };
     }
 
@@ -200,6 +120,116 @@
 
     // Specification:
     //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#animation
+    function translateAnimationW2(data, resources) 
+    {
+        var clip = new AnimationClip(); 
+        if(data.hasOwnProperty('name'))
+            clip.name = data.name;
+
+        var gltf = resources.gltf;  
+        var animComponent = null;
+
+        data.channels.forEach(function (channel) 
+        {
+            var sampler = data.samplers[channel.sampler]; 
+            var times = getAccessorData(gltf, gltf.accessors[sampler.input], resources.buffers);
+            var values = getAccessorData(gltf, gltf.accessors[sampler.output], resources.buffers);
+            var time, value, key;
+
+            var target = channel.target;
+            var path = target.path;
+
+            //animation for the same root, organized in one AnimationComponent
+            var entity = resources.nodes[target.node];
+            var itsRoot = resources.nodes[0];//entity.root;
+            if (!itsRoot.script)  
+                itsRoot.addComponent('script'); 
+
+            if (!itsRoot.script.anim) 
+            {
+                itsRoot.script.create('anim');
+                itsRoot.script.anim.animComponent = new AnimationComponent();  
+                AnimationSession.app = itsRoot.script.anim.app;
+                itsRoot.script.anim.animComponent.curClip = clip.name; 
+            }  
+            animComponent = itsRoot.script.anim.animComponent; 
+
+            /*if (!entity.script)  
+                entity.addComponent('script'); 
+
+            if (!entity.script.anim) 
+            {
+                entity.script.create('anim');
+                entity.script.anim.clip = new AnimationClip(); 
+                if(data.hasOwnProperty('name')) 
+                    entity.script.anim.clip.name = data.name;
+            }*/
+
+
+            if (path === 'weights') 
+            {
+                var numCurves = values.length / times.length;
+                for (var i = 0; i < numCurves; i++) 
+                { 
+                    var curve = new AnimationCurve();
+                    var keyType = AnimationKeyableType.NUM;
+                    curve.keyableType = keyType; 
+                    curve.addTarget(entity, path, i);
+                    if(sampler.interpolation === "CUBIC")
+                        curve.type = AnimationCurveType.CUBIC;
+                    else if(sampler.interpolation === "STEP")
+                        curve.type = AnimationCurveType.STEP;
+
+                    for (var j = 0; j < times.length; j++) 
+                    {
+                        time = times[j];
+                        value = values[numCurves * j + i]; 
+                        curve.insertKey(keyType, time, value);
+                    }
+                    //entity.script.anim.
+                    clip.addCurve(curve);
+                }  
+            } 
+            else 
+            { 
+                // translation, rotation or scale 
+                var keyType = AnimationKeyableType.NUM;
+                var targetPath = path;
+                switch(path)
+                {
+                    case "translation": keyType = AnimationKeyableType.VEC; targetPath = "localPosition"; break;
+                    case "scale": keyType = AnimationKeyableType.VEC; targetPath = "localScale"; break;
+                    case "rotation": keyType = AnimationKeyableType.QUAT; targetPath = "localRotation"; break;
+                } 
+                var curve = new AnimationCurve();
+                curve.keyableType = keyType;  
+                curve.setTarget(entity, targetPath); 
+                if(sampler.interpolation === "CUBIC")
+                    curve.type = AnimationCurveType.CUBIC;
+                else if(sampler.interpolation === "STEP")
+                    curve.type = AnimationCurveType.STEP;
+
+                for (i = 0; i < times.length; i++) 
+                {
+                    time = times[i];
+                    if ((path === 'translation') || (path === 'scale'))  
+                        value = new pc.Vec3(values[3 * i + 0], values[3 * i + 1], values[3 * i + 2]); 
+                    else if (path === 'rotation')  
+                        value = new pc.Quat(values[4 * i + 0], values[4 * i + 1], values[4 * i + 2], values[4 * i + 3]); 
+                    curve.insertKey(keyType, time, value);
+                } 
+                //entity.script.anim.
+                clip.addCurve(curve); 
+            }
+        }); 
+
+        if(animComponent)
+            animComponent.addClip(clip);
+        return clip;
+    }
+
+
+    // Original Implementation
     function translateAnimation(data, resources) {
         var gltf = resources.gltf;
 
@@ -268,6 +298,9 @@
             }
         });
     }
+
+
+
 
     // Specification:
     //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#image
@@ -364,19 +397,17 @@
         "void getGlossiness() {",
         "    dGlossiness = 1.0;",
         "",
-        "#ifdef MAPFLOAT",
-        "    dGlossiness *= material_shininess;",
-        "#endif",
+        "    #ifdef MAPFLOAT",
+        "        dGlossiness *= material_shininess;",
+        "    #endif",
         "",
-        "#ifdef MAPTEXTURE",
-        "    dGlossiness *= texture2D(texture_glossMap, $UV).$CH;",
-        "#endif",
+        "    #ifdef MAPTEXTURE",
+        "        dGlossiness *= 1.0 - texture2D(texture_glossMap, $UV).$CH;",
+        "    #endif",
         "",
-        "#ifdef MAPVERTEX",
-        "    dGlossiness *= saturate(vVertexColor.$VC);",
-        "#endif",
-        "",
-        "    dGlossiness = 1.0 - dGlossiness;",
+        "    #ifdef MAPVERTEX",
+        "        dGlossiness *= 1.0 - saturate(vVertexColor.$VC);",
+        "    #endif",
         "",
         "    dGlossiness += 0.0000001;",
         "}"
@@ -386,7 +417,7 @@
         var material = new pc.StandardMaterial();
 
         // glTF dooesn't define how to occlude specular
-        material.occludeSpecular = true;
+        material.occludeSpecular = false;
         material.diffuseTint = true;
         material.diffuseVertexColor = true;
         material.chunks.glossPS = glossChunk;
@@ -427,9 +458,9 @@
                 material.metalness = 1;
             }
             if (pbrData.hasOwnProperty('roughnessFactor')) {
-                material.shininess = 100 * pbrData.roughnessFactor;
+                material.shininess = 100 * (1 - pbrData.roughnessFactor);
             } else {
-                material.shininess = 100;
+                material.shininess = 0;
             }
             if (pbrData.hasOwnProperty('metallicRoughnessTexture')) {
                 var metallicRoughnessTexture = pbrData.metallicRoughnessTexture;
@@ -437,6 +468,9 @@
                 material.metalnessMapChannel = 'b';
                 material.glossMap = resources.textures[metallicRoughnessTexture.index];
                 material.glossMapChannel = 'g';
+                if (!pbrData.hasOwnProperty('roughnessFactor')) {
+                    material.shininess = 100;
+                }
                 if (metallicRoughnessTexture.hasOwnProperty('texCoord')) {
                     material.glossMapUv = metallicRoughnessTexture.texCoord;
                     material.metalnessMapUv = metallicRoughnessTexture.texCoord;
@@ -456,7 +490,6 @@
         if (data.hasOwnProperty('occlusionTexture')) {
             var occlusionTexture = data.occlusionTexture;
             material.aoMap = resources.textures[occlusionTexture.index];
-            material.aoMapChannel = 'r';
             if (occlusionTexture.hasOwnProperty('texCoord')) {
                 material.aoMapUv = occlusionTexture.texCoord;
             }
@@ -1266,7 +1299,7 @@
                 parse('meshes', translateMesh, resources);
                 parse('nodes', translateNode, resources);
                 parse('skins', translateSkin, resources);
-                parse('animations', translateAnimation, resources);
+                parse('animations', translateAnimationW2, resources);
 
                 buildHierarchy(resources);
                 createModels(resources);
@@ -1322,8 +1355,9 @@
         }, {
             buffers: buffers
         });
-    }
+    } 
 
     window.loadGltf = loadGltf;
     window.loadGlb = loadGlb;
+
 }());

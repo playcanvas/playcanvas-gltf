@@ -8,26 +8,26 @@ function Viewer() {
     });
     app.start();
 
-    // fill the available space at full resolution
+    // Fill the available space at full resolution
     app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
     app.setCanvasResolution(pc.RESOLUTION_AUTO);
 
     app.scene.gammaCorrection = pc.GAMMA_SRGB;
     app.scene.toneMapping = pc.TONEMAP_ACES;
 
-    // ensure canvas is resized when window changes size
+    // Ensure canvas is resized when window changes size
     window.addEventListener('resize', function() {
         app.resizeCanvas();
     });
 
-    // create camera entity
+    // Create camera entity
     var camera = new pc.Entity('camera');
     camera.addComponent('camera');
     camera.addComponent('script');
     app.root.addChild(camera);
     camera.setLocalPosition(0, 0, 1);
 
-    // make the camera interactive
+    // Make the camera interactive
     app.assets.loadFromUrl('./src/orbit-camera.js', 'script', function (err, asset) {
         camera.script.create('orbitCamera', {
             attributes: {
@@ -48,17 +48,17 @@ function Viewer() {
         });
     });
 
-    // create directional light entity
+    // Create directional light entity
     var light = new pc.Entity('light');
     light.addComponent('light');
     light.setEulerAngles(45, 0, 0);
     app.root.addChild(light);
 
-    // root entity for loaded gltf scenes which can have more than one root entity
+    // Root entity for loaded gltf scenes which can have more than one root entity
     var gltfRoot = new pc.Entity('gltf');
     app.root.addChild(gltfRoot);
 
-    // set a prefiltered cubemap as the skybox
+    // Set a prefiltered cubemap as the skybox
     var cubemapAsset = new pc.Asset('helipad', 'cubemap', {
         url: "./assets/cubemap/6079289/Helipad.dds"
     }, {
@@ -90,7 +90,7 @@ function Viewer() {
 }
 
 Viewer.prototype.unloadScene = function () {
-    // empty the current scene
+    // Empty the current scene
     var gltfRoot = this.gltfRoot;
     while (gltfRoot.children.length > 0) {
         var child = gltfRoot.children[0];
@@ -100,13 +100,13 @@ Viewer.prototype.unloadScene = function () {
 };
 
 Viewer.prototype.initializeScene = function (roots) {
-    // add the loaded scene to the hierarchy
+    // Add the loaded scene to the hierarchy
     var gltfRoot = this.gltfRoot;
     roots.forEach(function (root) {
         gltfRoot.addChild(root);
     });
 
-    // focus the camera on the newly loaded scene
+    // Focus the camera on the newly loaded scene
     this.camera.script.orbitCamera.focusEntity = gltfRoot;
 };
 
@@ -131,23 +131,83 @@ Viewer.prototype.loadGltf = function (arrayBuffer, processUri) {
     });
 };
 
+// Incrementally add animations to loaded characters
+Viewer.prototype.addAnimation = function(roots)
+{
+    if(this.gltfRoot.children.length === 0)
+        return;
+
+    // Check newly loaded animation
+    var animRoot = null;
+    if(roots && roots.length > 0)
+        animRoot = roots[0];
+    var animComponent = null;
+    if(animRoot && animRoot.script && animRoot.script.anim && animRoot.script.anim.animComponent.clipCount() > 0) 
+        animComponent = animRoot.script.anim.animComponent;
+    else 
+        return; 
+
+    // Add to character's animation component
+    var characterRoot = this.gltfRoot.children[0];
+    if(!characterRoot.script)
+        characterRoot.addComponent('script'); 
+    if (!characterRoot.script.anim) 
+    {
+        characterRoot.script.create('anim');
+        characterRoot.script.anim.animComponent = new AnimationComponent();  
+    }   
+    var characterAnimComponent = characterRoot.script.anim.animComponent; 
+
+    var clipNames = Object.keys(animComponent.animClips);
+    for(var i = 0; i < clipNames.length; i ++)
+    {
+        var cname = clipNames[i];
+        var clip = animComponent.animClips[cname];
+        // Transfer the animation clip to character's root
+        clip.transferToRoot(characterRoot);
+        characterAnimComponent.addClip(clip); 
+        characterAnimComponent.curClip = clip.name;
+    } 
+    if(characterAnimComponent.getCurrentClip())
+        characterAnimComponent.getCurrentClip().resetSession(); 
+};
+
+Viewer.prototype.addGltf = function(arrayBuffer, processUri) 
+{
+    var decoder = new TextDecoder('utf-8');
+    var json = decoder.decode(arrayBuffer);
+    var gltf = JSON.parse(json);
+    var onSuccess = function (roots) { this.addAnimation(roots); }.bind(this);
+    loadGltf(gltf, this.app.graphicsDevice, onSuccess, {processUri: processUri});  
+};
+
+Viewer.prototype.addGlb = function (arrayBuffer) 
+{  
+    var onSuccess = function (roots) { this.addAnimation(roots); }.bind(this);
+    loadGlb(arrayBuffer, this.app.graphicsDevice,  onSuccess);
+};
 
 function main() {
     var viewer;
 
-    // handle dropped GLB/GLTF files
+    // Handle dropped GLB/GLTF files
     document.addEventListener('dragover', function (event) {
         event.preventDefault();
-    }, false);
-    document.addEventListener('drop', function (event) {
-        event.preventDefault();
+    }, false); 
 
+    var bAddAnimation = false;
+    document.addEventListener('dblclick', function(event) { bAddAnimation = !bAddAnimation; }, false);
+
+    document.addEventListener('drop', function (event) {
+        event.preventDefault(); 
+ 
         var dropzone = document.getElementById('dropzone');
         dropzone.style.display = 'none';
 
         if (!viewer)
             viewer = new Viewer();
-
+        
+        var bAddMode = bAddAnimation; // event.ctrlKey;
         var loadFile = function (file, availableFiles) {
             var processUri = function (uri, success) {
                 for (filename in availableFiles) {
@@ -171,9 +231,11 @@ function main() {
                 var extension = file.name.split('.').pop();
 
                 if (extension === 'glb') {
-                    viewer.loadGlb(arrayBuffer);
+                    if(bAddAnimation) viewer.addGlb(arrayBuffer);
+                    else viewer.loadGlb(arrayBuffer);
                 } else if (extension === 'gltf') {
-                    viewer.loadGltf(arrayBuffer, processUri);
+                    if(bAddAnimation) viewer.addGltf(arrayBuffer, processUri);
+                    else viewer.loadGltf(arrayBuffer, processUri);
                 }
             };
             fr.readAsArrayBuffer(file);
@@ -231,6 +293,7 @@ function main() {
                     loadFile(files[filename], files);
                 }
             };
-        });
+        }); 
+
     }, false);
 }
