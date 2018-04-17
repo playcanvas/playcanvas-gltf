@@ -157,6 +157,7 @@ Viewer.prototype.addAnimation = function(roots)
         characterRoot.script.anim.animComponent = new AnimationComponent();  
     }   
     var characterAnimComponent = characterRoot.script.anim.animComponent; 
+    characterAnimComponent.stopClip();
 
     var clipNames = Object.keys(animComponent.animClips);
     for(var i = 0; i < clipNames.length; i ++)
@@ -168,8 +169,11 @@ Viewer.prototype.addAnimation = function(roots)
         characterAnimComponent.addClip(clip); 
         characterAnimComponent.curClip = clip.name;
     } 
-    if(characterAnimComponent.getCurrentClip())
-        characterAnimComponent.getCurrentClip().resetSession(); 
+    if(characterAnimComponent.getCurrentClip()){
+        //characterAnimComponent.getCurrentClip().resetSession();
+        characterAnimComponent.getCurrentClip().loop = true;  
+        characterAnimComponent.getCurrentClip().play();
+    }
 };
 
 Viewer.prototype.addGltf = function(arrayBuffer, processUri) 

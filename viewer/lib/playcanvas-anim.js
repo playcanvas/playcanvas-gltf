@@ -1159,13 +1159,13 @@ var AnimationSession = function AnimationSession(playable, targets) {
         self.curTime += (self.bySpeed * dt);
 
         if (!self.isPlaying ||// not playing
-            (!self.loop && (self.curTime < self.begTime || self.curTime > self.endTime)) || // not in range
-            (self.fadeDir === -1 && self.curTime > self.fadeEndTime)) { // in duration but faded out already
+            (!self.loop && (self.curTime < self.begTime || self.curTime > self.endTime))){ // not in range 
             self.stop();
             self.invokeByName("stop");
             return;
         }
-
+        
+        //round time to duration
         var duration = self.endTime - self.begTime;
         if (self.curTime > self.endTime) { // loop start
             self.curTime -= duration;
@@ -1173,7 +1173,11 @@ var AnimationSession = function AnimationSession(playable, targets) {
                 self.animEvents[i].triggered = false;
         }
         if (self.curTime < self.begTime)
-            self.curTime += duration;
+            self.curTime += duration; 
+        
+        var bReturn = self._onceFaded();//if complete, stop playing/fading
+        if(bReturn)
+            return; 
 
         self.showAt(self.curTime, self.fadeDir, self.fadeBegTime, self.fadeEndTime);
         self.invokeByTime(self.curTime);
@@ -1181,6 +1185,35 @@ var AnimationSession = function AnimationSession(playable, targets) {
 };
 
 AnimationSession.app = null;
+
+AnimationSession.prototype._onceFaded = function () {
+    if(this.fadeDir===0)
+        return false; 
+    
+    if(this.fadeEndTime <= this.endTime) { 
+         if(this.curTime >= this.fadeBegTime && this.curTime <= this.fadeEndTime)//not completed faded yet
+            return false; 
+    }
+    else {
+        var ft = this.fadeEndTime - this.endTime;
+        if(this.curTime >= this.fadeBegTime || this.curTime <= ft)//not completed faded yet
+            return false; 
+    }
+    
+    //fading completed
+    if(this.fadeDir === -1) {//fade out completed, stop playing
+        this.stop();
+        return true;
+    }
+    else if(this.fadeDir === 1) {//fade in complete, stop fading
+        this.fadeDir = 0;
+        this.fadeBegTime = -1;
+        this.fadeEndTime = -1;
+        return false;
+    } 
+    return false; 
+};
+
 
 // events related
 AnimationSession.prototype.on = function (name, time, fnCallback, parameter) {
