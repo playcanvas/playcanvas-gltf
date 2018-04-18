@@ -8,8 +8,7 @@
         Anim.prototype.initialize = function () {
             if(!this.animComponent || this.animComponent.clipCount() === 0 ||
                 !this.animComponent.getCurrentClip())
-                return;
-
+                return; 
             this.animComponent.getCurrentClip().play();
         };
 
