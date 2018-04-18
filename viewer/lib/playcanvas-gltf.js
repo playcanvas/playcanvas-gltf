@@ -10,7 +10,9 @@
                 !this.animComponent.getCurrentClip())
                 return;
 
-            this.animComponent.getCurrentClip().resetSession();
+            if(!this.animComponent.getCurrentClip().loop)
+                this.animComponent.getCurrentClip().loop = true;
+            this.animComponent.getCurrentClip().play();
         };
 
         Anim.prototype.update = function (dt) {
@@ -18,7 +20,7 @@
                 !this.animComponent.getCurrentClip())
                 return;
 
-            this.animComponent.getCurrentClip().session.onTimer(dt);
+            //this.animComponent.getCurrentClip().session.onTimer(dt);
         };
     }
 
