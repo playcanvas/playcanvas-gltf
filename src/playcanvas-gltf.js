@@ -1,4 +1,4 @@
-(function () {
+(function () { 
 
     // Math utility functions
     function nearestPow2(n) {
