@@ -1177,8 +1177,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
             self.curTime += duration; 
         
         if(self.fadeDir) { 
-            self.fadeTime +=  dt;//(self.bySpeed * dt);
-            console.log(self.playable.name, " fadeTime:", self.fadeTime, " fadeBeg:", self.fadeBegTime, " fadeEnd:", self.fadeEndTime, " end: ", self.endTime);
+            self.fadeTime +=  dt;//(self.bySpeed * dt); 
             if(self.fadeTime >= self.fadeEndTime) { 
                 if(self.fadeDir === 1) {//fadein completed
                     self.fadeDir = 0;
