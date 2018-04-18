@@ -9,9 +9,7 @@
             if(!this.animComponent || this.animComponent.clipCount() === 0 ||
                 !this.animComponent.getCurrentClip())
                 return;
-
-            if(!this.animComponent.getCurrentClip().loop)
-                this.animComponent.getCurrentClip().loop = true;
+ 
             this.animComponent.getCurrentClip().play();
         };
 
@@ -19,8 +17,6 @@
             if(!this.animComponent || this.animComponent.clipCount() === 0 ||
                 !this.animComponent.getCurrentClip())
                 return;
-
-            //this.animComponent.getCurrentClip().session.onTimer(dt);
         };
     }
 
@@ -124,6 +120,7 @@
     //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#animation
     function translateAnimation(data, resources) {
         var clip = new AnimationClip();
+        clip.loop = true;
         if(data.hasOwnProperty('name'))
             clip.name = data.name;
 
