@@ -1140,8 +1140,8 @@ AnimationClip.prototype.setInterpolationType = function (type) {
 // * class AnimationEvent:
 // *===============================================================================================================
 var AnimationEvent = function AnimationEvent(name, time, fnCallback, context, parameter) {
-    this.name = name;
-    this.triggerTime = time; 
+    this.name = name; 
+    this.triggerTime = time;
     this.fnCallback = fnCallback;
     this.context = context || this;
     this.parameter = parameter;
@@ -1149,9 +1149,9 @@ var AnimationEvent = function AnimationEvent(name, time, fnCallback, context, pa
     this.triggered = false;
 };
 
-AnimationEvent.prototype.invoke = function () { 
+AnimationEvent.prototype.invoke = function () {
     if (this.fnCallback) {
-        this.fnCallback.call(this.context, this.parameter); 
+        this.fnCallback.call(this.context, this.parameter);
         this.triggered = true;
     }
 };
@@ -1476,7 +1476,7 @@ AnimationSession.prototype.play = function (playable, animTargets) {
         this.animTargets = animTargets; 
 
     // reset events
-    for (i = 0; i < this.animEvents.length; i ++)
+    for (i = 0; i < this.animEvents.length; i ++) 
         this.animEvents[i].triggered = false;
 
     // reset events
