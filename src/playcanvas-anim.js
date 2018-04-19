@@ -1142,16 +1142,16 @@ AnimationClip.prototype.setInterpolationType = function (type) {
 var AnimationEvent = function AnimationEvent(name, time, fnCallback, context, parameter) {
     this.name = name;
     this.triggerTime = time;
-    this.fnCallback = fnCallback;
+    this.fnCallback = fnCallback; 
     this.context = context || this;
     this.parameter = parameter;
 
     this.triggered = false;
 };
 
-AnimationEvent.prototype.invoke = function () {
+AnimationEvent.prototype.invoke = function () { 
     if (this.fnCallback) {
-        this.fnCallback.call(this.context, this.parameter);
+        this.fnCallback.call(this.context, this.parameter); 
         this.triggered = true;
     }
 };
@@ -1199,8 +1199,8 @@ var AnimationSession = function AnimationSession(playable, targets) {
         self.curTime += (self.bySpeed * dt);
         self.accTime += (self.bySpeed * dt);
 
-        if (!self.isPlaying ||// not playing
-            (!self.loop && (self.curTime < self.begTime || self.curTime > self.endTime))){ // not in range
+        if (!self.isPlaying ||// not playing 
+            (!self.loop && (self.curTime < self.begTime || self.curTime > self.endTime))){ // not in range 
             self.invokeByTime(self.curTime);
             self.stop();
             self.invokeByName("stop");
@@ -1474,7 +1474,7 @@ AnimationSession.prototype.play = function (playable, animTargets) {
     if (!animTargets && typeof playable.getAnimTargets === "function")
         this.animTargets = playable.getAnimTargets();
     else
-        this.animTargets = animTargets;
+        this.animTargets = animTargets; 
 
     // reset events
     for (i = 0; i < this.animEvents.length; i ++)
@@ -1485,7 +1485,7 @@ AnimationSession.prototype.play = function (playable, animTargets) {
         this.animEvents[i].triggered = false;
 
     var app = pc.Application.getApplication();
-    app.on('update', this.onTimer);
+    app.on('update', this.onTimer); 
     return this;
 };
 
