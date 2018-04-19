@@ -1110,7 +1110,7 @@ var AnimationEvent = function AnimationEvent(name, time, fnCallback, context, pa
     this.name = name;
     this.triggerTime = time;
     this.fnCallback = fnCallback;
-    this.context = context;
+    this.context = context || this;
     this.parameter = parameter;
 
     this.triggered = false;
