@@ -1141,8 +1141,8 @@ AnimationClip.prototype.setInterpolationType = function (type) {
 // *===============================================================================================================
 var AnimationEvent = function AnimationEvent(name, time, fnCallback, context, parameter) {
     this.name = name;
-    this.triggerTime = time;
-    this.fnCallback = fnCallback; 
+    this.triggerTime = time; 
+    this.fnCallback = fnCallback;
     this.context = context || this;
     this.parameter = parameter;
 
