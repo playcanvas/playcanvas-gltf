@@ -346,7 +346,8 @@
 
             if (pbrData.hasOwnProperty('baseColorFactor')) {
                 color = pbrData.baseColorFactor;
-                material.diffuse.set(color[0], color[1], color[2]);
+                // Convert from linear space to sRGB space
+                material.diffuse.set(Math.pow(color[0], 1 / 2.2), Math.pow(color[1], 1 / 2.2), Math.pow(color[2], 1 / 2.2));
                 material.opacity = color[3];
             } else {
                 material.diffuse.set(1, 1, 1);
@@ -409,7 +410,8 @@
         }
         if (data.hasOwnProperty('emissiveFactor')) {
             color = data.emissiveFactor;
-            material.emissive.set(color[0], color[1], color[2]);
+            // Convert from linear space to sRGB space
+            material.emissive.set(Math.pow(color[0], 1 / 2.2), Math.pow(color[1], 1 / 2.2), Math.pow(color[2], 1 / 2.2));
             material.emissiveTint = true;
         } else {
             material.emissive.set(0, 0, 0);
