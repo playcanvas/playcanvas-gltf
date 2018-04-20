@@ -437,15 +437,15 @@ AnimationCurve.prototype.getAnimTargets = function () {
 };
 
 // events related
-AnimationCurve.prototype.on = function (name, time, fnCallback, parameter) {
+AnimationCurve.prototype.on = function (name, time, fnCallback, context, parameter) {
     if (this.session)
-        this.session.on(name, time, fnCallback, parameter);
+        this.session.on(name, time, fnCallback, context, parameter);
     return this;
 };
 
-AnimationCurve.prototype.off = function (name, time, fnCallback, parameter) {
+AnimationCurve.prototype.off = function (name, time, fnCallback) {
     if (this.session)
-        this.session.off(name, time, fnCallback, parameter);
+        this.session.off(name, time, fnCallback);
     return this;
 };
 
@@ -942,15 +942,15 @@ AnimationClip.prototype.removeAllCurves = function () {
 
 
 // events related
-AnimationClip.prototype.on = function (name, time, fnCallback, parameter) {
+AnimationClip.prototype.on = function (name, time, fnCallback, context, parameter) {
     if (this.session)
-        this.session.on(name, time, fnCallback, parameter);
+        this.session.on(name, time, fnCallback, context, parameter);
     return this;
 };
 
-AnimationClip.prototype.off = function (name, time, fnCallback, parameter) {
+AnimationClip.prototype.off = function (name, time, fnCallback) {
     if (this.session)
-        this.session.off(name, time, fnCallback, parameter);
+        this.session.off(name, time, fnCallback);
     return this;
 };
 
@@ -1106,18 +1106,19 @@ AnimationClip.prototype.setInterpolationType = function (type) {
 // *===============================================================================================================
 // * class AnimationEvent:
 // *===============================================================================================================
-var AnimationEvent = function AnimationEvent(name, time, fnCallback, parameter) {
+var AnimationEvent = function AnimationEvent(name, time, fnCallback, context, parameter) {
     this.name = name;
     this.triggerTime = time;
     this.fnCallback = fnCallback;
+    this.context = context || this;
     this.parameter = parameter;
 
     this.triggered = false;
 };
 
 AnimationEvent.prototype.invoke = function () {
-    if (this.fnCallback) {
-        this.fnCallback(this.parameter);
+    if (this.fnCallback) { 
+        this.fnCallback.call(this.context, this.parameter); 
         this.triggered = true;
     }
 };
@@ -1161,6 +1162,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
 
         if (!self.isPlaying ||// not playing
             (!self.loop && (self.curTime < self.begTime || self.curTime > self.endTime))){ // not in range 
+            self.invokeByTime(self.curTime);
             self.stop();
             self.invokeByName("stop");
             return;
@@ -1169,6 +1171,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
         //round time to duration
         var duration = self.endTime - self.begTime;
         if (self.curTime > self.endTime) { // loop start
+            self.invokeByTime(self.curTime);
             self.curTime -= duration;
             for (var i = 0; i < self.animEvents.length; i ++)
                 self.animEvents[i].triggered = false;
@@ -1199,11 +1202,11 @@ var AnimationSession = function AnimationSession(playable, targets) {
 AnimationSession.app = null; 
 
 // events related
-AnimationSession.prototype.on = function (name, time, fnCallback, parameter) {
+AnimationSession.prototype.on = function (name, time, fnCallback, context, parameter) {
     if (!name || !fnCallback)
         return;
 
-    var event = new AnimationEvent(name, time, fnCallback, parameter);
+    var event = new AnimationEvent(name, time, fnCallback, context, parameter);
     var pos = 0;
     for (; pos < this.animEvents.length; pos ++) {
         if (this.animEvents[pos].triggerTime > time)
@@ -1216,7 +1219,7 @@ AnimationSession.prototype.on = function (name, time, fnCallback, parameter) {
         this.animEvents.splice(pos, 0, event);
 };
 
-AnimationSession.prototype.off = function (name, time, fnCallback, parameter) {
+AnimationSession.prototype.off = function (name, time, fnCallback) {
     var pos = 0;
     for ( ; pos < this.animEvents.length; pos ++) {
         var event = this.animEvents[pos];
@@ -1380,6 +1383,10 @@ AnimationSession.prototype.play = function (playable, animTargets) {
         this.animTargets = playable.getAnimTargets();
     else
         this.animTargets = animTargets;
+
+    //reset events 
+    for (var i = 0; i < this.animEvents.length; i ++)
+        this.animEvents[i].triggered = false;
 
     if(AnimationSession.app)
         AnimationSession.app.on('update', this.onTimer);
