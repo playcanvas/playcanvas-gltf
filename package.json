@@ -1,0 +1,36 @@
+{
+  "name": "playcanvas-gltf",
+  "version": "1.0.0",
+  "author": "PlayCanvas <support@playcanvas.com>",
+  "homepage": "https://playcanvas.com",
+  "description": "PlayCanvas glTF loader",
+  "keywords": [
+    "playcanvas",
+    "gltf",
+    "animation",
+    "webgl",
+    "webgl2",
+    "3d"
+  ],
+  "license": "MIT",
+  "main": "viewer/lib/playcanvas-gltf.js",
+  "bugs": {
+    "url": "https://github.com/playcanvas/playcanvas-gltf/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/playcanvas/playcanvas-gltf.git"
+  },
+  "devDependencies": {
+    "electron": ">=1.8.4",
+    "eslint": "^4.19.0",
+    "eslint-config-playcanvas": "^1.0.0"
+  },
+  "scripts": {
+    "viewer": "electron ./viewer/main.js",
+    "lint": "eslint viewer/lib/playcanvas-anim.js viewer/lib/playcanvas-gltf.js"
+  },
+  "engines": {
+    "node": ">= 0.6.12"
+  }
+}
