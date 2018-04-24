@@ -166,6 +166,18 @@ var AnimationTarget = function AnimationTarget(targetNode, targetPath, targetPro
     this.targetProp = targetProp;
 };
 
+//yiwang:
+AnimationTarget.prototype.toString = function(){
+    var str = "";
+    if(this.targetNode)
+        str += this.targetNode.name;
+    if(this.targetPath)
+        str += ("_" + this.targetPath);
+    if(this.targetProp)
+        str += ("_" + this.targetProp);
+    return str;
+};
+
 AnimationTarget.prototype.copy = function (target) {
     if (target) {
         this.targetNode = target.targetNode;
@@ -1086,6 +1098,25 @@ AnimationClip.prototype.transferToRoot = function (root) {
     }
 };
 
+//yiwang
+AnimationClip.prototype.updateCurveNameFromTarget = function () {
+    var curveNames = Object.keys(this.animCurves);
+    for (var i = 0; i < curveNames.length; i++) { // for each curve in clip
+        var oldName = curveNames[i]; 
+        if (!oldName || !this.animCurves[oldName])
+            continue;
+        var curve = this.animCurves[oldName];
+        if(!curve.animTargets || curve.animTargets.length < 1)
+            continue;
+
+        //change name to target string
+        var newName = curve.animTargets[0].toString();
+        curve.name = newName;
+        this.animCurves[newName] = curve;
+        delete this.animCurves[oldName]; 
+    } 
+};
+
 AnimationClip.prototype.removeEmptyCurves = function () {
     var curveNames = Object.keys(this.animCurves);
     for (var i = 0; i < curveNames.length; i++) {
@@ -1133,6 +1164,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
     this.begTime = -1;
     this.endTime = -1;
     this.curTime = 0;
+    this.accTime = 0;//accumulate time since play WANGYI
     this.bySpeed = 1;
     this.isPlaying = false;
     this.loop = false;
@@ -1155,10 +1187,16 @@ var AnimationSession = function AnimationSession(playable, targets) {
 
     this.animEvents = [];
 
+    //yiwang blend related==========================================================
+    this.blendable = null;
+    this.blendDOF = {}; 
+    this.blendWeights = {};
+
     // ontimer function for playback
     var self = this; 
     this.onTimer = function (dt) {
         self.curTime += (self.bySpeed * dt);
+        self.accTime += (self.bySpeed * dt);//WANGYI
 
         if (!self.isPlaying ||// not playing
             (!self.loop && (self.curTime < self.begTime || self.curTime > self.endTime))){ // not in range 
@@ -1200,6 +1238,46 @@ var AnimationSession = function AnimationSession(playable, targets) {
 };
 
 AnimationSession.app = null; 
+
+//yiwang blend related==========================================================
+AnimationSession.prototype.setBlend = function(blendValue, weight, curveName){
+    if(blendValue instanceof AnimationClip){
+        this.blendable = blendValue;
+        if(!curveName || curveName === "")
+            this.blendWeights["__default__"] = weight;
+        else
+            this.blendWeights[curveName] = weight;
+        return;
+    }
+
+    //blendable is just a single DOF=================================
+    var keyType;
+    if(typeof blendValue === "number")//1 instanceof Number is false, don't know why
+        keyType =  AnimationKeyableType.NUM;
+    else if(blendValue instanceof pc.Vec3)
+        keyType = AnimationKeyableType.VEC;
+    else if(blendValue instanceof pc.Quat)
+        keyType = AnimationKeyableType.QUAT;
+
+    if(!curveName || curveName === "" || typeof keyType === "undefined")//has to specify curveName
+        return;  
+
+    this.blendWeights[curveName] = weight;  
+    this.blendDOF[curveName] = new AnimationKeyable(keyType, 0, blendValue); 
+};
+
+AnimationSession.prototype.unsetBlend = function(curveName) {
+    if(!curveName || curveName === "") { //remove all blend
+        this.blendable = null;
+        this.blendWeights["__default__"] = 0; 
+        return;
+    } 
+    //unset blendvalue of a single DOF==================================
+    if(this.blendDOF[curveName]) {
+        delete this.blendDOF[curveName];
+        delete this.blendWeights[curveName];
+    } 
+};
 
 // events related
 AnimationSession.prototype.on = function (name, time, fnCallback, context, parameter) {
@@ -1337,6 +1415,24 @@ AnimationSession.prototype.updateToTarget = function (input) {
 
 AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTime, fadeTime) {
     var input = this.playable.eval(time); 
+    //yiwang blend related==========================================================
+    if(this.blendable && this.blendable instanceof AnimationClip){
+        var blendInput = this.blendable.eval(this.accTime%this.blendable.duration); 
+        if(typeof this.blendWeights["__default__"] === "number") { 
+            input = AnimationClipSnapshot.linearBlend(input, blendInput, this.blendWeights["__default__"]);  
+        }
+    }
+    //on top, check custom bones
+    var dofNames = Object.keys(this.blendDOF);
+    for (var i = 0; i < dofNames.length; i ++) {
+        var cname = dofNames[i];
+        var p = this.blendWeights[cname];
+        var blendkey = this.blendDOF[cname];
+        if (input.curveKeyable[cname] && blendkey) { //only blend if exists
+            var resKey = AnimationKeyable.linearBlend(input.curveKeyable[cname], blendkey, p);
+            input.curveKeyable[cname] = resKey;
+        } 
+    } 
     
     if(fadeDir === 0 || fadeTime < fadeBegTime || fadeTime > fadeEndTime)
         this.updateToTarget(input);
@@ -1346,18 +1442,6 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
             p = 1 - p;
         this.blendToTarget(input, p);
     } 
-    
-    /*if (!fadeDir ||  // no fading
-        (fadeDir === -1 && time < fadeBegTime) || // earlier than fade out
-        (fadeDir === 1 && time > fadeEndTime)) { // later than fade in
-        this.updateToTarget(input);
-
-    } else if (time >= fadeBegTime && time <= fadeEndTime) {
-        var p = (time - fadeBegTime) / (fadeEndTime - fadeBegTime);
-        if (fadeDir === -1)
-            p = 1 - p;
-        this.blendToTarget(input, p);
-    }*/
 };  
 
 AnimationSession.prototype.play = function (playable, animTargets) {
@@ -1373,6 +1457,7 @@ AnimationSession.prototype.play = function (playable, animTargets) {
     this.begTime = 0;
     this.endTime = playable.duration;
     this.curTime = 0;
+    this.accTime = 0;//WANGYI:
     this.isPlaying = true;
     if (this !== playable.session) {
         this.bySpeed = playable.bySpeed;
@@ -1512,3 +1597,18 @@ AnimationComponent.prototype.crossFadeToClip = function (name, duration) {
         this.curClip = name;
     }
 };
+
+
+//yiwang: blend related
+AnimationComponent.prototype.setBlend = function (blendValue, weight, curveName) {
+    var curClip = this.getCurrentClip();
+    if(curClip && curClip.session)
+        curClip.session.setBlend(blendValue, weight, curveName);
+};
+ 
+AnimationComponent.prototype.unsetBlend = function(curveName) {
+    var curClip = this.getCurrentClip();
+    if(curClip && curClip.session)
+        curClip.session.unsetBlend(curveName);
+};
+
