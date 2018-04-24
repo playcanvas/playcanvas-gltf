@@ -1138,7 +1138,7 @@ AnimationClip.prototype.setInterpolationType = function (type) {
 // * class AnimationEvent:
 // *===============================================================================================================
 var AnimationEvent = function AnimationEvent(name, time, fnCallback, context, parameter) {
-    this.name = name;
+    this.name = name; 
     this.triggerTime = time; 
     this.fnCallback = fnCallback; 
     this.context = context || this;  
@@ -1146,8 +1146,8 @@ var AnimationEvent = function AnimationEvent(name, time, fnCallback, context, pa
 
     this.triggered = false;
 };
-
-AnimationEvent.prototype.invoke = function () { 
+ 
+AnimationEvent.prototype.invoke = function () {
     if (this.fnCallback) { 
         this.fnCallback.call(this.context, this.parameter);  
         this.triggered = true;
@@ -1192,7 +1192,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
     this.blendWeights = {}; 
 
     // ontimer function for playback
-    var self = this; 
+    var self = this;  
     this.onTimer = function (dt) { 
         self.curTime += (self.bySpeed * dt);
         self.accTime += (self.bySpeed * dt); 
@@ -1234,7 +1234,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
         self.showAt(self.curTime, self.fadeDir, self.fadeBegTime, self.fadeEndTime, self.fadeTime);
         self.invokeByTime(self.curTime);
     };
-};
+}; 
  
 AnimationSession.app = null;
 
@@ -1273,7 +1273,7 @@ AnimationSession.prototype.unsetBlend = function(curveName) {
         delete this.blendables[curveName];
         delete this.blendWeights[curveName];
     } 
-};  
+}; 
 
 // events related
 AnimationSession.prototype.on = function (name, time, fnCallback, context, parameter) {
@@ -1473,6 +1473,10 @@ AnimationSession.prototype.play = function (playable, animTargets) {
     for (var i = 0; i < this.animEvents.length; i ++)
         this.animEvents[i].triggered = false;
 
+    //reset events 
+    for (var i = 0; i < this.animEvents.length; i ++)
+        this.animEvents[i].triggered = false;
+
     if(AnimationSession.app)
         AnimationSession.app.on('update', this.onTimer);
     return this;
@@ -1503,9 +1507,9 @@ AnimationSession.prototype.resume = function () {
         if(AnimationSession.app) AnimationSession.app.on('update', this.onTimer);
     }
 };
-
+ 
 AnimationSession.prototype.fadeOut = function (duration) { 
-    this.fadeBegTime = this.curTime;  
+    this.fadeBegTime = this.curTime;   
     this.fadeTime = this.fadeBegTime;
     this.fadeEndTime = this.fadeBegTime + duration;
     this.fadeDir = -1;

@@ -7,7 +7,7 @@
 
         Anim.prototype.initialize = function () {
             if(!this.animComponent || this.animComponent.clipCount() === 0 ||
-                !this.animComponent.getCurrentClip())
+                !this.animComponent.getCurrentClip()) 
                 return; 
             this.animComponent.getCurrentClip().play();
         };
