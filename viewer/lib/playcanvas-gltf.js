@@ -1221,6 +1221,13 @@
                 success(getRoots(resources));
             });
         });
+
+        if (gltf.hasOwnProperty('extensionsUsed')) {
+            var extensionsUsed = gltf.extensionsUsed;
+            if (extensionsUsed.indexOf('KHR_draco_mesh_compression') !== -1) {
+                resources.decoderModule = null;
+            }
+        }
     }
 
     function loadGlb(glb, device, success) {
