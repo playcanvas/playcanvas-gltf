@@ -622,7 +622,7 @@
                 // pc.calculateNormals needs indices so generate some if none are present
                 normals = pc.calculateNormals(positions, (indices === null) ? calculateIndices() : indices);
             }
-            if (positions !== null && normals !== null && texCoord0 !== null && tangents === null) {
+            if (positions !== null && normals !== null && texCoord0 !== null && tangents === null && resources.calculateTangents) {
                 // pc.calculateTangents needs indices so generate some if none are present
                 tangents = pc.calculateTangents(positions, normals, texCoord0, (indices === null) ? calculateIndices() : indices);
             }
@@ -1181,6 +1181,15 @@
         return rootNodes;
     }
 
+    function requiresTangents(gltf) {
+        for (var i = 0, len = gltf.materials.length; i < len; i++) {
+            if (gltf.materials[i].hasOwnProperty('normalTexture')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function loadGltf(gltf, device, success, options) {
         initAnim();
 
@@ -1190,6 +1199,7 @@
 
         var resources = {
             buffers: buffers,
+            calculateTangents: requiresTangents(gltf),
             imagesLoaded: 0,
             basePath: basePath,
             processUri: processUri,
@@ -1197,6 +1207,7 @@
             device: device,
             defaultMaterial: translateMaterial({})
         };
+
 
         if (gltf.hasOwnProperty('extensionsUsed')) {
             var extensionsUsed = gltf.extensionsUsed;
