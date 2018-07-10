@@ -1193,21 +1193,21 @@
     function loadGltf(gltf, device, success, options) {
         initAnim();
 
-        var buffers = options ? options.buffers : undefined;
-        var basePath = options ? options.basePath : undefined;
-        var processUri = options ? options.processUri : undefined;
+        var buffers = (options && options.hasOwnProperty('buffers')) ? options.buffers : undefined;
+        var basePath = (options && options.hasOwnProperty('basePath')) ? options.basePath : undefined;
+        var processUri = (options && options.hasOwnProperty('processUri')) ? options.processUri : undefined;
+        var calculateTangents = (options && options.hasOwnProperty('calculateTangents')) ? options.calculateTangents : requiresTangents(gltf);
 
         var resources = {
-            buffers: buffers,
-            calculateTangents: requiresTangents(gltf),
-            imagesLoaded: 0,
             basePath: basePath,
-            processUri: processUri,
-            gltf: gltf,
+            buffers: buffers,
+            calculateTangents: calculateTangents,
             device: device,
-            defaultMaterial: translateMaterial({})
+            defaultMaterial: translateMaterial({}),
+            gltf: gltf,
+            imagesLoaded: 0,
+            processUri: processUri
         };
-
 
         if (gltf.hasOwnProperty('extensionsUsed')) {
             var extensionsUsed = gltf.extensionsUsed;
@@ -1240,7 +1240,7 @@
         });
     }
 
-    function loadGlb(glb, device, success) {
+    function loadGlb(glb, device, success, options) {
         var dataView = new DataView(glb);
 
         // Read header
@@ -1281,11 +1281,12 @@
         var json = decoder.decode(jsonData);
         json = JSON.parse(json);
 
+        options = options ? options : {};
+        options.buffers = buffers;
+
         loadGltf(json, device, function (rootNodes) {
             success(rootNodes);
-        }, {
-            buffers: buffers
-        });
+        }, options);
     }
 
     window.loadGltf = loadGltf;
