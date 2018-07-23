@@ -19,11 +19,19 @@
   navigator = _navigator || navigator;
 
   /*
- PlayCanvas Engine v1.0.1 revision 79eaa99
+ PlayCanvas Engine v1.4.3 revision c1a9280
  http://playcanvas.com
- Copyright 2011-2017 PlayCanvas Ltd. All rights reserved.
+ Copyright 2011-2018 PlayCanvas Ltd. All rights reserved.
 */
-var pc = {version:"1.0.1", revision:"79eaa99", config:{}, common:{}, apps:{}, data:{}, unpack:function() {
+var _typeLookup = function() {
+  var result = {};
+  var names = ["Array", "Object", "Function", "Date", "RegExp", "Float32Array"];
+  for (var i = 0;i < names.length;i++) {
+    result["[object " + names[i] + "]"] = names[i].toLowerCase();
+  }
+  return result;
+}();
+var pc = {version:"1.4.3", revision:"c1a9280", config:{}, common:{}, apps:{}, data:{}, unpack:function() {
   console.warn("pc.unpack has been deprecated and will be removed shortly. Please update your code.");
 }, makeArray:function(arr) {
   var i, ret = [], length = arr.length;
@@ -36,7 +44,7 @@ var pc = {version:"1.0.1", revision:"79eaa99", config:{}, common:{}, apps:{}, da
     return "null";
   }
   var type = typeof obj;
-  if (type == "undefined" || type == "number" || type == "string" || type == "boolean") {
+  if (type === "undefined" || type === "number" || type === "string" || type === "boolean") {
     return type;
   }
   return _typeLookup[Object.prototype.toString.call(obj)];
@@ -59,74 +67,8 @@ var pc = {version:"1.0.1", revision:"79eaa99", config:{}, common:{}, apps:{}, da
   var a;
   return o !== a;
 }};
-var _typeLookup = function() {
-  var result = {};
-  var names = ["Array", "Object", "Function", "Date", "RegExp", "Float32Array"];
-  for (var i = 0;i < names.length;i++) {
-    result["[object " + names[i] + "]"] = names[i].toLowerCase();
-  }
-  return result;
-}();
 if (typeof exports !== "undefined") {
   exports.pc = pc;
-}
-;(function() {
-  var lastTime = 0;
-  var vendors = ["ms", "moz", "webkit", "o"];
-  for (var x = 0;x < vendors.length && !window.requestAnimationFrame;++x) {
-    window.requestAnimationFrame = window[vendors[x] + "RequestAnimationFrame"];
-    window.cancelAnimationFrame = window[vendors[x] + "CancelAnimationFrame"] || window[vendors[x] + "CancelRequestAnimationFrame"];
-  }
-  if (!window.requestAnimationFrame) {
-    window.requestAnimationFrame = function(callback, element) {
-      var currTime = (new Date).getTime();
-      var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-      var id = window.setTimeout(function() {
-        callback(currTime + timeToCall);
-      }, timeToCall);
-      lastTime = currTime + timeToCall;
-      return id;
-    };
-  }
-  if (!window.cancelAnimationFrame) {
-    window.cancelAnimationFrame = function(id) {
-      clearTimeout(id);
-    };
-  }
-})();
-if (!String.prototype.startsWith) {
-  Object.defineProperty(String.prototype, "startsWith", {enumerable:false, configurable:true, writable:true, value:function(str) {
-    var that = this;
-    for (var i = 0, ceil = str.length;i < ceil;i++) {
-      if (that[i] !== str[i]) {
-        return false;
-      }
-    }
-    return true;
-  }});
-}
-if (!String.prototype.endsWith) {
-  Object.defineProperty(String.prototype, "endsWith", {enumerable:false, configurable:true, writable:true, value:function(str) {
-    var that = this;
-    for (var i = 0, ceil = str.length;i < ceil;i++) {
-      if (that[i + that.length - ceil] !== str[i]) {
-        return false;
-      }
-    }
-    return true;
-  }});
-}
-if (!String.prototype.includes) {
-  String.prototype.includes = function(search, start) {
-    if (typeof start !== "number") {
-      start = 0;
-    }
-    if (start + search.length > this.length) {
-      return false;
-    } else {
-      return this.indexOf(search, start) !== -1;
-    }
-  };
 }
 ;(function() {
   if (typeof document === "undefined") {
@@ -167,7 +109,123 @@ if (!String.prototype.includes) {
     }});
   }
 })();
-pc.extend(pc, function() {
+Math.log2 = Math.log2 || function(x) {
+  return Math.log(x) * Math.LOG2E;
+};
+if (typeof Object.assign != "function") {
+  Object.defineProperty(Object, "assign", {value:function assign(target, varArgs) {
+    if (target == null) {
+      throw new TypeError("Cannot convert undefined or null to object");
+    }
+    var to = Object(target);
+    for (var index = 1;index < arguments.length;index++) {
+      var nextSource = arguments[index];
+      if (nextSource != null) {
+        for (var nextKey in nextSource) {
+          if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+            to[nextKey] = nextSource[nextKey];
+          }
+        }
+      }
+    }
+    return to;
+  }, writable:true, configurable:true});
+}
+;(function() {
+  if (typeof navigator === "undefined" || typeof document === "undefined") {
+    return;
+  }
+  navigator.pointer = navigator.pointer || navigator.webkitPointer || navigator.mozPointer;
+  var pointerlockchange = function() {
+    var e = document.createEvent("CustomEvent");
+    e.initCustomEvent("pointerlockchange", true, false, null);
+    document.dispatchEvent(e);
+  };
+  var pointerlockerror = function() {
+    var e = document.createEvent("CustomEvent");
+    e.initCustomEvent("pointerlockerror", true, false, null);
+    document.dispatchEvent(e);
+  };
+  document.addEventListener("webkitpointerlockchange", pointerlockchange, false);
+  document.addEventListener("webkitpointerlocklost", pointerlockchange, false);
+  document.addEventListener("mozpointerlockchange", pointerlockchange, false);
+  document.addEventListener("mozpointerlocklost", pointerlockchange, false);
+  document.addEventListener("webkitpointerlockerror", pointerlockerror, false);
+  document.addEventListener("mozpointerlockerror", pointerlockerror, false);
+  if (Element.prototype.mozRequestPointerLock) {
+    Element.prototype.requestPointerLock = function() {
+      this.mozRequestPointerLock();
+    };
+  } else {
+    Element.prototype.requestPointerLock = Element.prototype.requestPointerLock || Element.prototype.webkitRequestPointerLock || Element.prototype.mozRequestPointerLock;
+  }
+  if (!Element.prototype.requestPointerLock && navigator.pointer) {
+    Element.prototype.requestPointerLock = function() {
+      var el = this;
+      document.pointerLockElement = el;
+      navigator.pointer.lock(el, pointerlockchange, pointerlockerror);
+    };
+  }
+  document.exitPointerLock = document.exitPointerLock || document.webkitExitPointerLock || document.mozExitPointerLock;
+  if (!document.exitPointerLock) {
+    document.exitPointerLock = function() {
+      if (navigator.pointer) {
+        document.pointerLockElement = null;
+        navigator.pointer.unlock();
+      }
+    };
+  }
+})();
+(function() {
+  var lastTime = 0;
+  var vendors = ["ms", "moz", "webkit", "o"];
+  for (var x = 0;x < vendors.length && !window.requestAnimationFrame;++x) {
+    window.requestAnimationFrame = window[vendors[x] + "RequestAnimationFrame"];
+    window.cancelAnimationFrame = window[vendors[x] + "CancelAnimationFrame"] || window[vendors[x] + "CancelRequestAnimationFrame"];
+  }
+  if (!window.requestAnimationFrame) {
+    window.requestAnimationFrame = function(callback, element) {
+      var currTime = (new Date).getTime();
+      var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+      var id = window.setTimeout(function() {
+        callback(currTime + timeToCall);
+      }, timeToCall);
+      lastTime = currTime + timeToCall;
+      return id;
+    };
+  }
+  if (!window.cancelAnimationFrame) {
+    window.cancelAnimationFrame = function(id) {
+      clearTimeout(id);
+    };
+  }
+})();
+if (!String.prototype.endsWith) {
+  String.prototype.endsWith = function(search, this_len) {
+    if (this_len === undefined || this_len > this.length) {
+      this_len = this.length;
+    }
+    return this.substring(this_len - search.length, this_len) === search;
+  };
+}
+if (!String.prototype.includes) {
+  String.prototype.includes = function(search, start) {
+    if (typeof start !== "number") {
+      start = 0;
+    }
+    if (start + search.length > this.length) {
+      return false;
+    } else {
+      return this.indexOf(search, start) !== -1;
+    }
+  };
+}
+if (!String.prototype.startsWith) {
+  String.prototype.startsWith = function(search, pos) {
+    return this.substr(!pos || pos < 0 ? 0 : +pos, search.length) === search;
+  };
+}
+;Object.assign(pc, function() {
   var Color = function(r, g, b, a) {
     this.buffer = new ArrayBuffer(4 * 4);
     this.data = new Float32Array(this.buffer, 0, 4);
@@ -185,7 +243,7 @@ pc.extend(pc, function() {
       this.data[3] = a !== undefined ? a : 1.0;
     }
   };
-  Color.prototype = {clone:function() {
+  Object.assign(Color.prototype, {clone:function() {
     return new pc.Color(this.data[0], this.data[1], this.data[2], this.data[3]);
   }, copy:function(rhs) {
     var a = this.data, b = rhs.data;
@@ -202,7 +260,7 @@ pc.extend(pc, function() {
     c[3] = a === undefined ? 1 : a;
     return this;
   }, fromString:function(hex) {
-    var i = parseInt(hex.replace("#", "0x"));
+    var i = parseInt(hex.replace("#", "0x"), 16);
     var bytes;
     if (hex.length > 7) {
       bytes = pc.math.intToBytes32(i);
@@ -213,9 +271,9 @@ pc.extend(pc, function() {
     this.set(bytes[0] / 255, bytes[1] / 255, bytes[2] / 255, bytes[3] / 255);
     return this;
   }, toString:function(alpha) {
-    var s = "#" + ((1 << 24) + (parseInt(this.r * 255) << 16) + (parseInt(this.g * 255) << 8) + parseInt(this.b * 255)).toString(16).slice(1);
+    var s = "#" + ((1 << 24) + (Math.round(this.r * 255) << 16) + (Math.round(this.g * 255) << 8) + Math.round(this.b * 255)).toString(16).slice(1);
     if (alpha === true) {
-      var a = parseInt(this.a * 255).toString(16);
+      var a = Math.round(this.a * 255).toString(16);
       if (this.a < 16 / 255) {
         s += "0" + a;
       } else {
@@ -223,7 +281,7 @@ pc.extend(pc, function() {
       }
     }
     return s;
-  }};
+  }});
   Object.defineProperty(Color.prototype, "r", {get:function() {
     return this.data[0];
   }, set:function(value) {
@@ -254,13 +312,13 @@ pc.guid = function() {
     });
   }};
 }();
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Timer = function Timer() {
     this._isRunning = false;
     this._a = 0;
     this._b = 0;
   };
-  Timer.prototype = {start:function() {
+  Object.assign(Timer.prototype, {start:function() {
     this._isRunning = true;
     this._a = pc.now();
   }, stop:function() {
@@ -268,26 +326,22 @@ pc.extend(pc, function() {
     this._b = pc.now();
   }, getMilliseconds:function() {
     return this._b - this._a;
-  }};
+  }});
   return {Timer:Timer, now:!window.performance || !window.performance.now || !window.performance.timing ? Date.now : function() {
     return window.performance.now();
   }};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   return {hashCode:function(str) {
     var hash = 0;
-    if (str.length === 0) {
-      return hash;
-    }
-    for (var i = 0;i < str.length;i++) {
-      var char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
+    for (var i = 0, len = str.length;i < len;i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0;
     }
     return hash;
   }};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   return {createURI:function(options) {
     var s = "";
     if ((options.authority || options.scheme) && (options.host || options.hostpath)) {
@@ -372,7 +426,7 @@ pc.extend(pc, function() {
     };
   }};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var log = {write:function(text) {
     console.log(text);
   }, open:function() {
@@ -391,7 +445,6 @@ pc.extend(pc, function() {
   }, assert:function(condition, text) {
     if (condition === false) {
       pc.log.write("ASSERT:  " + text);
-      alert("ASSERT failed: " + text);
     }
   }};
   return {log:log};
@@ -402,35 +455,6 @@ var logWARNING = pc.log.warning;
 var logERROR = pc.log.error;
 var logALERT = pc.log.alert;
 var logASSERT = pc.log.assert;
-Function.prototype.extendsFrom = function(Super) {
-  var Self, Func;
-  var Temp = function() {
-  };
-  Self = this;
-  Func = function() {
-    Super.apply(this, arguments);
-    Self.apply(this, arguments);
-    this.constructor = Self;
-  };
-  Func._super = Super.prototype;
-  Temp.prototype = Super.prototype;
-  Func.prototype = new Temp;
-  return Func;
-};
-pc.extend(pc, function() {
-  return {inherits:function(Self, Super) {
-    var Temp = function() {
-    };
-    var Func = function(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
-      Super.call(this, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
-      Self.call(this, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
-    };
-    Func._super = Super.prototype;
-    Temp.prototype = Super.prototype;
-    Func.prototype = new Temp;
-    return Func;
-  }};
-}());
 pc.path = function() {
   return {delimiter:"/", join:function() {
     var index;
@@ -467,9 +491,8 @@ pc.path = function() {
     var ext = path.split("?")[0].split(".").pop();
     if (ext !== path) {
       return "." + ext;
-    } else {
-      return "";
     }
+    return "";
   }, isRelativePath:function(s) {
     return s.charAt(0) !== "/" && s.match(/:\/\//) === null;
   }, extractPath:function(s) {
@@ -659,12 +682,12 @@ pc.events = {attach:function(target) {
 }, hasEvent:function(name) {
   return this._callbacks && this._callbacks[name] && this._callbacks[name].length !== 0 || false;
 }};
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var TagsCache = function(key) {
     this._index = {};
     this._key = key || null;
   };
-  TagsCache.prototype = {addItem:function(item) {
+  Object.assign(TagsCache.prototype, {addItem:function(item) {
     var tags = item.tags._list;
     for (var i = 0;i < tags.length;i++) {
       this.add(tags[i], item);
@@ -770,14 +793,14 @@ pc.extend(pc, function() {
       }
     }
     return items;
-  }};
+  }});
   var Tags = function(parent) {
     this._index = {};
     this._list = [];
     this._parent = parent;
     pc.events.attach(this);
   };
-  Tags.prototype = {add:function() {
+  Object.assign(Tags.prototype, {add:function() {
     var changed = false;
     var tags = this._processArguments(arguments, true);
     if (!tags.length) {
@@ -895,20 +918,20 @@ pc.extend(pc, function() {
       }
     }
     return tags;
-  }};
+  }});
   Object.defineProperty(Tags.prototype, "size", {get:function() {
     return this._list.length;
   }});
   return {TagsCache:TagsCache, Tags:Tags};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var AllocatePool = function(constructor, size) {
     this._constructor = constructor;
     this._pool = [];
     this._count = 0;
     this._resize(size);
   };
-  AllocatePool.prototype = {_resize:function(size) {
+  Object.assign(AllocatePool.prototype, {_resize:function(size) {
     if (size > this._pool.length) {
       for (var i = this._pool.length;i < size;i++) {
         this._pool[i] = new this._constructor;
@@ -921,10 +944,10 @@ pc.extend(pc, function() {
     return this._pool[this._count++];
   }, freeAll:function() {
     this._count = 0;
-  }};
+  }});
   return {AllocatePool:AllocatePool};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var platform = {desktop:false, mobile:false, ios:false, android:false, windows:false, cocoonjs:false, xbox:false, gamepads:false, touch:false};
   var ua = navigator.userAgent;
   if (/(windows|mac os|linux|cros)/i.test(ua)) {
@@ -957,7 +980,7 @@ pc.extend(pc, function() {
   platform.gamepads = "getGamepads" in navigator;
   return {platform:platform};
 }());
-pc.math = {DEG_TO_RAD:Math.PI / 180, RAD_TO_DEG:180 / Math.PI, INV_LOG2:1 / Math.log(2), clamp:function(value, min, max) {
+pc.math = {DEG_TO_RAD:Math.PI / 180, RAD_TO_DEG:180 / Math.PI, clamp:function(value, min, max) {
   if (value >= max) {
     return max;
   }
@@ -1007,11 +1030,11 @@ pc.math = {DEG_TO_RAD:Math.PI / 180, RAD_TO_DEG:180 / Math.PI, INV_LOG2:1 / Math
   return x !== 0 && !(x & x - 1);
 }, nextPowerOfTwo:function(val) {
   val--;
-  val = val >> 1 | val;
-  val = val >> 2 | val;
-  val = val >> 4 | val;
-  val = val >> 8 | val;
-  val = val >> 16 | val;
+  val |= val >> 1;
+  val |= val >> 2;
+  val |= val >> 4;
+  val |= val >> 8;
+  val |= val >> 16;
   val++;
   return val;
 }, random:function(min, max) {
@@ -1036,14 +1059,7 @@ pc.math = {DEG_TO_RAD:Math.PI / 180, RAD_TO_DEG:180 / Math.PI, INV_LOG2:1 / Math
   x = (x - min) / (max - min);
   return x * x * x * (x * (x * 6 - 15) + 10);
 }};
-pc.math.intToBytes = pc.math.intToBytes32;
-pc.math.bytesToInt = pc.math.bytesToInt32;
-if (!Math.log2) {
-  Math.log2 = function(x) {
-    return Math.log(x) * pc.math.INV_LOG2;
-  };
-}
-;pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Vec2 = function(x, y) {
     if (x && x.length === 2) {
       this.data = new Float32Array(x);
@@ -1053,7 +1069,7 @@ if (!Math.log2) {
     this.data[0] = x || 0;
     this.data[1] = y || 0;
   };
-  Vec2.prototype = {add:function(rhs) {
+  Object.assign(Vec2.prototype, {add:function(rhs) {
     var a = this.data, b = rhs.data;
     a[0] += b[0];
     a[1] += b[1];
@@ -1128,7 +1144,7 @@ if (!Math.log2) {
     return this;
   }, toString:function() {
     return "[" + this.data[0] + ", " + this.data[1] + "]";
-  }};
+  }});
   Object.defineProperty(Vec2.prototype, "x", {get:function() {
     return this.data[0];
   }, set:function(value) {
@@ -1165,7 +1181,7 @@ if (!Math.log2) {
   }()});
   return {Vec2:Vec2};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Vec3 = function(x, y, z) {
     if (x && x.length === 3) {
       this.data = new Float32Array(x);
@@ -1176,7 +1192,7 @@ pc.extend(pc, function() {
     this.data[1] = y || 0;
     this.data[2] = z || 0;
   };
-  Vec3.prototype = {add:function(rhs) {
+  Object.assign(Vec3.prototype, {add:function(rhs) {
     var a = this.data, b = rhs.data;
     a[0] += b[0];
     a[1] += b[1];
@@ -1287,7 +1303,7 @@ pc.extend(pc, function() {
     return this;
   }, toString:function() {
     return "[" + this.data[0] + ", " + this.data[1] + ", " + this.data[2] + "]";
-  }};
+  }});
   Object.defineProperty(Vec3.prototype, "x", {get:function() {
     return this.data[0];
   }, set:function(value) {
@@ -1353,7 +1369,7 @@ pc.extend(pc, function() {
   }()});
   return {Vec3:Vec3};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Vec4 = function(x, y, z, w) {
     if (x && x.length === 4) {
       this.data = new Float32Array(x);
@@ -1365,7 +1381,7 @@ pc.extend(pc, function() {
     this.data[2] = z || 0;
     this.data[3] = w || 0;
   };
-  Vec4.prototype = {add:function(rhs) {
+  Object.assign(Vec4.prototype, {add:function(rhs) {
     var a = this.data, b = rhs.data;
     a[0] += b[0];
     a[1] += b[1];
@@ -1462,7 +1478,7 @@ pc.extend(pc, function() {
     return this;
   }, toString:function() {
     return "[" + this.data[0] + ", " + this.data[1] + ", " + this.data[2] + ", " + this.data[3] + "]";
-  }};
+  }});
   Object.defineProperty(Vec4.prototype, "x", {get:function() {
     return this.data[0];
   }, set:function(value) {
@@ -1497,7 +1513,7 @@ pc.extend(pc, function() {
   }()});
   return {Vec4:Vec4};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var typeNumber = "number";
   var Mat3 = function(v0, v1, v2, v3, v4, v5, v6, v7, v8) {
     if (v0 && v0.length === 9) {
@@ -1519,7 +1535,7 @@ pc.extend(pc, function() {
       this.setIdentity();
     }
   };
-  Mat3.prototype = {clone:function() {
+  Object.assign(Mat3.prototype, {clone:function() {
     return (new pc.Mat3).copy(this);
   }, copy:function(rhs) {
     var src = rhs.data;
@@ -1574,7 +1590,7 @@ pc.extend(pc, function() {
     m[5] = m[7];
     m[7] = tmp;
     return this;
-  }};
+  }});
   Object.defineProperty(Mat3, "IDENTITY", {get:function() {
     var identity = new Mat3;
     return function() {
@@ -1589,7 +1605,7 @@ pc.extend(pc, function() {
   }()});
   return {Mat3:Mat3};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var typeNumber = "number";
   var Mat4 = function(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15) {
     if (v0 && v0.length === 16) {
@@ -1618,7 +1634,7 @@ pc.extend(pc, function() {
       this.setIdentity();
     }
   };
-  Mat4.prototype = {add2:function(lhs, rhs) {
+  Object.assign(Mat4.prototype, {add2:function(lhs, rhs) {
     var a = lhs.data, b = rhs.data, r = this.data;
     r[0] = a[0] + b[0];
     r[1] = a[1] + b[1];
@@ -1794,13 +1810,13 @@ pc.extend(pc, function() {
     r[14] = -temp1 * zfar / temp4;
     r[15] = 0;
     return this;
-  }, setPerspective:function(fovy, aspect, znear, zfar, fovIsHorizontal) {
+  }, setPerspective:function(fov, aspect, znear, zfar, fovIsHorizontal) {
     var xmax, ymax;
     if (!fovIsHorizontal) {
-      ymax = znear * Math.tan(fovy * Math.PI / 360);
+      ymax = znear * Math.tan(fov * Math.PI / 360);
       xmax = ymax * aspect;
     } else {
-      xmax = znear * Math.tan(fovy * Math.PI / 360);
+      xmax = znear * Math.tan(fov * Math.PI / 360);
       ymax = xmax / aspect;
     }
     return this.setFrustum(-xmax, xmax, -ymax, ymax, znear, zfar);
@@ -2171,7 +2187,7 @@ pc.extend(pc, function() {
     }
     t += "]";
     return t;
-  }};
+  }});
   Object.defineProperty(Mat4, "IDENTITY", {get:function() {
     var identity = new Mat4;
     return function() {
@@ -2186,7 +2202,7 @@ pc.extend(pc, function() {
   }()});
   return {Mat4:Mat4};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Quat = function(x, y, z, w) {
     if (x && x.length === 4) {
       this.x = x[0];
@@ -2200,7 +2216,7 @@ pc.extend(pc, function() {
       this.w = w === undefined ? 1 : w;
     }
   };
-  Quat.prototype = {clone:function() {
+  Object.assign(Quat.prototype, {clone:function() {
     return new pc.Quat(this.x, this.y, this.z, this.w);
   }, conjugate:function() {
     this.x *= -1;
@@ -2475,7 +2491,7 @@ pc.extend(pc, function() {
     return res;
   }, toString:function() {
     return "[" + this.x + ", " + this.y + ", " + this.z + ", " + this.w + "]";
-  }};
+  }});
   Object.defineProperty(Quat, "IDENTITY", {get:function() {
     var identity = new Quat;
     return function() {
@@ -2490,7 +2506,7 @@ pc.extend(pc, function() {
   }()});
   return {Quat:Quat};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var CURVE_LINEAR = 0;
   var CURVE_SMOOTHSTEP = 1;
   var CURVE_CATMULL = 2;
@@ -2506,7 +2522,7 @@ pc.extend(pc, function() {
     }
     this.sort();
   };
-  Curve.prototype = {add:function(time, value) {
+  Object.assign(Curve.prototype, {add:function(time, value) {
     var keys = this.keys;
     var len = keys.length;
     var i = 0;
@@ -2525,6 +2541,7 @@ pc.extend(pc, function() {
       return a[0] - b[0];
     });
   }, value:function(time) {
+    var i, len;
     var keys = this.keys;
     if (!keys.length) {
       return 0;
@@ -2540,7 +2557,7 @@ pc.extend(pc, function() {
     var leftValue = keys.length ? keys[0][1] : 0;
     var rightTime = 1;
     var rightValue = 0;
-    for (var i = 0, len = keys.length;i < len;i++) {
+    for (i = 0, len = keys.length;i < len;i++) {
       if (keys[i][0] === time) {
         return keys[i][1];
       }
@@ -2566,7 +2583,7 @@ pc.extend(pc, function() {
         var dt0 = dt1;
         var dt2 = dt1;
         if (i > 0) {
-          i = i - 1;
+          i--;
         }
         if (i > 0) {
           p0 = keys[i - 1][1];
@@ -2583,9 +2600,8 @@ pc.extend(pc, function() {
         p3 = p2 + (p3 - p2) * dt1 / dt2;
         if (this.type === CURVE_CATMULL) {
           return this._interpolateCatmullRom(p0, p1, p2, p3, interpolation);
-        } else {
-          return this._interpolateCardinal(p0, p1, p2, p3, interpolation, this.tension);
         }
+        return this._interpolateCardinal(p0, p1, p2, p3, interpolation, this.tension);
       }
     }
     return pc.math.lerp(leftValue, rightValue, interpolation);
@@ -2632,13 +2648,13 @@ pc.extend(pc, function() {
       values[i] = value;
     }
     return values;
-  }};
+  }});
   Object.defineProperty(Curve.prototype, "length", {get:function() {
     return this.keys.length;
   }});
   return {Curve:Curve, CURVE_LINEAR:CURVE_LINEAR, CURVE_SMOOTHSTEP:CURVE_SMOOTHSTEP, CURVE_CATMULL:CURVE_CATMULL, CURVE_CARDINAL:CURVE_CARDINAL};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var CurveSet = function() {
     var i;
     this.curves = [];
@@ -2664,7 +2680,7 @@ pc.extend(pc, function() {
       }
     }
   };
-  CurveSet.prototype = {get:function(index) {
+  Object.assign(CurveSet.prototype, {get:function(index) {
     return this.curves[index];
   }, value:function(time, result) {
     var length = this.curves.length;
@@ -2699,7 +2715,7 @@ pc.extend(pc, function() {
       }
     }
     return values;
-  }};
+  }});
   Object.defineProperty(CurveSet.prototype, "length", {get:function() {
     return this.curves.length;
   }});
@@ -2713,7 +2729,7 @@ pc.extend(pc, function() {
   }});
   return {CurveSet:CurveSet};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var tmpVecA = new pc.Vec3;
   var tmpVecB = new pc.Vec3;
   var tmpVecC = new pc.Vec3;
@@ -2725,7 +2741,7 @@ pc.extend(pc, function() {
     this._min = new pc.Vec3;
     this._max = new pc.Vec3;
   };
-  BoundingBox.prototype = {add:function(other) {
+  Object.assign(BoundingBox.prototype, {add:function(other) {
     var tc = this.center.data;
     var tcx = tc[0];
     var tcy = tc[1];
@@ -2847,9 +2863,8 @@ pc.extend(pc, function() {
   }, intersectsRay:function(ray, point) {
     if (point) {
       return this._intersectsRay(ray, point);
-    } else {
-      return this._fastIntersectsRay(ray);
     }
+    return this._fastIntersectsRay(ray);
   }, setMinMax:function(min, max) {
     this.center.add2(max, min).scale(0.5);
     this.halfExtents.sub2(max, min).scale(0.5);
@@ -2948,10 +2963,10 @@ pc.extend(pc, function() {
       sq += out;
     }
     return sq;
-  }};
+  }});
   return {BoundingBox:BoundingBox};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var tmpVecA = new pc.Vec3;
   var tmpVecB = new pc.Vec3;
   var tmpVecC = new pc.Vec3;
@@ -2960,7 +2975,7 @@ pc.extend(pc, function() {
     this.center = center || new pc.Vec3(0, 0, 0);
     this.radius = radius === undefined ? 0.5 : radius;
   }
-  BoundingSphere.prototype = {containsPoint:function(point) {
+  Object.assign(BoundingSphere.prototype, {containsPoint:function(point) {
     var lenSq = tmpVecA.sub2(point, this.center).lengthSq();
     var r = this.radius;
     return lenSq < r * r;
@@ -3013,10 +3028,10 @@ pc.extend(pc, function() {
       return true;
     }
     return false;
-  }};
+  }});
   return {BoundingSphere:BoundingSphere};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var viewProj = new pc.Mat4;
   var Frustum = function Frustum(projectionMatrix, viewMatrix) {
     projectionMatrix = projectionMatrix || (new pc.Mat4).setPerspective(90, 16 / 9, 0.1, 1000);
@@ -3027,7 +3042,7 @@ pc.extend(pc, function() {
     }
     this.update(projectionMatrix, viewMatrix);
   };
-  Frustum.prototype = {update:function(projectionMatrix, viewMatrix) {
+  Object.assign(Frustum.prototype, {update:function(projectionMatrix, viewMatrix) {
     viewProj.mul2(projectionMatrix, viewMatrix);
     var vpm = viewProj.data;
     this.planes[0][0] = vpm[3] - vpm[0];
@@ -3113,16 +3128,16 @@ pc.extend(pc, function() {
       }
     }
     return c === 6 ? 2 : 1;
-  }};
+  }});
   return {Frustum:Frustum};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var tmpVecA = new pc.Vec3;
   var Plane = function Plane(point, normal) {
     this.normal = normal || new pc.Vec3(0, 0, 1);
     this.point = point || new pc.Vec3(0, 0, 0);
   };
-  Plane.prototype = {intersectsLine:function(start, end, point) {
+  Object.assign(Plane.prototype, {intersectsLine:function(start, end, point) {
     var d = -this.normal.dot(this.point);
     var d0 = this.normal.dot(start) + d;
     var d1 = this.normal.dot(end) + d;
@@ -3140,17 +3155,17 @@ pc.extend(pc, function() {
       point.copy(ray.direction).scale(t).add(ray.origin);
     }
     return intersects;
-  }};
+  }});
   return {Plane:Plane};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Ray = function Ray(origin, direction) {
     this.origin = origin || new pc.Vec3(0, 0, 0);
     this.direction = direction || new pc.Vec3(0, 0, -1);
   };
   return {Ray:Ray};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var tmpRay = new pc.Ray;
   var tmpVec3 = new pc.Vec3;
   var tmpSphere = new pc.BoundingSphere;
@@ -3161,16 +3176,15 @@ pc.extend(pc, function() {
     this._modelTransform = worldTransform.clone().invert();
     this._aabb = new pc.BoundingBox(new pc.Vec3, this.halfExtents);
   };
-  OrientedBox.prototype = {intersectsRay:function(ray, point) {
+  Object.assign(OrientedBox.prototype, {intersectsRay:function(ray, point) {
     this._modelTransform.transformPoint(ray.origin, tmpRay.origin);
     this._modelTransform.transformVector(ray.direction, tmpRay.direction);
     if (point) {
       var result = this._aabb._intersectsRay(tmpRay, point);
       tmpMat4.copy(this._modelTransform).invert().transformPoint(point, point);
       return result;
-    } else {
-      return this._aabb._fastIntersectsRay(tmpRay);
     }
+    return this._aabb._fastIntersectsRay(tmpRay);
   }, containsPoint:function(point) {
     this._modelTransform.transformPoint(point, tmpVec3);
     return this._aabb.containsPoint(tmpVec3);
@@ -3181,7 +3195,7 @@ pc.extend(pc, function() {
       return true;
     }
     return false;
-  }};
+  }});
   Object.defineProperty(OrientedBox.prototype, "worldTransform", {set:function(value) {
     this._modelTransform.copy(value).invert();
   }});
@@ -3196,50 +3210,49 @@ pc.extend(pc, function() {
   SEMANTIC_ATTR4:"ATTR4", SEMANTIC_ATTR5:"ATTR5", SEMANTIC_ATTR6:"ATTR6", SEMANTIC_ATTR7:"ATTR7", SEMANTIC_ATTR8:"ATTR8", SEMANTIC_ATTR9:"ATTR9", SEMANTIC_ATTR10:"ATTR10", SEMANTIC_ATTR11:"ATTR11", SEMANTIC_ATTR12:"ATTR12", SEMANTIC_ATTR13:"ATTR13", SEMANTIC_ATTR14:"ATTR14", SEMANTIC_ATTR15:"ATTR15", SHADERTAG_MATERIAL:1, STENCILOP_KEEP:0, STENCILOP_ZERO:1, STENCILOP_REPLACE:2, STENCILOP_INCREMENT:3, STENCILOP_INCREMENTWRAP:4, STENCILOP_DECREMENT:5, STENCILOP_DECREMENTWRAP:6, STENCILOP_INVERT:7, 
   TEXTURELOCK_READ:1, TEXTURELOCK_WRITE:2, TEXHINT_NONE:0, TEXHINT_SHADOWMAP:1, TEXHINT_ASSET:2, TEXHINT_LIGHTMAP:3, UNIFORMTYPE_BOOL:0, UNIFORMTYPE_INT:1, UNIFORMTYPE_FLOAT:2, UNIFORMTYPE_VEC2:3, UNIFORMTYPE_VEC3:4, UNIFORMTYPE_VEC4:5, UNIFORMTYPE_IVEC2:6, UNIFORMTYPE_IVEC3:7, UNIFORMTYPE_IVEC4:8, UNIFORMTYPE_BVEC2:9, UNIFORMTYPE_BVEC3:10, UNIFORMTYPE_BVEC4:11, UNIFORMTYPE_MAT2:12, UNIFORMTYPE_MAT3:13, UNIFORMTYPE_MAT4:14, UNIFORMTYPE_TEXTURE2D:15, UNIFORMTYPE_TEXTURECUBE:16, UNIFORMTYPE_FLOATARRAY:17, 
   UNIFORMTYPE_TEXTURE2D_SHADOW:18, UNIFORMTYPE_TEXTURECUBE_SHADOW:19, UNIFORMTYPE_TEXTURE3D:20};
-  pc.extend(pc, enums);
+  Object.assign(pc, enums);
   pc.gfx = {};
-  pc.extend(pc.gfx, enums);
+  Object.assign(pc.gfx, enums);
 })();
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ScopeId = function(name) {
     this.name = name;
     this.value = null;
     this.versionObject = new pc.VersionedObject;
   };
-  ScopeId.prototype = {setValue:function(value) {
+  Object.assign(ScopeId.prototype, {setValue:function(value) {
     this.value = value;
     this.versionObject.increment();
   }, getValue:function(value) {
     return this.value;
-  }};
+  }});
   return {ScopeId:ScopeId};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ScopeSpace = function(name) {
     this.name = name;
     this.variables = {};
     this.namespaces = {};
   };
-  ScopeSpace.prototype = {resolve:function(name) {
-    if (this.variables.hasOwnProperty(name) === false) {
+  Object.assign(ScopeSpace.prototype, {resolve:function(name) {
+    if (!this.variables.hasOwnProperty(name)) {
       this.variables[name] = new pc.ScopeId(name);
     }
     return this.variables[name];
   }, getSubSpace:function(name) {
-    if (this.namespaces.hasOwnProperty(name) === false) {
+    if (!this.namespaces.hasOwnProperty(name)) {
       this.namespaces[name] = new pc.ScopeSpace(name);
-      logDEBUG("Added ScopeSpace: " + name);
     }
     return this.namespaces[name];
-  }};
+  }});
   return {ScopeSpace:ScopeSpace};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Version = function() {
     this.globalId = 0;
     this.revision = 0;
   };
-  Version.prototype = {equals:function(other) {
+  Object.assign(Version.prototype, {equals:function(other) {
     return this.globalId === other.globalId && this.revision === other.revision;
   }, notequals:function(other) {
     return this.globalId !== other.globalId || this.revision !== other.revision;
@@ -3249,22 +3262,22 @@ pc.extend(pc, function() {
   }, reset:function() {
     this.globalId = 0;
     this.revision = 0;
-  }};
+  }});
   return {Version:Version};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var idCounter = 0;
   var VersionedObject = function() {
     idCounter++;
     this.version = new pc.Version;
     this.version.globalId = idCounter;
   };
-  VersionedObject.prototype = {increment:function() {
+  Object.assign(VersionedObject.prototype, {increment:function() {
     this.version.revision++;
-  }};
+  }});
   return {VersionedObject:VersionedObject};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   function VertexIteratorSetter(buffer, vertexElement) {
     this.index = 0;
     switch(vertexElement.dataType) {
@@ -3335,7 +3348,7 @@ pc.extend(pc, function() {
       this.element[vertexElement.name] = this.setters[i];
     }
   }
-  VertexIterator.prototype = {next:function() {
+  Object.assign(VertexIterator.prototype, {next:function() {
     var i = 0;
     var setters = this.setters;
     var numSetters = this.setters.length;
@@ -3346,10 +3359,10 @@ pc.extend(pc, function() {
     }
   }, end:function() {
     this.vertexBuffer.unlock();
-  }};
+  }});
   return {VertexIterator:VertexIterator};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _typeSize = [];
   _typeSize[pc.TYPE_INT8] = 1;
   _typeSize[pc.TYPE_UINT8] = 1;
@@ -3392,7 +3405,7 @@ pc.extend(pc, function() {
   };
   return {VertexFormat:VertexFormat};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var VertexBuffer = function(graphicsDevice, format, numVertices, usage, initialData) {
     this.usage = usage || pc.BUFFER_STATIC;
     this.format = format;
@@ -3407,7 +3420,7 @@ pc.extend(pc, function() {
     }
     this.device.buffers.push(this);
   };
-  VertexBuffer.prototype = {destroy:function() {
+  Object.assign(VertexBuffer.prototype, {destroy:function() {
     var device = this.device;
     var idx = device.buffers.indexOf(this);
     if (idx !== -1) {
@@ -3469,10 +3482,10 @@ pc.extend(pc, function() {
     this.storage = data;
     this.unlock();
     return true;
-  }};
+  }});
   return {VertexBuffer:VertexBuffer};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var IndexBuffer = function(graphicsDevice, format, numIndices, usage, initialData) {
     this.usage = usage || pc.BUFFER_STATIC;
     this.format = format;
@@ -3504,7 +3517,7 @@ pc.extend(pc, function() {
     graphicsDevice._vram.ib += this.numBytes;
     this.device.buffers.push(this);
   };
-  IndexBuffer.prototype = {destroy:function() {
+  Object.assign(IndexBuffer.prototype, {destroy:function() {
     var device = this.device;
     var idx = device.buffers.indexOf(this);
     if (idx !== -1) {
@@ -3559,10 +3572,10 @@ pc.extend(pc, function() {
     this.storage = data;
     this.unlock();
     return true;
-  }};
+  }});
   return {IndexBuffer:IndexBuffer};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var TransformFeedback = function(inputBuffer, usage) {
     usage = usage || pc.BUFFER_GPUDYNAMIC;
     this.device = inputBuffer.device;
@@ -3577,7 +3590,7 @@ pc.extend(pc, function() {
   TransformFeedback.createShader = function(graphicsDevice, vsCode, name) {
     return pc.shaderChunks.createShaderFromCode(graphicsDevice, vsCode, null, name, true);
   };
-  TransformFeedback.prototype = {destroy:function() {
+  Object.assign(TransformFeedback.prototype, {destroy:function() {
     this._outputBuffer.destroy();
   }, process:function(shader, swap) {
     if (swap === undefined) {
@@ -3599,7 +3612,7 @@ pc.extend(pc, function() {
       this._inputBuffer.bufferId = this._outputBuffer.bufferId;
       this._outputBuffer.bufferId = tmp;
     }
-  }};
+  }});
   Object.defineProperty(TransformFeedback.prototype, "inputBuffer", {get:function() {
     return this._inputBuffer;
   }});
@@ -3608,7 +3621,7 @@ pc.extend(pc, function() {
   }});
   return {TransformFeedback:TransformFeedback};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Texture = function(graphicsDevice, options) {
     this.device = graphicsDevice;
     this.name = null;
@@ -3768,6 +3781,70 @@ pc.extend(pc, function() {
   Object.defineProperty(Texture.prototype, "cubemap", {get:function() {
     return this._cubemap;
   }});
+  var _pixelFormat2Size = null;
+  Object.defineProperty(Texture.prototype, "gpuSize", {get:function() {
+    if (!_pixelFormat2Size) {
+      _pixelFormat2Size = [];
+      _pixelFormat2Size[pc.PIXELFORMAT_A8] = 1;
+      _pixelFormat2Size[pc.PIXELFORMAT_L8] = 1;
+      _pixelFormat2Size[pc.PIXELFORMAT_L8_A8] = 1;
+      _pixelFormat2Size[pc.PIXELFORMAT_R5_G6_B5] = 2;
+      _pixelFormat2Size[pc.PIXELFORMAT_R5_G5_B5_A1] = 2;
+      _pixelFormat2Size[pc.PIXELFORMAT_R4_G4_B4_A4] = 2;
+      _pixelFormat2Size[pc.PIXELFORMAT_R8_G8_B8] = 4;
+      _pixelFormat2Size[pc.PIXELFORMAT_R8_G8_B8_A8] = 4;
+      _pixelFormat2Size[pc.PIXELFORMAT_RGB16F] = 8;
+      _pixelFormat2Size[pc.PIXELFORMAT_RGBA16F] = 8;
+      _pixelFormat2Size[pc.PIXELFORMAT_RGB32F] = 16;
+      _pixelFormat2Size[pc.PIXELFORMAT_RGBA32F] = 16;
+      _pixelFormat2Size[pc.PIXELFORMAT_R32F] = 4;
+      _pixelFormat2Size[pc.PIXELFORMAT_DEPTH] = 4;
+      _pixelFormat2Size[pc.PIXELFORMAT_DEPTHSTENCIL] = 4;
+      _pixelFormat2Size[pc.PIXELFORMAT_111110F] = 4;
+      _pixelFormat2Size[pc.PIXELFORMAT_SRGB] = 4;
+      _pixelFormat2Size[pc.PIXELFORMAT_SRGBA] = 4;
+    }
+    var mips = 1;
+    if (this._pot && (this._mipmaps || this._minFilter === pc.FILTER_NEAREST_MIPMAP_NEAREST || this._minFilter === pc.FILTER_NEAREST_MIPMAP_LINEAR || this._minFilter === pc.FILTER_LINEAR_MIPMAP_NEAREST || this._minFilter === pc.FILTER_LINEAR_MIPMAP_LINEAR) && !(this._compressed && this._levels.length === 1)) {
+      mips = Math.round(Math.log2(Math.max(this._width, this._height)) + 1);
+    }
+    var mipWidth = this._width;
+    var mipHeight = this._height;
+    var mipDepth = this._depth;
+    var size = 0;
+    for (var i = 0;i < mips;i++) {
+      if (!this._compressed) {
+        size += mipWidth * mipHeight * mipDepth * _pixelFormat2Size[this._format];
+      } else {
+        if (this._format === pc.PIXELFORMAT_ETC1) {
+          size += Math.floor((mipWidth + 3) / 4) * Math.floor((mipHeight + 3) / 4) * 8 * mipDepth;
+        } else {
+          if (this._format === pc.PIXELFORMAT_PVRTC_2BPP_RGB_1 || this._format === pc.PIXELFORMAT_PVRTC_2BPP_RGBA_1) {
+            size += Math.max(mipWidth, 16) * Math.max(mipHeight, 8) / 4 * mipDepth;
+          } else {
+            if (this._format === pc.PIXELFORMAT_PVRTC_4BPP_RGB_1 || this._format === pc.PIXELFORMAT_PVRTC_4BPP_RGBA_1) {
+              size += Math.max(mipWidth, 8) * Math.max(mipHeight, 8) / 2 * mipDepth;
+            } else {
+              var DXT_BLOCK_WIDTH = 4;
+              var DXT_BLOCK_HEIGHT = 4;
+              var blockSize = this._format === pc.PIXELFORMAT_DXT1 ? 8 : 16;
+              var numBlocksAcross = Math.floor((mipWidth + DXT_BLOCK_WIDTH - 1) / DXT_BLOCK_WIDTH);
+              var numBlocksDown = Math.floor((mipHeight + DXT_BLOCK_HEIGHT - 1) / DXT_BLOCK_HEIGHT);
+              var numBlocks = numBlocksAcross * numBlocksDown;
+              size += numBlocks * blockSize * mipDepth;
+            }
+          }
+        }
+      }
+      mipWidth = Math.max(mipWidth * 0.5, 1);
+      mipHeight = Math.max(mipHeight * 0.5, 1);
+      mipDepth = Math.max(mipDepth * 0.5, 1);
+    }
+    if (this._cubemap) {
+      size *= 6;
+    }
+    return size;
+  }});
   Object.defineProperty(Texture.prototype, "volume", {get:function() {
     return this._volume;
   }});
@@ -3779,7 +3856,7 @@ pc.extend(pc, function() {
       this._needsUpload = true;
     }
   }});
-  pc.extend(Texture.prototype, {destroy:function() {
+  Object.assign(Texture.prototype, {destroy:function() {
     var device = this.device;
     var idx = device.textures.indexOf(this);
     if (idx !== -1) {
@@ -3920,7 +3997,6 @@ pc.extend(pc, function() {
   }, getSource:function() {
     return this._levels[0];
   }, unlock:function() {
-    logASSERT(this._lockedLevel !== -1, "Attempting to unlock a texture that is not locked");
     this.upload();
     this._lockedLevel = -1;
   }, upload:function() {
@@ -4035,9 +4111,11 @@ pc.extend(pc, function() {
   }});
   return {Texture:Texture};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var defaultOptions = {depth:true, face:0};
-  var RenderTarget = function(options, _arg2, _arg3) {
+  var RenderTarget = function(options) {
+    var _arg2 = arguments[1];
+    var _arg3 = arguments[2];
     if (options instanceof pc.GraphicsDevice) {
       this._colorBuffer = _arg2;
       options = _arg3;
@@ -4073,7 +4151,7 @@ pc.extend(pc, function() {
     this._glMsaaColorBuffer = null;
     this._glMsaaDepthBuffer = null;
   };
-  RenderTarget.prototype = {destroy:function() {
+  Object.assign(RenderTarget.prototype, {destroy:function() {
     if (!this._device) {
       return;
     }
@@ -4130,7 +4208,7 @@ pc.extend(pc, function() {
       }
     }
     return this._device.copyRenderTarget(source, this, color, depth);
-  }};
+  }});
   Object.defineProperty(RenderTarget.prototype, "colorBuffer", {get:function() {
     return this._colorBuffer;
   }});
@@ -4141,22 +4219,14 @@ pc.extend(pc, function() {
     return this._face;
   }});
   Object.defineProperty(RenderTarget.prototype, "width", {get:function() {
-    if (this._colorBuffer) {
-      return this._colorBuffer.width;
-    } else {
-      return this._depthBuffer.width;
-    }
+    return this._colorBuffer ? this._colorBuffer.width : this._depthBuffer.width;
   }});
   Object.defineProperty(RenderTarget.prototype, "height", {get:function() {
-    if (this._colorBuffer) {
-      return this._colorBuffer.height;
-    } else {
-      return this._depthBuffer.height;
-    }
+    return this._colorBuffer ? this._colorBuffer.height : this._depthBuffer.height;
   }});
   return {RenderTarget:RenderTarget};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ShaderInput = function(graphicsDevice, name, type, locationId) {
     this.locationId = locationId;
     this.scopeId = graphicsDevice.scope.resolve(name);
@@ -4172,7 +4242,7 @@ pc.extend(pc, function() {
   };
   return {ShaderInput:ShaderInput};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   function addLineNumbers(src) {
     var chunks = src.split("\n");
     for (var i = 0, len = chunks.length;i < len;i++) {
@@ -4199,7 +4269,7 @@ pc.extend(pc, function() {
     this.compile();
     this.device.shaders.push(this);
   };
-  Shader.prototype = {compile:function() {
+  Object.assign(Shader.prototype, {compile:function() {
     this.ready = false;
     var gl = this.device.gl;
     this.vshader = createShader(gl, gl.VERTEX_SHADER, this.definition.vshader);
@@ -4301,10 +4371,10 @@ pc.extend(pc, function() {
       this.program = null;
       this.device.removeShaderFromCache(this);
     }
-  }};
+  }});
   return {Shader:Shader};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ProgramLibrary = function(device) {
     this._device = device;
     this._cache = {};
@@ -4328,7 +4398,6 @@ pc.extend(pc, function() {
   ProgramLibrary.prototype.getProgram = function(name, options) {
     var generator = this._generators[name];
     if (generator === undefined) {
-      logERROR("No program library functions registered for: " + name);
       return null;
     }
     var gd = this._device;
@@ -4367,18 +4436,8 @@ pc.extend(pc, function() {
   };
   return {ProgramLibrary:ProgramLibrary};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var EVENT_RESIZE = "resizecanvas";
-  function UnsupportedBrowserError(message) {
-    this.name = "UnsupportedBrowserError";
-    this.message = message || "";
-  }
-  UnsupportedBrowserError.prototype = Error.prototype;
-  function ContextCreationError(message) {
-    this.name = "ContextCreationError";
-    this.message = message || "";
-  }
-  ContextCreationError.prototype = Error.prototype;
   var _downsampleImage = function(image, size) {
     var srcW = image.width;
     var srcH = image.height;
@@ -4402,89 +4461,25 @@ pc.extend(pc, function() {
     var trident = navigator.userAgent.match(/Trident.*rv:11\./);
     return msie > 0 || !!trident;
   }
-  var _pixelFormat2Size = null;
-  function gpuTexSize(gl, tex) {
-    if (!_pixelFormat2Size) {
-      _pixelFormat2Size = {};
-      _pixelFormat2Size[pc.PIXELFORMAT_A8] = 1;
-      _pixelFormat2Size[pc.PIXELFORMAT_L8] = 1;
-      _pixelFormat2Size[pc.PIXELFORMAT_L8_A8] = 1;
-      _pixelFormat2Size[pc.PIXELFORMAT_R5_G6_B5] = 2;
-      _pixelFormat2Size[pc.PIXELFORMAT_R5_G5_B5_A1] = 2;
-      _pixelFormat2Size[pc.PIXELFORMAT_R4_G4_B4_A4] = 2;
-      _pixelFormat2Size[pc.PIXELFORMAT_R8_G8_B8] = 4;
-      _pixelFormat2Size[pc.PIXELFORMAT_R8_G8_B8_A8] = 4;
-      _pixelFormat2Size[pc.PIXELFORMAT_RGB16F] = 8;
-      _pixelFormat2Size[pc.PIXELFORMAT_RGBA16F] = 8;
-      _pixelFormat2Size[pc.PIXELFORMAT_RGB32F] = 16;
-      _pixelFormat2Size[pc.PIXELFORMAT_RGBA32F] = 16;
-      _pixelFormat2Size[pc.PIXELFORMAT_R32F] = 4;
-      _pixelFormat2Size[pc.PIXELFORMAT_DEPTH] = 4;
-      _pixelFormat2Size[pc.PIXELFORMAT_DEPTHSTENCIL] = 4;
-      _pixelFormat2Size[pc.PIXELFORMAT_111110F] = 4;
-      _pixelFormat2Size[pc.PIXELFORMAT_SRGB] = 4;
-      _pixelFormat2Size[pc.PIXELFORMAT_SRGBA] = 4;
-    }
-    var mips = 1;
-    if (tex._pot && (tex._mipmaps || tex._minFilter === pc.FILTER_NEAREST_MIPMAP_NEAREST || tex._minFilter === pc.FILTER_NEAREST_MIPMAP_LINEAR || tex._minFilter === pc.FILTER_LINEAR_MIPMAP_NEAREST || tex._minFilter === pc.FILTER_LINEAR_MIPMAP_LINEAR) && !(tex._compressed && tex._levels.length === 1)) {
-      mips = Math.round(Math.log2(Math.max(tex._width, tex._height)) + 1);
-    }
-    var mipWidth = tex._width;
-    var mipHeight = tex._height;
-    var mipDepth = tex._depth;
-    var size = 0;
-    for (var i = 0;i < mips;i++) {
-      if (!tex._compressed) {
-        size += mipWidth * mipHeight * mipDepth * _pixelFormat2Size[tex._format];
-      } else {
-        if (tex._format === pc.PIXELFORMAT_ETC1) {
-          size += Math.floor((mipWidth + 3) / 4) * Math.floor((mipHeight + 3) / 4) * 8 * mipDepth;
-        } else {
-          if (tex._format === pc.PIXELFORMAT_PVRTC_2BPP_RGB_1 || tex._format === pc.PIXELFORMAT_PVRTC_2BPP_RGBA_1) {
-            size += Math.max(mipWidth, 16) * Math.max(mipHeight, 8) / 4 * mipDepth;
-          } else {
-            if (tex._format === pc.PIXELFORMAT_PVRTC_4BPP_RGB_1 || tex._format === pc.PIXELFORMAT_PVRTC_4BPP_RGBA_1) {
-              size += Math.max(mipWidth, 8) * Math.max(mipHeight, 8) / 2 * mipDepth;
-            } else {
-              var DXT_BLOCK_WIDTH = 4;
-              var DXT_BLOCK_HEIGHT = 4;
-              var blockSize = tex._format === pc.PIXELFORMAT_DXT1 ? 8 : 16;
-              var numBlocksAcross = Math.floor((mipWidth + DXT_BLOCK_WIDTH - 1) / DXT_BLOCK_WIDTH);
-              var numBlocksDown = Math.floor((mipHeight + DXT_BLOCK_HEIGHT - 1) / DXT_BLOCK_HEIGHT);
-              var numBlocks = numBlocksAcross * numBlocksDown;
-              size += numBlocks * blockSize * mipDepth;
-            }
-          }
-        }
-      }
-      mipWidth = Math.max(mipWidth * 0.5, 1);
-      mipHeight = Math.max(mipHeight * 0.5, 1);
-      mipDepth = Math.max(mipDepth * 0.5, 1);
-    }
-    if (tex._cubemap) {
-      size *= 6;
-    }
-    return size;
-  }
   function testRenderable(gl, pixelFormat) {
-    var __texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, __texture);
+    var texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    var __width = 2;
-    var __height = 2;
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, __width, __height, 0, gl.RGBA, pixelFormat, null);
-    var __fbo = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, __fbo);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, __texture, 0);
+    var width = 2;
+    var height = 2;
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, pixelFormat, null);
+    var fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
     gl.bindTexture(gl.TEXTURE_2D, null);
-    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) != gl.FRAMEBUFFER_COMPLETE) {
-      gl.deleteTexture(__texture);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+      gl.deleteTexture(texture);
       return false;
     }
-    gl.deleteTexture(__texture);
+    gl.deleteTexture(texture);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     return true;
   }
@@ -4522,9 +4517,6 @@ pc.extend(pc, function() {
     this._width = 0;
     this._height = 0;
     this.updateClientRect();
-    if (!window.WebGLRenderingContext) {
-      throw new pc.UnsupportedBrowserError;
-    }
     this.shaders = [];
     this.buffers = [];
     this.textures = [];
@@ -4556,12 +4548,15 @@ pc.extend(pc, function() {
       }
     }
     if (!gl) {
-      throw new pc.ContextCreationError;
+      throw new Error("WebGL not supported");
     }
     this.gl = gl;
     this.initializeExtensions();
     this.initializeCapabilities();
     this.initializeRenderState();
+    for (i = 0;i < this.maxCombinedTextures;i++) {
+      this.textureUnits.push([null, null, null]);
+    }
     (function() {
       this.defaultClearOptions = {color:[0, 0, 0, 1], depth:1, stencil:0, flags:pc.CLEARFLAG_COLOR | pc.CLEARFLAG_DEPTH};
       this.glAddress = [gl.REPEAT, gl.CLAMP_TO_EDGE, gl.MIRRORED_REPEAT];
@@ -4574,6 +4569,10 @@ pc.extend(pc, function() {
       this.glFilter = [gl.NEAREST, gl.LINEAR, gl.NEAREST_MIPMAP_NEAREST, gl.NEAREST_MIPMAP_LINEAR, gl.LINEAR_MIPMAP_NEAREST, gl.LINEAR_MIPMAP_LINEAR];
       this.glPrimitive = [gl.POINTS, gl.LINES, gl.LINE_LOOP, gl.LINE_STRIP, gl.TRIANGLES, gl.TRIANGLE_STRIP, gl.TRIANGLE_FAN];
       this.glType = [gl.BYTE, gl.UNSIGNED_BYTE, gl.SHORT, gl.UNSIGNED_SHORT, gl.INT, gl.UNSIGNED_INT, gl.FLOAT];
+      this.targetToSlot = {};
+      this.targetToSlot[gl.TEXTURE_2D] = 0;
+      this.targetToSlot[gl.TEXTURE_CUBE_MAP] = 1;
+      this.targetToSlot[gl.TEXTURE_3D] = 2;
       var scopeX, scopeY, scopeZ, scopeW;
       var uniformValue;
       this.commitFunction = [];
@@ -4684,7 +4683,7 @@ pc.extend(pc, function() {
       }
       pc.events.attach(this);
       this.supportsBoneTextures = this.extTextureFloat && this.maxVertexTextures > 0;
-      this.useTexCubeLod = this.extTextureLod && this.samplerCount < 16;
+      this.useTexCubeLod = this.extTextureLod && this.maxTextures < 16;
       var numUniforms = this.vertexUniformsCount;
       numUniforms -= 4 * 4;
       numUniforms -= 8;
@@ -4764,7 +4763,7 @@ pc.extend(pc, function() {
       }
     }).call(this);
   };
-  GraphicsDevice.prototype = {getPrecision:function() {
+  Object.assign(GraphicsDevice.prototype, {getPrecision:function() {
     var gl = this.gl;
     var precision = "highp";
     if (gl.getShaderPrecisionFormat) {
@@ -4825,7 +4824,8 @@ pc.extend(pc, function() {
     this.maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
     this.maxCubeMapSize = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE);
     this.maxRenderBufferSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE);
-    this.samplerCount = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+    this.maxTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+    this.maxCombinedTextures = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
     this.maxVertexTextures = gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS);
     this.vertexUniformsCount = gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS);
     this.fragmentUniformsCount = gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS);
@@ -4882,11 +4882,11 @@ pc.extend(pc, function() {
     gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
     gl.stencilMask(255);
     this.alphaToCoverage = false;
+    this.raster = true;
     if (this.webgl2) {
       gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);
       gl.disable(gl.RASTERIZER_DISCARD);
     }
-    this.raster = true;
     this.depthBiasEnabled = false;
     gl.disable(gl.POLYGON_OFFSET_FILL);
     this.clearDepth = 1;
@@ -4932,7 +4932,10 @@ pc.extend(pc, function() {
       texture.dirtyAll();
     }
     this.activeTexture = 0;
-    this.textureUnits = [];
+    this.textureUnits.length = 0;
+    for (i = 0;i < this.maxCombinedTextures;i++) {
+      this.textureUnits.push([null, null, null]);
+    }
     for (i = 0, len = this.targets.length;i < len;i++) {
       this.targets[i]._glFrameBuffer = undefined;
       this.targets[i]._glDepthBuffer = undefined;
@@ -5122,16 +5125,13 @@ pc.extend(pc, function() {
     } else {
       this.setFramebuffer(null);
     }
-    for (var i = 0;i < 16;i++) {
-      this.textureUnits[i] = null;
-    }
   }, updateEnd:function() {
     var gl = this.gl;
     var target = this.renderTarget;
     if (target) {
       var colorBuffer = target._colorBuffer;
       if (colorBuffer && colorBuffer._glTextureId && colorBuffer.mipmaps && colorBuffer._pot) {
-        gl.bindTexture(colorBuffer._glTarget, colorBuffer._glTextureId);
+        this.bindTexture(this.maxCombinedTextures - 1, colorBuffer._glTarget, colorBuffer._glTextureId);
         gl.generateMipmap(colorBuffer._glTarget);
       }
       if (this.webgl2 && target._samples > 1 && target.autoResolve) {
@@ -5415,22 +5415,26 @@ pc.extend(pc, function() {
     if (texture._gpuSize) {
       this._vram.tex -= texture._gpuSize;
     }
-    texture._gpuSize = gpuTexSize(gl, texture);
+    texture._gpuSize = texture.gpuSize;
     this._vram.tex += texture._gpuSize;
+  }, bindTexture:function(textureUnit, textureTarget, textureObject) {
+    var slot = this.targetToSlot[textureTarget];
+    if (this.textureUnits[textureUnit][slot] !== textureObject) {
+      var gl = this.gl;
+      if (this.activeTexture !== textureUnit) {
+        gl.activeTexture(gl.TEXTURE0 + textureUnit);
+        this.activeTexture = textureUnit;
+      }
+      gl.bindTexture(textureTarget, textureObject);
+      this.textureUnits[textureUnit][slot] = textureObject;
+    }
   }, setTexture:function(texture, textureUnit) {
     var gl = this.gl;
     if (!texture._glTextureId) {
       this.initializeTexture(texture);
     }
+    this.bindTexture(textureUnit, texture._glTarget, texture._glTextureId);
     var paramDirty = texture._minFilterDirty || texture._magFilterDirty || texture._addressUDirty || texture._addressVDirty || texture._addressWDirty || texture._anisotropyDirty || texture._compareModeDirty;
-    if (this.textureUnits[textureUnit] !== texture || paramDirty) {
-      if (this.activeTexture !== textureUnit) {
-        gl.activeTexture(gl.TEXTURE0 + textureUnit);
-        this.activeTexture = textureUnit;
-      }
-      gl.bindTexture(texture._glTarget, texture._glTextureId);
-      this.textureUnits[textureUnit] = texture;
-    }
     if (paramDirty) {
       if (texture._minFilterDirty) {
         var filter = texture._minFilter;
@@ -5466,16 +5470,18 @@ pc.extend(pc, function() {
         }
         texture._addressVDirty = false;
       }
-      if (this.webgl2) {
-        if (texture._addressWDirty) {
+      if (texture._addressWDirty) {
+        if (this.webgl2) {
           gl.texParameteri(texture._glTarget, gl.TEXTURE_WRAP_R, this.glAddress[texture._addressW]);
-          texture._addressWDirty = false;
         }
-        if (texture._compareModeDirty) {
+        texture._addressWDirty = false;
+      }
+      if (texture._compareModeDirty) {
+        if (this.webgl2) {
           gl.texParameteri(texture._glTarget, gl.TEXTURE_COMPARE_MODE, texture._compareOnRead ? gl.COMPARE_REF_TO_TEXTURE : gl.NONE);
           gl.texParameteri(texture._glTarget, gl.TEXTURE_COMPARE_FUNC, this.glComparison[texture._compareFunc]);
-          texture._compareModeDirty = false;
         }
+        texture._compareModeDirty = false;
       }
       if (texture._anisotropyDirty) {
         var ext = this.extTextureFilterAnisotropic;
@@ -5944,7 +5950,7 @@ pc.extend(pc, function() {
     if (this.webgl2 && this.feedback) {
       this.gl.deleteTransformFeedback(this.feedback);
     }
-  }};
+  }});
   Object.defineProperty(GraphicsDevice.prototype, "width", {get:function() {
     return this.gl.drawingBufferWidth || this.canvas.width;
   }});
@@ -5986,9 +5992,9 @@ pc.extend(pc, function() {
     this._maxPixelRatio = ratio;
     this.resizeCanvas(this._width, this._height);
   }});
-  return {UnsupportedBrowserError:UnsupportedBrowserError, ContextCreationError:ContextCreationError, GraphicsDevice:GraphicsDevice, precalculatedTangents:true};
+  return {GraphicsDevice:GraphicsDevice, precalculatedTangents:true};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var shaderChunks = {};
   var attrib2Semantic = {vertex_position:pc.SEMANTIC_POSITION, vertex_normal:pc.SEMANTIC_NORMAL, vertex_tangent:pc.SEMANTIC_TANGENT, vertex_texCoord0:pc.SEMANTIC_TEXCOORD0, vertex_texCoord1:pc.SEMANTIC_TEXCOORD1, vertex_texCoord2:pc.SEMANTIC_TEXCOORD2, vertex_texCoord3:pc.SEMANTIC_TEXCOORD3, vertex_texCoord4:pc.SEMANTIC_TEXCOORD4, vertex_texCoord5:pc.SEMANTIC_TEXCOORD5, vertex_texCoord6:pc.SEMANTIC_TEXCOORD6, vertex_texCoord7:pc.SEMANTIC_TEXCOORD7, vertex_color:pc.SEMANTIC_COLOR, vertex_boneIndices:pc.SEMANTIC_BLENDINDICES, 
   vertex_boneWeights:pc.SEMANTIC_BLENDWEIGHT};
@@ -6041,7 +6047,7 @@ pc.extend(pc, function() {
   };
   return {shaderChunks:shaderChunks};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _postEffectQuadVB = null;
   var _postEffectQuadDraw = {type:pc.PRIMITIVE_TRISTRIP, base:0, count:4, indexed:false};
   function drawQuadWithShader(device, target, shader, rect, scissorRect, useBlend) {
@@ -6111,12 +6117,7 @@ pc.extend(pc, function() {
   }
   return {drawQuadWithShader:drawQuadWithShader, destroyPostEffectQuad:destroyPostEffectQuad};
 }());
-pc.extend(pc, function() {
-  function fixChrome() {
-    var endTime = Date.now() + 10;
-    while (Date.now() < endTime) {
-    }
-  }
+Object.assign(pc, function() {
   function syncToCpu(device, targ, face) {
     var tex = targ._colorBuffer;
     if (tex.format != pc.PIXELFORMAT_R8_G8_B8_A8) {
@@ -6140,7 +6141,6 @@ pc.extend(pc, function() {
     var method = options.method;
     var samples = options.samples;
     var cpuSync = options.cpuSync;
-    var chromeFix = options.chromeFix;
     if (cpuSync && !sourceCubemap._levels[0]) {
       console.error("ERROR: prefilter: cubemap must have _levels");
       return;
@@ -6175,9 +6175,6 @@ pc.extend(pc, function() {
         params.y = 0;
         constantTexSource.setValue(sourceCubemap);
         constantParams.setValue(params.data);
-        if (chromeFix) {
-          fixChrome();
-        }
         pc.drawQuadWithShader(device, targ, shader2);
         syncToCpu(device, targ, face);
       }
@@ -6199,9 +6196,6 @@ pc.extend(pc, function() {
           params.w = rgbmSource ? 3 : 0;
           constantTexSource.setValue(sourceCubemap);
           constantParams.setValue(params.data);
-          if (chromeFix) {
-            fixChrome();
-          }
           pc.drawQuadWithShader(device, targ, shader2);
           if (i === steps - 1 && cpuSync) {
             syncToCpu(device, targ, face);
@@ -6220,9 +6214,6 @@ pc.extend(pc, function() {
         params.w = 2;
         constantTexSource.setValue(sourceCubemap);
         constantParams.setValue(params.data);
-        if (chromeFix) {
-          fixChrome();
-        }
         pc.drawQuadWithShader(device, targ, shader2);
         syncToCpu(device, targ, face);
       }
@@ -6253,9 +6244,6 @@ pc.extend(pc, function() {
             params.w = rgbmSource ? 3 : pass;
             constantTexSource.setValue(i === 0 ? sourceCubemap : method === 0 ? cmapsList[0][i - 1] : cmapsList[-1][i - 1]);
             constantParams.setValue(params.data);
-            if (chromeFix) {
-              fixChrome();
-            }
             pc.drawQuadWithShader(device, targ, shader);
             if (cpuSync) {
               syncToCpu(device, targ, face);
@@ -6454,7 +6442,7 @@ pc.extend(pc, function() {
   }
   return {prefilterCubemap:prefilterCubemap, shFromCubemap:shFromCubemap};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var dpMult = 2.0;
   function paraboloidFromCubemap(device, sourceCubemap, fixSeamsAmount, dontFlipX) {
     var chunks = pc.shaderChunks;
@@ -6733,20 +6721,18 @@ pc.programlib = {gammaCode:function(value) {
     } else {
       if (value === "exp2") {
         return pc.shaderChunks.fogExp2PS;
-      } else {
-        return pc.shaderChunks.fogNonePS;
       }
     }
   }
+  return pc.shaderChunks.fogNonePS;
 }, skinCode:function(device, chunks) {
   if (!chunks) {
     chunks = pc.shaderChunks;
   }
   if (device.supportsBoneTextures) {
     return chunks.skinTexVS;
-  } else {
-    return "#define BONE_LIMIT " + device.getBoneLimit() + "\n" + chunks.skinConstVS;
   }
+  return "#define BONE_LIMIT " + device.getBoneLimit() + "\n" + chunks.skinConstVS;
 }, precisionCode:function(device) {
   var pcode = "precision " + device.precision + " float;\n";
   if (device.webgl2) {
@@ -7109,10 +7095,10 @@ f:_oldChunkTexColor}, emissiveTexConstFloatPS:{n:"emissivePS", f:_oldChunkTexFlo
 f:_oldChunkFloat}, metalnessTexPS:{n:"metalnessPS", f:_oldChunkTex}, metalnessTexConstPS:{n:"metalnessPS", f:_oldChunkTexFloat}, metalnessVertPS:{n:"metalnessPS", f:_oldChunkVert}, metalnessVertConstPS:{n:"metalnessPS", f:_oldChunkVertFloat}, opacityConstPS:{n:"opacityPS", f:_oldChunkFloat}, opacityTexPS:{n:"opacityPS", f:_oldChunkTex}, opacityTexConstPS:{n:"opacityPS", f:_oldChunkTexFloat}, opacityVertPS:{n:"opacityPS", f:_oldChunkVert}, opacityVertConstPS:{n:"opacityPS", f:_oldChunkVertFloat}, 
 specularConstPS:{n:"specularPS", f:_oldChunkColor}, specularTexPS:{n:"specularPS", f:_oldChunkTex}, specularTexConstPS:{n:"specularPS", f:_oldChunkTexColor}, specularVertPS:{n:"specularPS", f:_oldChunkVert}, specularVertConstPS:{n:"specularPS", f:_oldChunkVertColor}, transformBatchSkinnedVS:{n:"transformVS", f:_oldChunkTransformDynbatch}, transformInstancedVS:{n:"transformVS", f:_oldChunkTransformInstanced}, transformPixelSnapVS:{n:"transformVS", f:_oldChunkTransformPixelSnap}, transformScreenSpaceVS:{n:"transformVS", 
 f:_oldChunkTransformScreenSpace}, transformScreenSpaceBatchSkinned:{n:"transformVS", f:_oldChunkTransformScreenSpaceBatch}, transformSkinned:{n:"transformVS", f:_oldChunkTransformSkin}, transformUv1:{n:"transformVS", f:_oldChunkTransformUv1}}, generateKey:function(device, options) {
-  var props = [];
+  var prop, props = [];
   var key = "standard";
   var light;
-  for (var prop in options) {
+  for (prop in options) {
     if (options.hasOwnProperty(prop)) {
       if (prop === "chunks") {
         for (var p in options[prop]) {
@@ -7211,23 +7197,18 @@ f:_oldChunkTransformScreenSpace}, transformScreenSpaceBatchSkinned:{n:"transform
     if (light._type === pc.LIGHTTYPE_SPOT) {
       if (light._isPcf && (device.webgl2 || device.extStandardDerivatives)) {
         return "       getShadowCoordPerspZbuffer" + shadowCoordArgs;
-      } else {
-        return "       getShadowCoordPersp" + shadowCoordArgs;
       }
-    } else {
-      return "       getShadowCoordOrtho" + shadowCoordArgs;
+      return "       getShadowCoordPersp" + shadowCoordArgs;
     }
-  } else {
-    if (light._type === pc.LIGHTTYPE_SPOT) {
-      if (light._isPcf && (device.webgl2 || device.extStandardDerivatives)) {
-        return "       getShadowCoordPerspZbufferNormalOffset" + shadowCoordArgs;
-      } else {
-        return "       getShadowCoordPerspNormalOffset" + shadowCoordArgs;
-      }
-    } else {
-      return "       getShadowCoordOrthoNormalOffset" + shadowCoordArgs;
-    }
+    return "       getShadowCoordOrtho" + shadowCoordArgs;
   }
+  if (light._type === pc.LIGHTTYPE_SPOT) {
+    if (light._isPcf && (device.webgl2 || device.extStandardDerivatives)) {
+      return "       getShadowCoordPerspZbufferNormalOffset" + shadowCoordArgs;
+    }
+    return "       getShadowCoordPerspNormalOffset" + shadowCoordArgs;
+  }
+  return "       getShadowCoordOrthoNormalOffset" + shadowCoordArgs;
 }, _addVaryingIfNeeded:function(code, type, name) {
   return code.indexOf(name) >= 0 ? "varying " + type + " " + name + ";\n" : "";
 }, createShaderDefinition:function(device, options) {
@@ -7246,7 +7227,7 @@ f:_oldChunkTransformScreenSpace}, transformScreenSpaceBatchSkinned:{n:"transform
   } else {
     options.fresnelModel = options.fresnelModel === 0 ? pc.FRESNEL_SCHLICK : options.fresnelModel;
   }
-  var cubemapReflection = options.cubeMap || options.prefilteredCubemap && options.useSpecular && (!options.sphereMap && !options.dpAtlas);
+  var cubemapReflection = (options.cubeMap || options.prefilteredCubemap && options.useSpecular) && !options.sphereMap && !options.dpAtlas;
   var reflections = options.sphereMap || cubemapReflection || options.dpAtlas;
   var useTangents = pc.precalculatedTangents;
   var useTexCubeLod = options.useTexCubeLod;
@@ -7771,24 +7752,26 @@ f:_oldChunkTransformScreenSpace}, transformScreenSpaceBatchSkinned:{n:"transform
     }
   }
   var reflectionDecode = options.rgbmReflection ? "decodeRGBM" : options.hdrReflection ? "" : "gammaCorrectInput";
-  if (cubemapReflection) {
-    if (options.prefilteredCubemap) {
-      if (useTexCubeLod) {
-        code += chunks.reflectionPrefilteredCubeLodPS.replace(/\$DECODE/g, reflectionDecode);
-      } else {
-        code += chunks.reflectionPrefilteredCubePS.replace(/\$DECODE/g, reflectionDecode);
-      }
-    } else {
-      code += chunks.reflectionCubePS.replace(/\$textureCubeSAMPLE/g, options.rgbmReflection ? "textureCubeRGBM" : options.hdrReflection ? "textureCube" : "textureCubeSRGB");
-    }
-  }
   if (options.sphereMap) {
     var scode = device.fragmentUniformsCount > 16 ? chunks.reflectionSpherePS : chunks.reflectionSphereLowPS;
     scode = scode.replace(/\$texture2DSAMPLE/g, options.rgbmReflection ? "texture2DRGBM" : options.hdrReflection ? "texture2D" : "texture2DSRGB");
     code += scode;
-  }
-  if (options.dpAtlas) {
-    code += chunks.reflectionDpAtlasPS.replace(/\$texture2DSAMPLE/g, options.rgbmReflection ? "texture2DRGBM" : options.hdrReflection ? "texture2D" : "texture2DSRGB");
+  } else {
+    if (cubemapReflection) {
+      if (options.prefilteredCubemap) {
+        if (useTexCubeLod) {
+          code += chunks.reflectionPrefilteredCubeLodPS.replace(/\$DECODE/g, reflectionDecode);
+        } else {
+          code += chunks.reflectionPrefilteredCubePS.replace(/\$DECODE/g, reflectionDecode);
+        }
+      } else {
+        code += chunks.reflectionCubePS.replace(/\$textureCubeSAMPLE/g, options.rgbmReflection ? "textureCubeRGBM" : options.hdrReflection ? "textureCube" : "textureCubeSRGB");
+      }
+    } else {
+      if (options.dpAtlas) {
+        code += chunks.reflectionDpAtlasPS.replace(/\$texture2DSAMPLE/g, options.rgbmReflection ? "texture2DRGBM" : options.hdrReflection ? "texture2D" : "texture2DSRGB");
+      }
+    }
   }
   if ((cubemapReflection || options.sphereMap || options.dpAtlas) && options.refraction) {
     code += chunks.refractionPS;
@@ -8221,7 +8204,7 @@ pc.programlib.skybox = {generateKey:function(device, options) {
   return {attributes:{aPosition:pc.SEMANTIC_POSITION}, vshader:chunks.skyboxVS, fshader:pc.programlib.precisionCode(device) + (options.mip ? chunks.fixCubemapSeamsStretchPS : chunks.fixCubemapSeamsNonePS) + (options.useIntensity ? chunks.envMultiplyPS : chunks.envConstPS) + pc.programlib.gammaCode(options.gamma) + pc.programlib.tonemapCode(options.toneMapping) + chunks.rgbmPS + chunks.skyboxHDRPS.replace(/\$textureCubeSAMPLE/g, options.rgbm ? "textureCubeRGBM" : options.hdr ? "textureCube" : "textureCubeSRGB").replace(/\$FIXCONST/g, 
   1.0 - 1.0 / mip2size[options.mip] + "")};
 }};
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var primitive = {type:pc.PRIMITIVE_TRISTRIP, base:0, count:4, indexed:false};
   var PostEffect = function(graphicsDevice) {
     this.device = graphicsDevice;
@@ -8230,8 +8213,8 @@ pc.extend(pc, function() {
     this.vertexBuffer = pc.createFullscreenQuad(graphicsDevice);
     this.needsDepthBuffer = false;
   };
-  PostEffect.prototype = {render:function(inputTarget, outputTarget, rect) {
-  }};
+  Object.assign(PostEffect.prototype, {render:function(inputTarget, outputTarget, rect) {
+  }});
   function createFullscreenQuad(device) {
     var vertexFormat = new pc.VertexFormat(device, [{semantic:pc.SEMANTIC_POSITION, components:2, type:pc.TYPE_FLOAT32}]);
     var vertexBuffer = new pc.VertexBuffer(device, vertexFormat, 4);
@@ -8291,12 +8274,12 @@ pc.extend(pc, function() {
   LIGHTTYPE_SPOT:2, LIGHTFALLOFF_LINEAR:0, LIGHTFALLOFF_INVERSESQUARED:1, SHADOW_PCF3:0, SHADOW_DEPTH:0, SHADOW_VSM8:1, SHADOW_VSM16:2, SHADOW_VSM32:3, SHADOW_PCF5:4, BLUR_BOX:0, BLUR_GAUSSIAN:1, PARTICLESORT_NONE:0, PARTICLESORT_DISTANCE:1, PARTICLESORT_NEWER_FIRST:2, PARTICLESORT_OLDER_FIRST:3, PARTICLEMODE_GPU:0, PARTICLEMODE_CPU:1, EMITTERSHAPE_BOX:0, EMITTERSHAPE_SPHERE:1, PROJECTION_PERSPECTIVE:0, PROJECTION_ORTHOGRAPHIC:1, RENDERSTYLE_SOLID:0, RENDERSTYLE_WIREFRAME:1, RENDERSTYLE_POINTS:2, 
   CUBEPROJ_NONE:0, CUBEPROJ_BOX:1, SPECULAR_PHONG:0, SPECULAR_BLINN:1, GAMMA_NONE:0, GAMMA_SRGB:1, GAMMA_SRGBFAST:2, GAMMA_SRGBHDR:3, TONEMAP_LINEAR:0, TONEMAP_FILMIC:1, TONEMAP_HEJL:2, TONEMAP_ACES:3, TONEMAP_ACES2:4, SPECOCC_NONE:0, SPECOCC_AO:1, SPECOCC_GLOSSDEPENDENT:2, SHADERDEF_NOSHADOW:1, SHADERDEF_SKIN:2, SHADERDEF_UV0:4, SHADERDEF_UV1:8, SHADERDEF_VCOLOR:16, SHADERDEF_INSTANCING:32, SHADERDEF_LM:64, SHADERDEF_DIRLM:128, SHADERDEF_SCREENSPACE:256, LINEBATCH_WORLD:0, LINEBATCH_OVERLAY:1, LINEBATCH_GIZMO:2, 
   SHADOWUPDATE_NONE:0, SHADOWUPDATE_THISFRAME:1, SHADOWUPDATE_REALTIME:2, SORTKEY_FORWARD:0, SORTKEY_DEPTH:1, MASK_DYNAMIC:1, MASK_BAKED:2, MASK_LIGHTMAP:4, SHADER_FORWARD:0, SHADER_FORWARDHDR:1, SHADER_DEPTH:2, SHADER_SHADOW:3, SHADER_PICK:18, BAKE_COLOR:0, BAKE_COLORDIR:1, VIEW_CENTER:0, VIEW_LEFT:1, VIEW_RIGHT:2, SORTMODE_NONE:0, SORTMODE_MANUAL:1, SORTMODE_MATERIALMESH:2, SORTMODE_BACK2FRONT:3, SORTMODE_FRONT2BACK:4, COMPUPDATED_INSTANCES:1, COMPUPDATED_LIGHTS:2, COMPUPDATED_CAMERAS:4, COMPUPDATED_BLEND:8, 
-  ASPECT_AUTO:0, ASPECT_MANUAL:1};
-  pc.extend(pc, enums);
+  ASPECT_AUTO:0, ASPECT_MANUAL:1, ORIENTATION_HORIZONTAL:0, ORIENTATION_VERTICAL:1};
+  Object.assign(pc, enums);
   pc.scene = {};
-  pc.extend(pc.scene, enums);
+  Object.assign(pc.scene, enums);
 })();
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Scene = function Scene() {
     this.root = null;
     this._gravity = new pc.Vec3(0, -9.8, 0);
@@ -8461,7 +8444,6 @@ pc.extend(pc, function() {
     this.updateShaders = true;
   };
   Scene.prototype._updateSkybox = function(device) {
-    var i;
     if (this._skyboxCubeMap && !this.skyboxModel) {
       var material = new pc.Material;
       var scene = this;
@@ -8581,7 +8563,7 @@ pc.extend(pc, function() {
   };
   return {Scene:Scene};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var scaleShift = (new pc.Mat4).mul2((new pc.Mat4).setTranslate(0.5, 0.5, 0.5), (new pc.Mat4).setScale(0.5, 0.5, 0.5));
   var opChanId = {r:1, g:2, b:3, a:4};
   var pointLightRotations = [(new pc.Quat).setFromEulerAngles(0, 90, 180), (new pc.Quat).setFromEulerAngles(0, -90, 180), (new pc.Quat).setFromEulerAngles(90, 0, 0), (new pc.Quat).setFromEulerAngles(-90, 0, 0), (new pc.Quat).setFromEulerAngles(0, 180, 180), (new pc.Quat).setFromEulerAngles(0, 0, 180)];
@@ -8613,14 +8595,13 @@ pc.extend(pc, function() {
   var tempSphere = {center:null, radius:0};
   var meshPos;
   var visibleSceneAabb = new pc.BoundingBox;
-  var lightBounds = new pc.BoundingBox;
   var boneTextureSize = [0, 0];
   var boneTexture, instancingData, modelMatrix, normalMatrix;
   var shadowMapCubeCache = {};
   var maxBlurSize = 25;
   var keyA, keyB;
   var frustumPoints = [];
-  for (var i = 0;i < 8;i++) {
+  for (var fp = 0;fp < 8;fp++) {
     frustumPoints.push(new pc.Vec3);
   }
   function _getFrustumPoints(camera, farClip, points) {
@@ -8665,160 +8646,7 @@ pc.extend(pc, function() {
     points[7].z = -farClip;
     return points;
   }
-  function StaticArray(size) {
-    var data = new Array(size);
-    var obj = function(idx) {
-      return data[idx];
-    };
-    obj.size = 0;
-    obj.push = function(v) {
-      data[this.size] = v;
-      ++this.size;
-    };
-    obj.data = data;
-    return obj;
-  }
-  var intersectCache = {temp:[new pc.Vec3, new pc.Vec3, new pc.Vec3], vertices:new Array(3), negative:new StaticArray(3), positive:new StaticArray(3), intersections:new StaticArray(3), zCollection:new StaticArray(36)};
-  function _groupVertices(coord, face, smallerIsNegative) {
-    var intersections = intersectCache.intersections;
-    var small, large;
-    if (smallerIsNegative) {
-      small = intersectCache.negative;
-      large = intersectCache.positive;
-    } else {
-      small = intersectCache.positive;
-      large = intersectCache.negative;
-    }
-    intersections.size = 0;
-    small.size = 0;
-    large.size = 0;
-    var intersectCount = 0;
-    var v;
-    for (var j = 0;j < 3;++j) {
-      v = intersectCache.vertices[j];
-      if (v[coord] < face) {
-        small.push(v);
-      } else {
-        if (v[coord] === face) {
-          intersections.push(intersectCache.temp[intersections.size].copy(v));
-        } else {
-          large.push(v);
-        }
-      }
-    }
-  }
-  function _triXFace(zs, x, y, faceTest, yMin, yMax) {
-    var negative = intersectCache.negative;
-    var positive = intersectCache.positive;
-    var intersections = intersectCache.intersections;
-    if (negative.size === 3) {
-      return false;
-    }
-    if (negative.size && positive.size) {
-      intersections.push(intersectCache.temp[intersections.size].lerp(negative(0), positive(0), (faceTest - negative(0)[x]) / (positive(0)[x] - negative(0)[x])));
-      if (negative.size === 2) {
-        intersections.push(intersectCache.temp[intersections.size].lerp(negative(1), positive(0), (faceTest - negative(1)[x]) / (positive(0)[x] - negative(1)[x])));
-      } else {
-        if (positive.size === 2) {
-          intersections.push(intersectCache.temp[intersections.size].lerp(negative(0), positive(1), (faceTest - negative(0)[x]) / (positive(1)[x] - negative(0)[x])));
-        }
-      }
-    }
-    if (intersections.size === 0) {
-      return true;
-    }
-    if (intersections.size === 1) {
-      if (yMin <= intersections(0)[y] && intersections(0)[y] <= yMax) {
-        zs.push(intersections(0).z);
-      }
-      return true;
-    }
-    if (intersections(1)[y] === intersections(0)[y]) {
-      if (yMin <= intersections(0)[y] && intersections(0)[y] <= yMax) {
-        zs.push(intersections(0).z);
-        zs.push(intersections(1).z);
-      }
-    } else {
-      var delta = (intersections(1).z - intersections(0).z) / (intersections(1)[y] - intersections(0)[y]);
-      if (intersections(0)[y] > yMax) {
-        zs.push(intersections(0).z + delta * (yMax - intersections(0)[y]));
-      } else {
-        if (intersections(0)[y] < yMin) {
-          zs.push(intersections(0).z + delta * (yMin - intersections(0)[y]));
-        } else {
-          zs.push(intersections(0).z);
-        }
-      }
-      if (intersections(1)[y] > yMax) {
-        zs.push(intersections(1).z + delta * (yMax - intersections(1)[y]));
-      } else {
-        if (intersections(1)[y] < yMin) {
-          zs.push(intersections(1).z + delta * (yMin - intersections(1)[y]));
-        } else {
-          zs.push(intersections(1).z);
-        }
-      }
-    }
-    return true;
-  }
   var _sceneAABB_LS = [new pc.Vec3, new pc.Vec3, new pc.Vec3, new pc.Vec3, new pc.Vec3, new pc.Vec3, new pc.Vec3, new pc.Vec3];
-  var iAABBTriIndexes = [0, 1, 2, 1, 2, 3, 4, 5, 6, 5, 6, 7, 0, 2, 4, 2, 4, 6, 1, 3, 5, 3, 5, 7, 0, 1, 4, 1, 4, 5, 2, 3, 6, 3, 6, 7];
-  function _getZFromAABB(w2sc, aabbMin, aabbMax, lcamMinX, lcamMaxX, lcamMinY, lcamMaxY) {
-    _sceneAABB_LS[0].x = _sceneAABB_LS[1].x = _sceneAABB_LS[2].x = _sceneAABB_LS[3].x = aabbMin.x;
-    _sceneAABB_LS[1].y = _sceneAABB_LS[3].y = _sceneAABB_LS[7].y = _sceneAABB_LS[5].y = aabbMin.y;
-    _sceneAABB_LS[2].z = _sceneAABB_LS[3].z = _sceneAABB_LS[6].z = _sceneAABB_LS[7].z = aabbMin.z;
-    _sceneAABB_LS[4].x = _sceneAABB_LS[5].x = _sceneAABB_LS[6].x = _sceneAABB_LS[7].x = aabbMax.x;
-    _sceneAABB_LS[0].y = _sceneAABB_LS[2].y = _sceneAABB_LS[4].y = _sceneAABB_LS[6].y = aabbMax.y;
-    _sceneAABB_LS[0].z = _sceneAABB_LS[1].z = _sceneAABB_LS[4].z = _sceneAABB_LS[5].z = aabbMax.z;
-    for (var i = 0;i < 8;++i) {
-      w2sc.transformPoint(_sceneAABB_LS[i], _sceneAABB_LS[i]);
-    }
-    var minz = 9999999999;
-    var maxz = -9999999999;
-    var vertices = intersectCache.vertices;
-    var positive = intersectCache.positive;
-    var zs = intersectCache.zCollection;
-    zs.size = 0;
-    for (var AABBTriIter = 0;AABBTriIter < 12;++AABBTriIter) {
-      vertices[0] = _sceneAABB_LS[iAABBTriIndexes[AABBTriIter * 3 + 0]];
-      vertices[1] = _sceneAABB_LS[iAABBTriIndexes[AABBTriIter * 3 + 1]];
-      vertices[2] = _sceneAABB_LS[iAABBTriIndexes[AABBTriIter * 3 + 2]];
-      var verticesWithinBound = 0;
-      _groupVertices("x", lcamMinX, true);
-      if (!_triXFace(zs, "x", "y", lcamMinX, lcamMinY, lcamMaxY)) {
-        continue;
-      }
-      verticesWithinBound += positive.size;
-      _groupVertices("x", lcamMaxX, false);
-      if (!_triXFace(zs, "x", "y", lcamMaxX, lcamMinY, lcamMaxY)) {
-        continue;
-      }
-      verticesWithinBound += positive.size;
-      _groupVertices("y", lcamMinY, true);
-      if (!_triXFace(zs, "y", "x", lcamMinY, lcamMinX, lcamMaxX)) {
-        continue;
-      }
-      verticesWithinBound += positive.size;
-      _groupVertices("y", lcamMaxY, false);
-      _triXFace(zs, "y", "x", lcamMaxY, lcamMinX, lcamMaxX);
-      if (verticesWithinBound + positive.size == 12) {
-        zs.push(vertices[0].z);
-        zs.push(vertices[1].z);
-        zs.push(vertices[2].z);
-      }
-    }
-    var z;
-    for (var j = 0, len = zs.size;j < len;j++) {
-      z = zs(j);
-      if (z < minz) {
-        minz = z;
-      }
-      if (z > maxz) {
-        maxz = z;
-      }
-    }
-    return {min:minz, max:maxz};
-  }
   function _getZFromAABBSimple(w2sc, aabbMin, aabbMax, lcamMinX, lcamMaxX, lcamMinY, lcamMaxY) {
     _sceneAABB_LS[0].x = _sceneAABB_LS[1].x = _sceneAABB_LS[2].x = _sceneAABB_LS[3].x = aabbMin.x;
     _sceneAABB_LS[1].y = _sceneAABB_LS[3].y = _sceneAABB_LS[7].y = _sceneAABB_LS[5].y = aabbMin.y;
@@ -9084,7 +8912,7 @@ pc.extend(pc, function() {
     m3.data[7] = m4.data[9];
     m3.data[8] = m4.data[10];
   }
-  pc.extend(ForwardRenderer.prototype, {sortCompare:function(drawCallA, drawCallB) {
+  Object.assign(ForwardRenderer.prototype, {sortCompare:function(drawCallA, drawCallB) {
     if (drawCallA.layer === drawCallB.layer) {
       if (drawCallA.drawOrder && drawCallB.drawOrder) {
         return drawCallA.drawOrder - drawCallB.drawOrder;
@@ -9276,7 +9104,6 @@ pc.extend(pc, function() {
   }, dispatchGlobalLights:function(scene) {
     var i;
     this.mainLight = -1;
-    var scope = this.device.scope;
     this.ambientColor[0] = scene.ambientLight.data[0];
     this.ambientColor[1] = scene.ambientLight.data[1];
     this.ambientColor[2] = scene.ambientLight.data[2];
@@ -9423,12 +9250,6 @@ pc.extend(pc, function() {
       params[2] = bias;
       params[3] = 1.0 / spot.attenuationEnd;
       this.lightShadowParamsId[cnt].setValue(params);
-      if (this.mainLight < 0) {
-        this.lightShadowMatrixVsId[cnt].setValue(spot._shadowMatrix.data);
-        this.lightShadowParamsVsId[cnt].setValue(params);
-        this.lightPosVsId[cnt].setValue(spot._position.data);
-        this.mainLight = i;
-      }
     }
     if (spot._cookie) {
       this.lightCookieId[cnt].setValue(spot._cookie);
@@ -9675,15 +9496,10 @@ pc.extend(pc, function() {
     }
   }, renderShadows:function(lights, cameraPass) {
     var device = this.device;
-    var i, j, light, shadowShader, type, shadowCam, shadowCamNode, lightNode, pass, passes, frustumSize, shadowType, smode;
-    var unitPerTexel, delta, p;
-    var minx, miny, minz, maxx, maxy, maxz, centerx, centery;
-    var opChan;
-    var visible, cullTime, numInstances;
+    var i, j, light, shadowShader, type, shadowCam, shadowCamNode, pass, passes, shadowType, smode;
+    var numInstances;
     var meshInstance, mesh, material;
     var style;
-    var emptyAabb;
-    var drawCallAabb;
     var settings;
     var visibleList, visibleLength;
     var passFlag = 1 << pc.SHADER_SHADOW;
@@ -9700,7 +9516,6 @@ pc.extend(pc, function() {
       if (light.shadowUpdateMode !== pc.SHADOWUPDATE_NONE && light.visibleThisFrame) {
         shadowCam = this.getShadowCamera(device, light);
         shadowCamNode = shadowCam._node;
-        lightNode = light._node;
         pass = 0;
         passes = 1;
         if (type === pc.LIGHTTYPE_DIRECTIONAL) {
@@ -9827,12 +9642,25 @@ pc.extend(pc, function() {
           if (filterSize > 1) {
             var origShadowMap = shadowCam.renderTarget;
             var tempRt = getShadowMapFromCache(device, light._shadowResolution, light._shadowType, 1);
+            var isVsm8 = light._shadowType === pc.SHADOW_VSM8;
             var blurMode = light.vsmBlurMode;
-            var blurShader = (light._shadowType === pc.SHADOW_VSM8 ? this.blurPackedVsmShader : this.blurVsmShader)[blurMode][filterSize];
+            var blurShader = (isVsm8 ? this.blurPackedVsmShader : this.blurVsmShader)[blurMode][filterSize];
             if (!blurShader) {
               this.blurVsmWeights[filterSize] = gaussWeights(filterSize);
-              var chunks = pc.shaderChunks;
-              (light._shadowType === pc.SHADOW_VSM8 ? this.blurPackedVsmShader : this.blurVsmShader)[blurMode][filterSize] = blurShader = chunks.createShaderFromCode(this.device, chunks.fullscreenQuadVS, "#define SAMPLES " + filterSize + "\n" + (light._shadowType === pc.SHADOW_VSM8 ? this.blurPackedVsmShaderCode : this.blurVsmShaderCode)[blurMode], "blurVsm" + blurMode + "" + filterSize + "" + (light._shadowType === pc.SHADOW_VSM8));
+              var blurVS = pc.shaderChunks.fullscreenQuadVS;
+              var blurFS = "#define SAMPLES " + filterSize + "\n";
+              if (isVsm8) {
+                blurFS += this.blurPackedVsmShaderCode[blurMode];
+              } else {
+                blurFS += this.blurVsmShaderCode[blurMode];
+              }
+              var blurShaderName = "blurVsm" + blurMode + "" + filterSize + "" + isVsm8;
+              blurShader = pc.shaderChunks.createShaderFromCode(this.device, blurVS, blurFS, blurShaderName);
+              if (isVsm8) {
+                this.blurPackedVsmShader[blurMode][filterSize] = blurShader;
+              } else {
+                this.blurVsmShader[blurMode][filterSize] = blurShader;
+              }
             }
             blurScissorRect.z = light._shadowResolution - 2;
             blurScissorRect.w = blurScissorRect.z;
@@ -9873,7 +9701,7 @@ pc.extend(pc, function() {
     var passFlag = 1 << pass;
     var lightHash = layer ? layer._lightHash : 0;
     var i, drawCall, mesh, material, objDefs, variantKey, lightMask, style, usedDirLights;
-    var prevMeshInstance = null, prevMaterial = null, prevObjDefs, prevLightMask, prevStatic;
+    var prevMaterial = null, prevObjDefs, prevLightMask, prevStatic;
     var paramName, parameter, parameters;
     var stencilFront, stencilBack;
     var halfWidth = device.width * 0.5;
@@ -10035,7 +9863,6 @@ pc.extend(pc, function() {
           }
         }
         prevMaterial = material;
-        prevMeshInstance = drawCall;
         prevObjDefs = objDefs;
         prevLightMask = lightMask;
         prevStatic = drawCall.isStatic;
@@ -10054,12 +9881,13 @@ pc.extend(pc, function() {
       }
     }
   }, revertStaticMeshes:function(meshInstances) {
+    var i;
     var drawCalls = meshInstances;
     var drawCallsCount = drawCalls.length;
     var drawCall;
     var newDrawCalls = [];
     var prevStaticSource;
-    for (var i = 0;i < drawCallsCount;i++) {
+    for (i = 0;i < drawCallsCount;i++) {
       drawCall = drawCalls[i];
       if (drawCall._staticSource) {
         if (drawCall._staticSource !== prevStaticSource) {
@@ -10089,7 +9917,6 @@ pc.extend(pc, function() {
     var minv, maxv;
     var minVec = new pc.Vec3;
     var maxVec = new pc.Vec3;
-    var triAabb = new pc.BoundingBox;
     var localLightBounds = new pc.BoundingBox;
     var invMatrix = new pc.Mat4;
     var triLightComb = [];
@@ -10405,7 +10232,7 @@ pc.extend(pc, function() {
       }
     }
   }, cullLocalShadowmap:function(light, drawCalls) {
-    var i, type, shadowCam, shadowCamNode, passes, pass, j, numInstances, meshInstance, visibleList, vlen, visible;
+    var i, type, shadowCam, shadowCamNode, passes, pass, numInstances, meshInstance, visibleList, vlen, visible;
     var lightNode;
     type = light._type;
     if (type === pc.LIGHTTYPE_DIRECTIONAL) {
@@ -10443,8 +10270,8 @@ pc.extend(pc, function() {
       }
       light._visibleLength[pass] = 0;
       vlen = 0;
-      for (j = 0, numInstances = drawCalls.length;j < numInstances;j++) {
-        meshInstance = drawCalls[j];
+      for (i = 0, numInstances = drawCalls.length;i < numInstances;i++) {
+        meshInstance = drawCalls[i];
         visible = true;
         if (meshInstance.cull) {
           visible = this._isVisible(shadowCam, meshInstance);
@@ -10462,13 +10289,11 @@ pc.extend(pc, function() {
       visibleList.sort(this.depthSortCompare);
     }
   }, cullDirectionalShadowmap:function(light, drawCalls, camera, pass) {
-    var i, j, shadowShader, type, shadowCam, shadowCamNode, lightNode, passes, frustumSize, shadowType, smode, vlen, visibleList;
+    var i, shadowCam, shadowCamNode, lightNode, frustumSize, vlen, visibleList;
     var unitPerTexel, delta, p;
     var minx, miny, minz, maxx, maxy, maxz, centerx, centery;
-    var opChan;
-    var visible, cullTime, numInstances;
-    var meshInstance, mesh, material;
-    var style;
+    var visible, numInstances;
+    var meshInstance;
     var emptyAabb;
     var drawCallAabb;
     var device = this.device;
@@ -10484,13 +10309,13 @@ pc.extend(pc, function() {
     frustumSize = Math.max(frustumSize, frustumDiagonal.sub2(frustumPoints[4], frustumPoints[6]).length());
     shadowCamView.copy(shadowCamNode.getWorldTransform()).invert();
     c2sc.copy(shadowCamView).mul(camera._node.worldTransform);
-    for (j = 0;j < 8;j++) {
-      c2sc.transformPoint(frustumPoints[j], frustumPoints[j]);
+    for (i = 0;i < 8;i++) {
+      c2sc.transformPoint(frustumPoints[i], frustumPoints[i]);
     }
     minx = miny = minz = 1000000;
     maxx = maxy = maxz = -1000000;
-    for (j = 0;j < 8;j++) {
-      p = frustumPoints[j];
+    for (i = 0;i < 8;i++) {
+      p = frustumPoints[i];
       if (p.x < minx) {
         minx = p.x;
       }
@@ -10532,8 +10357,8 @@ pc.extend(pc, function() {
       visibleList = light._visibleList[pass] = [];
     }
     vlen = light._visibleLength[pass] = 0;
-    for (j = 0, numInstances = drawCalls.length;j < numInstances;j++) {
-      meshInstance = drawCalls[j];
+    for (i = 0, numInstances = drawCalls.length;i < numInstances;i++) {
+      meshInstance = drawCalls[i];
       visible = true;
       if (meshInstance.cull) {
         visible = this._isVisible(shadowCam, meshInstance);
@@ -10595,6 +10420,7 @@ pc.extend(pc, function() {
     device.setScissor(x, y, w, h);
     device.clear(options ? options : camera._clearOptions);
   }, setSceneConstants:function() {
+    var i;
     var device = this.device;
     var scene = this.scene;
     this.dispatchGlobalLights(scene);
@@ -10626,7 +10452,7 @@ pc.extend(pc, function() {
     var renderedRt = comp._renderedRt;
     var renderedByCam = comp._renderedByCam;
     var renderedLayer = comp._renderedLayer;
-    var i, layer, transparent, cameras, j, rt, k, processedThisCamera, processedThisCameraAndLayer, processedThisCameraAndRt, visibleLength;
+    var i, layer, transparent, cameras, j, rt, k, processedThisCamera, processedThisCameraAndLayer, processedThisCameraAndRt;
     this.beginLayers(comp);
     var updated = comp._update();
     if (updated & pc.COMPUPDATED_LIGHTS) {
@@ -10802,7 +10628,7 @@ pc.extend(pc, function() {
   }});
   return {ForwardRenderer:ForwardRenderer, gaussWeights:gaussWeights};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var scaleCompensatePosTransform = new pc.Mat4;
   var scaleCompensatePos = new pc.Vec3;
   var scaleCompensateRot = new pc.Quat;
@@ -10832,6 +10658,7 @@ pc.extend(pc, function() {
     this._forward = new pc.Vec3;
     this._parent = null;
     this._children = [];
+    this._graphDepth = 0;
     this._enabled = true;
     this._enabledInHierarchy = false;
     this.scaleCompensation = false;
@@ -10871,7 +10698,10 @@ pc.extend(pc, function() {
   Object.defineProperty(GraphNode.prototype, "children", {get:function() {
     return this._children;
   }});
-  pc.extend(GraphNode.prototype, {_notifyHierarchyStateChanged:function(node, enabled) {
+  Object.defineProperty(GraphNode.prototype, "graphDepth", {get:function() {
+    return this._graphDepth;
+  }});
+  Object.assign(GraphNode.prototype, {_notifyHierarchyStateChanged:function(node, enabled) {
     node._onHierarchyStateChanged(enabled);
     var c = node._children;
     for (var i = 0, len = c.length;i < len;i++) {
@@ -10887,7 +10717,7 @@ pc.extend(pc, function() {
     for (var i = 0;i < tags.length;i++) {
       clone.tags.add(tags[i]);
     }
-    clone._labels = pc.extend(this._labels, {});
+    clone._labels = Object.assign({}, this._labels);
     clone.localPosition.copy(this.localPosition);
     clone.localRotation.copy(this.localRotation);
     clone.localScale.copy(this.localScale);
@@ -11034,9 +10864,8 @@ pc.extend(pc, function() {
         parent = parent._parent;
       }
       return path;
-    } else {
-      return "";
     }
+    return "";
   }, getRoot:function() {
     var parent = this._parent;
     if (!parent) {
@@ -11255,9 +11084,22 @@ pc.extend(pc, function() {
       node._enabledInHierarchy = enabledInHierarchy;
       node._notifyHierarchyStateChanged(node, enabledInHierarchy);
     }
+    node._updateGraphDepth();
     node._dirtify();
     if (node.fire) {
       node.fire("insert", this);
+    }
+    if (this.fire) {
+      this.fire("childinsert", node);
+    }
+  }, _updateGraphDepth:function() {
+    if (this._parent) {
+      this._graphDepth = this._parent._graphDepth + 1;
+    } else {
+      this._graphDepth = 0;
+    }
+    for (var i = 0, len = this._children.length;i < len;i++) {
+      this._children[i]._updateGraphDepth();
     }
   }, removeChild:function(child) {
     var i;
@@ -11266,6 +11108,9 @@ pc.extend(pc, function() {
       if (this._children[i] === child) {
         this._children.splice(i, 1);
         child._parent = null;
+        if (this.fire) {
+          this.fire("childremove", child);
+        }
         return;
       }
     }
@@ -11337,8 +11182,9 @@ pc.extend(pc, function() {
     if (this._dirtyLocal || this._dirtyWorld) {
       this._sync();
     }
-    for (var i = 0;i < this._children.length;i++) {
-      this._children[i].syncHierarchy();
+    var children = this._children;
+    for (var i = 0, len = children.length;i < len;i++) {
+      children[i].syncHierarchy();
     }
   }, lookAt:function() {
     var matrix = new pc.Mat4;
@@ -11432,7 +11278,7 @@ pc.extend(pc, function() {
   }()});
   return {GraphNode:GraphNode};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _deviceCoord = new pc.Vec3;
   var _far = new pc.Vec3;
   var _farW = new pc.Vec3;
@@ -11470,7 +11316,7 @@ pc.extend(pc, function() {
     this._flipFaces = false;
     this._component = null;
   };
-  Camera.prototype = {clone:function() {
+  Object.assign(Camera.prototype, {clone:function() {
     var clone = new pc.Camera;
     clone.projection = this._projection;
     clone.nearClip = this._nearClip;
@@ -11567,7 +11413,7 @@ pc.extend(pc, function() {
     this._renderDepthRequests++;
   }, releaseDepthMap:function() {
     this._renderDepthRequests--;
-  }};
+  }});
   Object.defineProperty(Camera.prototype, "aspectRatio", {get:function() {
     return this._aspect;
   }, set:function(v) {
@@ -11649,7 +11495,7 @@ pc.extend(pc, function() {
   }});
   return {Camera:Camera};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var spotCenter = new pc.Vec3;
   var spotEndPoint = new pc.Vec3;
   var tmpVec = new pc.Vec3;
@@ -11706,7 +11552,9 @@ pc.extend(pc, function() {
     this._visibleList = [[]];
     this._visibleCameraSettings = [];
   };
-  Light.prototype = {clone:function() {
+  Object.assign(Light.prototype, {destroy:function() {
+    this._destroyShadowMap();
+  }, clone:function() {
     var clone = new pc.Light;
     clone.type = this._type;
     clone.setColor(this._color);
@@ -11808,6 +11656,9 @@ pc.extend(pc, function() {
             if (rt.colorBuffer) {
               rt.colorBuffer.destroy();
             }
+            if (rt.depthBuffer) {
+              rt.depthBuffer.destroy();
+            }
             rt.destroy();
           }
         }
@@ -11830,7 +11681,7 @@ pc.extend(pc, function() {
       key |= chanId[this._cookieChannel.charAt(2)] << 14;
     }
     this.key = key;
-  }};
+  }});
   Object.defineProperty(Light.prototype, "enabled", {get:function() {
     return this._type;
   }, set:function(value) {
@@ -12093,7 +11944,7 @@ pc.extend(pc, function() {
   }});
   return {Light:Light};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var id = 0;
   var Material = function Material() {
     this.name = "Untitled";
@@ -12162,8 +12013,6 @@ pc.extend(pc, function() {
                     } else {
                       if (this.blend && this.blendSrc === pc.BLENDMODE_ONE && this.blendDst === pc.BLENDMODE_ONE_MINUS_SRC_ALPHA && this.blendEquation === pc.BLENDEQUATION_ADD) {
                         return pc.BLEND_PREMULTIPLIED;
-                      } else {
-                        return pc.BLEND_NORMAL;
                       }
                     }
                   }
@@ -12174,6 +12023,7 @@ pc.extend(pc, function() {
         }
       }
     }
+    return pc.BLEND_NORMAL;
   }, set:function(type) {
     var prevBlend = this.blend !== pc.BLEND_NONE;
     switch(type) {
@@ -12327,24 +12177,20 @@ pc.extend(pc, function() {
   Material.prototype.getParameter = function(name) {
     return this.parameters[name];
   };
-  Material.prototype.setParameter = function(arg, data, passFlags) {
+  Material.prototype.setParameter = function(name, data, passFlags) {
     if (passFlags === undefined) {
       passFlags = -524285;
     }
-    var name;
-    if (data === undefined && typeof arg === "object") {
-      var uniformObject = arg;
+    if (data === undefined && typeof name === "object") {
+      var uniformObject = name;
       if (uniformObject.length) {
         for (var i = 0;i < uniformObject.length;i++) {
           this.setParameter(uniformObject[i]);
         }
         return;
-      } else {
-        name = uniformObject.name;
-        data = uniformObject.value;
       }
-    } else {
-      name = arg;
+      name = uniformObject.name;
+      data = uniformObject.value;
     }
     var param = this.parameters[name];
     if (param) {
@@ -12425,15 +12271,17 @@ pc.extend(pc, function() {
   };
   return {Material:Material};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var BasicMaterial = function() {
+    pc.Material.call(this);
     this.color = new pc.Color(1, 1, 1, 1);
     this.colorMap = null;
     this.vertexColors = false;
     this.update();
   };
-  BasicMaterial = pc.inherits(BasicMaterial, pc.Material);
-  pc.extend(BasicMaterial.prototype, {clone:function() {
+  BasicMaterial.prototype = Object.create(pc.Material.prototype);
+  BasicMaterial.prototype.constructor = BasicMaterial;
+  Object.assign(BasicMaterial.prototype, {clone:function() {
     var clone = new pc.BasicMaterial;
     pc.Material.prototype._cloneInternal.call(this, clone);
     clone.color.copy(this.color);
@@ -12454,11 +12302,13 @@ pc.extend(pc, function() {
   }});
   return {BasicMaterial:BasicMaterial};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var DepthMaterial = function() {
+    pc.Material.call(this);
   };
-  DepthMaterial = pc.inherits(DepthMaterial, pc.Material);
-  pc.extend(DepthMaterial.prototype, {clone:function() {
+  DepthMaterial.prototype = Object.create(pc.Material.prototype);
+  DepthMaterial.prototype.constructor = DepthMaterial;
+  Object.assign(DepthMaterial.prototype, {clone:function() {
     var clone = new pc.DepthMaterial;
     pc.Material.prototype._cloneInternal.call(this, clone);
     clone.update();
@@ -12471,29 +12321,19 @@ pc.extend(pc, function() {
   }});
   return {DepthMaterial:DepthMaterial};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var StandardMaterial = function() {
+    pc.Material.call(this);
     this.reset();
     this.update();
   };
+  StandardMaterial.prototype = Object.create(pc.Material.prototype);
+  StandardMaterial.prototype.constructor = StandardMaterial;
   var _createTexture = function(param) {
-    if (param.data) {
-      if (param.data instanceof pc.Texture) {
-        return param.data;
-      } else {
-        return null;
-      }
-    } else {
-      return null;
-    }
+    return param.data instanceof pc.Texture ? param.data : null;
   };
   var _createCubemap = function(param) {
-    if (param.data) {
-      if (param.data instanceof pc.Texture) {
-        return param.data;
-      }
-    }
-    return null;
+    return param.data instanceof pc.Texture ? param.data : null;
   };
   var _createVec2 = function(param) {
     return new pc.Vec2(param.data[0], param.data[1]);
@@ -12739,7 +12579,6 @@ pc.extend(pc, function() {
     }});
   };
   var _defineChunks = function(obj) {
-    this._chunks = null;
     Object.defineProperty(StandardMaterial.prototype, "chunks", {get:function() {
       this.dirtyShader = true;
       return this._chunks;
@@ -12771,8 +12610,7 @@ pc.extend(pc, function() {
       }
     }
   };
-  StandardMaterial = pc.inherits(StandardMaterial, pc.Material);
-  pc.extend(StandardMaterial.prototype, {reset:function() {
+  Object.assign(StandardMaterial.prototype, {reset:function() {
     this.blendType = pc.BLEND_NONE;
     var i;
     for (i = 0;i < _propsSerial.length;i++) {
@@ -13352,7 +13190,7 @@ pc.extend(pc, function() {
   _defineMaterialProps(StandardMaterial.prototype);
   return {StandardMaterial:StandardMaterial};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var id = 0;
   var _tmpAabb = new pc.BoundingBox;
   var Mesh = function() {
@@ -13711,7 +13549,7 @@ pc.extend(pc, function() {
     this._shader[pc.SHADER_FORWARD] = null;
     this._shader[pc.SHADER_FORWARDHDR] = null;
   }});
-  pc.extend(MeshInstance.prototype, {syncAabb:function() {
+  Object.assign(MeshInstance.prototype, {syncAabb:function() {
   }, updateKey:function() {
     var material = this.material;
     this._key[pc.SORTKEY_FORWARD] = getKey(this.layer, material.alphaToCoverage || material.alphaTest ? pc.BLEND_NORMAL : material.blendType, false, material.id);
@@ -13734,17 +13572,17 @@ pc.extend(pc, function() {
     this.usage = dynamic ? pc.BUFFER_DYNAMIC : pc.BUFFER_STATIC;
     this._buffer = null;
   };
-  InstancingData.prototype = {update:function() {
+  Object.assign(InstancingData.prototype, {update:function() {
     if (this._buffer) {
       this._buffer.setData(this.buffer);
     }
-  }};
+  }});
   function getKey(layer, blendType, isCommand, materialId) {
     return (layer & 15) << 27 | (blendType === pc.BLEND_NONE ? 1 : 0) << 26 | (isCommand ? 1 : 0) << 25 | (materialId & 33554431) << 0;
   }
   return {Command:Command, Mesh:Mesh, MeshInstance:MeshInstance, InstancingData:InstancingData, _getDrawcallSortKey:getKey};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _invMatrix = new pc.Mat4;
   var Skin = function(graphicsDevice, ibp, boneNames) {
     this.device = graphicsDevice;
@@ -13782,7 +13620,7 @@ pc.extend(pc, function() {
       this.matrices[i] = new pc.Mat4;
     }
   };
-  SkinInstance.prototype = {updateMatrices:function(rootNode) {
+  Object.assign(SkinInstance.prototype, {updateMatrices:function(rootNode) {
     _invMatrix.copy(rootNode.getWorldTransform()).invert();
     for (var i = this.bones.length - 1;i >= 0;i--) {
       this.matrices[i].mul2(_invMatrix, this.bones[i].getWorldTransform());
@@ -13816,10 +13654,10 @@ pc.extend(pc, function() {
       this.boneTexture.lock();
       this.boneTexture.unlock();
     }
-  }};
+  }});
   return {Skin:Skin, SkinInstance:SkinInstance};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   function PartitionedVertex() {
     this.index = 0;
     this.boneIndices = [0, 0, 0, 0];
@@ -13835,7 +13673,7 @@ pc.extend(pc, function() {
     this.indices = [];
     this.indexMap = {};
   }
-  SkinPartition.prototype = {addVertex:function(vertex, idx, vertexArray) {
+  Object.assign(SkinPartition.prototype, {addVertex:function(vertex, idx, vertexArray) {
     var remappedIndex = -1;
     if (this.indexMap[idx] !== undefined) {
       remappedIndex = this.indexMap[idx];
@@ -13896,7 +13734,7 @@ pc.extend(pc, function() {
       }
     }
     return -1;
-  }};
+  }});
   function indicesToReferences(model) {
     var i;
     var vertices = model.vertices;
@@ -14097,7 +13935,7 @@ pc.extend(pc, function() {
   }
   return {partitionSkin:partitionSkin};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _morphMin = new pc.Vec3;
   var _morphMax = new pc.Vec3;
   var MorphTarget = function(options) {
@@ -14130,7 +13968,7 @@ pc.extend(pc, function() {
     this._offsetTF = 0;
     this._vertSizeF = 0;
   };
-  pc.extend(Morph.prototype, {_setBaseMesh:function(baseMesh) {
+  Object.assign(Morph.prototype, {_setBaseMesh:function(baseMesh) {
     this._baseBuffer = baseMesh.vertexBuffer;
     this._baseAabb = baseMesh._aabb;
     this._baseData = new Float32Array(this._baseBuffer.storage);
@@ -14226,7 +14064,7 @@ pc.extend(pc, function() {
     this._weights = [];
     this._dirty = true;
   };
-  MorphInstance.prototype = {_setBaseMesh:function(baseMesh) {
+  Object.assign(MorphInstance.prototype, {_setBaseMesh:function(baseMesh) {
     this.destroy();
     this._vertexBuffer = new pc.VertexBuffer(this.morph._baseBuffer.device, this.morph._baseBuffer.format, this.morph._baseBuffer.numVertices, pc.BUFFER_DYNAMIC, this.morph._baseBuffer.storage.slice(0));
     this._vertexData = new Float32Array(this._vertexBuffer.storage);
@@ -14305,10 +14143,10 @@ pc.extend(pc, function() {
       }
     }
     this._vertexBuffer.unlock();
-  }};
+  }});
   return {MorphTarget:MorphTarget, Morph:Morph, MorphInstance:MorphInstance};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Model = function Model() {
     this.graph = null;
     this.meshInstances = [];
@@ -14318,7 +14156,7 @@ pc.extend(pc, function() {
     this.lights = [];
     this._shadersVersion = 0;
   };
-  Model.prototype = {getGraph:function() {
+  Object.assign(Model.prototype, {getGraph:function() {
     return this.graph;
   }, setGraph:function(graph) {
     this.graph = graph;
@@ -14348,8 +14186,8 @@ pc.extend(pc, function() {
       var newNode = node.clone();
       srcNodes.push(node);
       cloneNodes.push(newNode);
-      for (var i = 0;i < node._children.length;i++) {
-        newNode.addChild(_duplicate(node._children[i]));
+      for (var idx = 0;idx < node._children.length;idx++) {
+        newNode.addChild(_duplicate(node._children[idx]));
       }
       return newNode;
     };
@@ -14476,10 +14314,10 @@ pc.extend(pc, function() {
       mesh.primitive[pc.RENDERSTYLE_WIREFRAME] = {type:pc.PRIMITIVE_LINES, base:0, count:lines.length, indexed:true};
       mesh.indexBuffer[pc.RENDERSTYLE_WIREFRAME] = wireBuffer;
     }
-  }};
+  }});
   return {Model:Model};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var particleVerts = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
   var _createTexture = function(device, width, height, pixelData, format, mult8Bit, filter) {
     if (!format) {
@@ -14502,6 +14340,27 @@ pc.extend(pc, function() {
     texture.unlock();
     return texture;
   };
+  function frac(f) {
+    return f - Math.floor(f);
+  }
+  function encodeFloatRGBA(v) {
+    var encX = frac(v);
+    var encY = frac(255.0 * v);
+    var encZ = frac(65025.0 * v);
+    var encW = frac(160581375.0 * v);
+    encX -= encY / 255.0;
+    encY -= encZ / 255.0;
+    encZ -= encW / 255.0;
+    encW -= encW / 255.0;
+    return [encX, encY, encZ, encW];
+  }
+  function encodeFloatRG(v) {
+    var encX = frac(v);
+    var encY = frac(255.0 * v);
+    encX -= encY / 255.0;
+    encY -= encY / 255.0;
+    return [encX, encY];
+  }
   function saturate(x) {
     return Math.max(Math.min(x, 1), 0);
   }
@@ -14532,7 +14391,6 @@ pc.extend(pc, function() {
   var randomPos = new pc.Vec3;
   var randomPosTformed = new pc.Vec3;
   var tmpVec3 = new pc.Vec3;
-  var velocityV = new pc.Vec3;
   var bMin = new pc.Vec3;
   var bMax = new pc.Vec3;
   var setPropertyTarget;
@@ -14578,17 +14436,6 @@ pc.extend(pc, function() {
       colors[i * 4 + 3] = pack3NFloats(qC[i], qD[i], qE[i]);
     }
     return colors;
-  }
-  function syncToCpu(device, targ) {
-    var tex = targ._colorBuffer;
-    var pixels = new Uint8Array(tex.width * tex.height * 4);
-    var gl = device.gl;
-    device.setFramebuffer(targ._glFrameBuffer);
-    gl.readPixels(0, 0, tex.width, tex.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-    if (!tex._levels) {
-      tex._levels = [];
-    }
-    tex._levels[0] = pixels;
   }
   var ParticleEmitter = function(graphicsDevice, options) {
     this.graphicsDevice = graphicsDevice;
@@ -14802,7 +14649,7 @@ pc.extend(pc, function() {
     mat3.data[7] = mat4.data[9];
     mat3.data[8] = mat4.data[10];
   }
-  ParticleEmitter.prototype = {onChangeCamera:function() {
+  Object.assign(ParticleEmitter.prototype, {onChangeCamera:function() {
     this.regenShader();
     this.resetMaterial();
   }, calculateBoundsMad:function() {
@@ -14817,7 +14664,6 @@ pc.extend(pc, function() {
     if (!this.node) {
       return;
     }
-    var pos = this.node.getPosition();
     this.prevWorldBoundsSize.copy(this.worldBoundsSize);
     this.prevWorldBoundsCenter.copy(this.worldBounds.center);
     this.worldBoundsNoTrail.setFromTransformedAabb(this.localBounds, this.node.getWorldTransform());
@@ -14943,8 +14789,7 @@ pc.extend(pc, function() {
     bMax.z = maxz + maxScale;
     this.localBounds.setMinMax(bMin, bMax);
   }, rebuild:function() {
-    var i, len;
-    var precision = this.precision;
+    var i;
     var gd = this.graphicsDevice;
     if (this.colorMap === null) {
       this.colorMap = ParticleEmitter.DEFAULT_PARAM_TEXTURE;
@@ -15203,7 +15048,6 @@ pc.extend(pc, function() {
     this.material.updateShader();
   }, resetMaterial:function() {
     var material = this.material;
-    var gd = this.graphicsDevice;
     material.setParameter("stretch", this.stretch);
     if (this._isAnimated()) {
       material.setParameter("animTexParams", this.animParams.data);
@@ -15271,14 +15115,9 @@ pc.extend(pc, function() {
         meshData = new Float32Array(this.mesh.vertexBuffer.lock());
         stride = meshData.length / this.mesh.vertexBuffer.numVertices;
       }
-      var id, rnd;
+      var id;
       for (i = 0;i < psysVertCount;i++) {
         id = Math.floor(i / this.numParticleVerts);
-        if (this.useCpu) {
-          if (i % this.numParticleVerts === 0) {
-            rnd = this.particleTex[i * particleTexChannels + 0 + this.numParticlesPot * 2 * particleTexChannels];
-          }
-        }
         if (!this.useMesh) {
           var vertID = i % 4;
           data[i * 4] = particleVerts[vertID][0];
@@ -15477,20 +15316,17 @@ pc.extend(pc, function() {
         rndFactor3Vec.data[2] = this.particleTex[id * particleTexChannels + 2 + this.numParticlesPot * 2 * particleTexChannels];
         var particleRate = this.rate + (this.rate2 - this.rate) * rndFactor;
         var particleLifetime = this.lifetime;
-        var startSpawnTime = -particleRate * id;
         var life = this.particleTex[id * particleTexChannels + 3 + this.numParticlesPot * particleTexChannels] + delta;
         var nlife = saturate(life / particleLifetime);
         var scale = 0;
         var alphaDiv = 0;
         var angle = 0;
-        var len;
-        var interpolation;
         var particleEnabled = life > 0.0 && life < particleLifetime;
         if (particleEnabled) {
           c = nlife * precision1;
           cf = Math.floor(c);
           cc = Math.ceil(c);
-          c = c % 1;
+          c %= 1;
           a = this.qRotSpeed[cf];
           b = this.qRotSpeed[cc];
           rotSpeed = a + (b - a) * c;
@@ -15547,9 +15383,9 @@ pc.extend(pc, function() {
           a = this.qVelocity2[cf + 2];
           b = this.qVelocity2[cc + 2];
           velocityVec2.data[2] = a + (b - a) * c;
-          localVelocityVec.data[0] = localVelocityVec.data[0] + (localVelocityVec2.data[0] - localVelocityVec.data[0]) * rndFactor3Vec.data[0];
-          localVelocityVec.data[1] = localVelocityVec.data[1] + (localVelocityVec2.data[1] - localVelocityVec.data[1]) * rndFactor3Vec.data[1];
-          localVelocityVec.data[2] = localVelocityVec.data[2] + (localVelocityVec2.data[2] - localVelocityVec.data[2]) * rndFactor3Vec.data[2];
+          localVelocityVec.data[0] += (localVelocityVec2.data[0] - localVelocityVec.data[0]) * rndFactor3Vec.data[0];
+          localVelocityVec.data[1] += (localVelocityVec2.data[1] - localVelocityVec.data[1]) * rndFactor3Vec.data[1];
+          localVelocityVec.data[2] += (localVelocityVec2.data[2] - localVelocityVec.data[2]) * rndFactor3Vec.data[2];
           if (this.initialVelocity > 0) {
             if (this.emitterShape === pc.EMITTERSHAPE_SPHERE) {
               randomPos.copy(rndFactor3Vec).scale(2).sub(pc.Vec3.ONE).normalize();
@@ -15558,10 +15394,10 @@ pc.extend(pc, function() {
               localVelocityVec.add(pc.Vec3.FORWARD.scale(this.initialVelocity));
             }
           }
-          velocityVec.data[0] = velocityVec.data[0] + (velocityVec2.data[0] - velocityVec.data[0]) * rndFactor3Vec.data[0];
-          velocityVec.data[1] = velocityVec.data[1] + (velocityVec2.data[1] - velocityVec.data[1]) * rndFactor3Vec.data[1];
-          velocityVec.data[2] = velocityVec.data[2] + (velocityVec2.data[2] - velocityVec.data[2]) * rndFactor3Vec.data[2];
-          rotSpeed = rotSpeed + (rotSpeed2 - rotSpeed) * rndFactor3Vec.data[1];
+          velocityVec.data[0] += (velocityVec2.data[0] - velocityVec.data[0]) * rndFactor3Vec.data[0];
+          velocityVec.data[1] += (velocityVec2.data[1] - velocityVec.data[1]) * rndFactor3Vec.data[1];
+          velocityVec.data[2] += (velocityVec2.data[2] - velocityVec.data[2]) * rndFactor3Vec.data[2];
+          rotSpeed += (rotSpeed2 - rotSpeed) * rndFactor3Vec.data[1];
           scale = (scale + (scale2 - scale) * (rndFactor * 10000.0 % 1.0)) * uniformScale;
           alphaDiv = (alpha2 - alpha) * (rndFactor * 1000.0 % 1.0);
           if (this.meshInstance.node) {
@@ -15648,8 +15484,8 @@ pc.extend(pc, function() {
           this.vbToSort[i] = [i, particleDistance[Math.floor(this.vbCPU[i * this.numParticleVerts * 4 + 3])]];
         }
         this.vbOld.set(this.vbCPU);
-        this.vbToSort.sort(function(a, b) {
-          return a[1] - b[1];
+        this.vbToSort.sort(function(p1, p2) {
+          return p1[1] - p2[1];
         });
         for (i = 0;i < this.numParticles;i++) {
           var src = this.vbToSort[i][0] * this.numParticleVerts * 4;
@@ -15692,42 +15528,13 @@ pc.extend(pc, function() {
     this.shaderParticleUpdateRespawn = null;
     this.shaderParticleUpdateNoRespawn = null;
     this.shaderParticleUpdateOnStop = null;
-  }};
+  }});
   return {ParticleEmitter:ParticleEmitter};
 }());
-function frac(f) {
-  return f - Math.floor(f);
-}
-function encodeFloatRGBA(v) {
-  var encX = frac(v);
-  var encY = frac(255.0 * v);
-  var encZ = frac(65025.0 * v);
-  var encW = frac(160581375.0 * v);
-  encX -= encY / 255.0;
-  encY -= encZ / 255.0;
-  encZ -= encW / 255.0;
-  encW -= encW / 255.0;
-  return [encX, encY, encZ, encW];
-}
-function encodeFloatRG(v) {
-  var encX = frac(v);
-  var encY = frac(255.0 * v);
-  encX -= encY / 255.0;
-  encY -= encY / 255.0;
-  return [encX, encY];
-}
-;pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _deviceDeprecationWarning = false;
   var _getSelectionDeprecationWarning = false;
   var _prepareDeprecationWarning = false;
-  function sortDrawCalls(drawCallA, drawCallB) {
-    if (drawCallA.layer === drawCallB.layer) {
-      if (drawCallA.drawOrder && drawCallB.drawOrder) {
-        return drawCallA.drawOrder - drawCallB.drawOrder;
-      }
-    }
-    return drawCallB.key - drawCallA.key;
-  }
   var Picker = function(app, width, height) {
     if (app instanceof pc.GraphicsDevice) {
       app = pc.Application.getApplication();
@@ -15776,7 +15583,7 @@ function encodeFloatRG(v) {
     device.setRenderTarget(prevRenderTarget);
     var selection = [];
     var drawCalls = this.layer.instances.visibleOpaque[0].list;
-    var r, g, b, a, index;
+    var r, g, b, index;
     for (var i = 0;i < width * height;i++) {
       r = pixels[4 * i + 0];
       g = pixels[4 * i + 1];
@@ -15793,6 +15600,7 @@ function encodeFloatRG(v) {
   };
   Picker.prototype.prepare = function(camera, scene, arg) {
     var device = this.device;
+    var i, j;
     var self = this;
     if (camera instanceof pc.Camera) {
       camera = camera._component;
@@ -15824,10 +15632,10 @@ function encodeFloatRG(v) {
         this.renderTarget._colorBuffer.destroy();
         this.renderTarget.destroy();
         this.renderTarget = null;
-      }, onDrawCall:function(meshInstance, i) {
-        self.pickColor[0] = (i >> 16 & 255) / 255;
-        self.pickColor[1] = (i >> 8 & 255) / 255;
-        self.pickColor[2] = (i & 255) / 255;
+      }, onDrawCall:function(meshInstance, index) {
+        self.pickColor[0] = (index >> 16 & 255) / 255;
+        self.pickColor[1] = (index >> 8 & 255) / 255;
+        self.pickColor[2] = (index & 255) / 255;
         pickColorId.setValue(self.pickColor);
         device.setBlending(false);
       }, onPreCull:function() {
@@ -15846,20 +15654,20 @@ function encodeFloatRG(v) {
       this.meshInstances = this.layer.opaqueMeshInstances;
       this._instancesVersion = -1;
     }
+    var instanceList, instanceListLength, drawCall;
     if (!sourceLayer) {
       this.layer.clearMeshInstances();
       var layers = scene.layers.layerList;
       var subLayerEnabled = scene.layers.subLayerEnabled;
       var isTransparent = scene.layers.subLayerList;
       var layer;
-      var j;
-      var instanceList, layerCamId, instanceListLength, drawCall, transparent;
-      for (var i = 0;i < layers.length;i++) {
+      var layerCamId, transparent;
+      for (i = 0;i < layers.length;i++) {
         if (layers[i].overrideClear && layers[i]._clearDepthBuffer) {
           layers[i]._pickerCleared = false;
         }
       }
-      for (var i = 0;i < layers.length;i++) {
+      for (i = 0;i < layers.length;i++) {
         layer = layers[i];
         if (layer.renderTarget !== sourceRt || !layer.enabled || !subLayerEnabled[i]) {
           continue;
@@ -15885,9 +15693,9 @@ function encodeFloatRG(v) {
     } else {
       if (this._instancesVersion !== sourceLayer._version) {
         this.layer.clearMeshInstances();
-        var instanceList = sourceLayer.instances.opaqueMeshInstances;
-        var instanceListLength = instanceList.length;
-        for (var j = 0;j < instanceListLength;j++) {
+        instanceList = sourceLayer.instances.opaqueMeshInstances;
+        instanceListLength = instanceList.length;
+        for (j = 0;j < instanceListLength;j++) {
           drawCall = instanceList[j];
           if (drawCall.pick) {
             this.meshInstances.push(drawCall);
@@ -16497,7 +16305,6 @@ pc.createBox = function(device, opts) {
   var generateFace = function(side, uSegments, vSegments) {
     var u, v;
     var i, j;
-    var offset = positions.length / 3;
     for (i = 0;i <= uSegments;i++) {
       for (j = 0;j <= vSegments;j++) {
         var temp1 = new pc.Vec3;
@@ -16542,7 +16349,7 @@ pc.createBox = function(device, opts) {
 };
 pc.Scene.defaultMaterial = new pc.StandardMaterial;
 pc.Scene.defaultMaterial.shadingModel = pc.SPECULAR_BLINN;
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var keyA, keyB, sortPos, sortDir;
   function sortManual(drawCallA, drawCallB) {
     return drawCallA.drawOrder - drawCallB.drawOrder;
@@ -16569,7 +16376,6 @@ pc.extend(pc, function() {
     return lightB.key - lightA.key;
   }
   var layerCounter = 0;
-  var layerList = [];
   var VisibleInstanceList = function() {
     this.list = [];
     this.length = 0;
@@ -16668,13 +16474,13 @@ pc.extend(pc, function() {
   Layer.prototype._updateClearFlags = function() {
     var flags = 0;
     if (this._clearColorBuffer) {
-      flags = flags | pc.CLEARFLAG_COLOR;
+      flags |= pc.CLEARFLAG_COLOR;
     }
     if (this._clearDepthBuffer) {
-      flags = flags | pc.CLEARFLAG_DEPTH;
+      flags |= pc.CLEARFLAG_DEPTH;
     }
     if (this._clearStencilBuffer) {
-      flags = flags | pc.CLEARFLAG_STENCIL;
+      flags |= pc.CLEARFLAG_STENCIL;
     }
     this._clearOptions.flags = flags;
   };
@@ -16942,7 +16748,7 @@ pc.extend(pc, function() {
     this._generateCameraHash();
   };
   Layer.prototype._calculateSortDistances = function(drawCalls, drawCallsCount, camPos, camFwd) {
-    var i, drawCall, btype, meshPos;
+    var i, drawCall, meshPos;
     var tempx, tempy, tempz;
     for (i = 0;i < drawCallsCount;i++) {
       drawCall = drawCalls[i];
@@ -16978,7 +16784,7 @@ pc.extend(pc, function() {
   };
   return {Layer:Layer, InstanceList:InstanceList, VisibleInstanceList:VisibleInstanceList};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var LayerComposition = function() {
     this.layerList = [];
     this.subLayerList = [];
@@ -17109,12 +16915,11 @@ pc.extend(pc, function() {
       this._dirtyBlend = false;
     }
     this._dirty = false;
-    var transparent;
+    var casters, lid, light;
     if (this._dirtyLights || result & pc.COMPUPDATED_INSTANCES) {
       result |= pc.COMPUPDATED_LIGHTS;
       this._lights.length = 0;
       this._lightShadowCasters.length = 0;
-      var light, casters, meshInstances, lid;
       for (i = 0;i < len;i++) {
         layer = this.layerList[i];
         arr = layer._lights;
@@ -17149,7 +16954,7 @@ pc.extend(pc, function() {
           light = arr[j];
           lid = this._lights.indexOf(light);
           casters = this._lightShadowCasters[lid];
-          meshInstances = layer.shadowCasters;
+          var meshInstances = layer.shadowCasters;
           for (k = 0;k < meshInstances.length;k++) {
             if (casters.indexOf(meshInstances[k]) < 0) {
               casters.push(meshInstances[k]);
@@ -17435,12 +17240,12 @@ pc.extend(pc, function() {
   };
   return {LayerComposition:LayerComposition};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   pc.SPRITE_RENDERMODE_SIMPLE = 0;
   pc.SPRITE_RENDERMODE_SLICED = 1;
   pc.SPRITE_RENDERMODE_TILED = 2;
-  var normals = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1];
-  var indices = [0, 1, 3, 2, 3, 1];
+  var spriteNormals = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1];
+  var spriteIndices = [0, 1, 3, 2, 3, 1];
   var Sprite = function(device, options) {
     this._device = device;
     this._pixelsPerUnit = options && options.pixelsPerUnit !== undefined ? options.pixelsPerUnit : 1;
@@ -17490,7 +17295,7 @@ pc.extend(pc, function() {
     var ru = (rect.data[0] + rect.data[2]) / texWidth;
     var tv = (rect.data[1] + rect.data[3]) / texHeight;
     var uvs = [lu, bv, ru, bv, ru, tv, lu, tv];
-    var mesh = pc.createMesh(this._device, positions, {uvs:uvs, normals:normals, indices:indices});
+    var mesh = pc.createMesh(this._device, positions, {uvs:uvs, normals:spriteNormals, indices:spriteIndices});
     return mesh;
   };
   Sprite.prototype._create9SliceMesh = function() {
@@ -17502,7 +17307,6 @@ pc.extend(pc, function() {
     var positions = [];
     var normals = [];
     var uvs = [];
-    var uvs1 = [];
     var indices = [];
     var vcounter = 0;
     for (i = 0;i <= ws;i++) {
@@ -17579,7 +17383,8 @@ pc.extend(pc, function() {
       }
     }
     this._meshes.length = 0;
-  }, Object.defineProperty(Sprite.prototype, "frameKeys", {get:function() {
+  };
+  Object.defineProperty(Sprite.prototype, "frameKeys", {get:function() {
     return this._frameKeys;
   }, set:function(value) {
     this._frameKeys = value;
@@ -17656,7 +17461,7 @@ pc.extend(pc, function() {
   }});
   return {Sprite:Sprite};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var TextureAtlas = function() {
     this._texture = null;
     this._frames = null;
@@ -17685,7 +17490,8 @@ pc.extend(pc, function() {
     if (this._texture) {
       this._texture.destroy();
     }
-  }, Object.defineProperty(TextureAtlas.prototype, "texture", {get:function() {
+  };
+  Object.defineProperty(TextureAtlas.prototype, "texture", {get:function() {
     return this._texture;
   }, set:function(value) {
     this._texture = value;
@@ -17699,7 +17505,7 @@ pc.extend(pc, function() {
   }});
   return {TextureAtlas:TextureAtlas};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var StencilParameters = function(options) {
     this.func = options.func === undefined ? pc.FUNC_ALWAYS : options.func;
     this.ref = options.ref || 0;
@@ -17715,7 +17521,7 @@ pc.extend(pc, function() {
   };
   return {StencilParameters:StencilParameters};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Key = function Key(time, position, rotation, scale) {
     this.time = time;
     this.position = position;
@@ -17759,7 +17565,7 @@ pc.extend(pc, function() {
   };
   return {Animation:Animation, Key:Key, Node:Node};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   function InterpolatedKey() {
     this._written = false;
     this._name = "";
@@ -17769,11 +17575,11 @@ pc.extend(pc, function() {
     this._scale = new pc.Vec3;
     this._targetNode = null;
   }
-  InterpolatedKey.prototype = {getTarget:function() {
+  Object.assign(InterpolatedKey.prototype, {getTarget:function() {
     return this._targetNode;
   }, setTarget:function(node) {
     this._targetNode = node;
-  }};
+  }});
   var Skeleton = function Skeleton(graph) {
     this._animation = null;
     this._time = 0;
@@ -17962,7 +17768,7 @@ pc.extend(pc, function() {
   };
   return {Skeleton:Skeleton};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   function hasAudio() {
     return typeof Audio !== "undefined";
   }
@@ -18006,7 +17812,7 @@ pc.extend(pc, function() {
   };
   SoundManager.hasAudio = hasAudio;
   SoundManager.hasAudioContext = hasAudioContext;
-  SoundManager.prototype = {suspend:function() {
+  Object.assign(SoundManager.prototype, {suspend:function() {
     this.suspended = true;
     this.fire("suspend");
   }, resume:function() {
@@ -18062,7 +17868,7 @@ pc.extend(pc, function() {
       channel.play();
     }
     return channel;
-  }};
+  }});
   Object.defineProperty(SoundManager.prototype, "volume", {get:function() {
     return this._volume;
   }, set:function(volume) {
@@ -18073,7 +17879,7 @@ pc.extend(pc, function() {
   pc.AudioManager = SoundManager;
   return {SoundManager:SoundManager};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Sound = function(resource) {
     if (resource instanceof Audio) {
       this.audio = resource;
@@ -18094,7 +17900,7 @@ pc.extend(pc, function() {
   }});
   return {Sound:Sound};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Listener = function(manager) {
     this.position = new pc.Vec3;
     this.velocity = new pc.Vec3;
@@ -18103,7 +17909,7 @@ pc.extend(pc, function() {
       this.listener = manager.context.listener;
     }
   };
-  Listener.prototype = {getPosition:function() {
+  Object.assign(Listener.prototype, {getPosition:function() {
     return this.position;
   }, setPosition:function(position) {
     this.position.copy(position);
@@ -18124,10 +17930,10 @@ pc.extend(pc, function() {
     }
   }, getOrientation:function() {
     return this.orientation;
-  }};
+  }});
   return {Listener:Listener};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var SoundInstance;
   var STATE_PLAYING = 0;
   var STATE_PAUSED = 1;
@@ -18168,7 +17974,7 @@ pc.extend(pc, function() {
       this._endedHandler = this._onEnded.bind(this);
       this.source = null;
     };
-    SoundInstance.prototype = {_initializeNodes:function() {
+    Object.assign(SoundInstance.prototype, {_initializeNodes:function() {
       this.gain = this._manager.context.createGain();
       this._inputNode = this.gain;
       this._connectorNode = this.gain;
@@ -18335,7 +18141,7 @@ pc.extend(pc, function() {
         this.source.stop(0);
         this.source = null;
       }
-    }};
+    }});
     Object.defineProperty(SoundInstance.prototype, "volume", {get:function() {
       return this._volume;
     }, set:function(volume) {
@@ -18431,7 +18237,7 @@ pc.extend(pc, function() {
         this.source = null;
         this._createSource();
       };
-      SoundInstance.prototype = {play:function() {
+      Object.assign(SoundInstance.prototype, {play:function() {
         if (this._state !== STATE_STOPPED) {
           this.stop();
         }
@@ -18537,7 +18343,7 @@ pc.extend(pc, function() {
         if (this.source) {
           this.source.pause();
         }
-      }};
+      }});
       Object.defineProperty(SoundInstance.prototype, "volume", {get:function() {
         return this._volume;
       }, set:function(volume) {
@@ -18592,7 +18398,7 @@ pc.extend(pc, function() {
       };
     }
   }
-  pc.extend(SoundInstance.prototype, {_onPlay:function() {
+  Object.assign(SoundInstance.prototype, {_onPlay:function() {
     this.fire("play");
     if (this._onPlayCallback) {
       this._onPlayCallback(this);
@@ -18651,9 +18457,8 @@ pc.extend(pc, function() {
     }
     if (this._duration) {
       return capTime(this._duration, this._sound.duration);
-    } else {
-      return this._sound.duration;
     }
+    return this._sound.duration;
   }, set:function(value) {
     this._duration = Math.max(0, Number(value) || 0);
     var isPlaying = this.isPlaying;
@@ -18676,11 +18481,12 @@ pc.extend(pc, function() {
   }});
   return {SoundInstance:SoundInstance};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var MAX_DISTANCE = 10000;
   var SoundInstance3d;
   if (pc.SoundManager.hasAudioContext()) {
     SoundInstance3d = function(manager, sound, options) {
+      pc.SoundInstance.call(this, manager, sound, options);
       options = options || {};
       this._position = new pc.Vec3;
       if (options.position) {
@@ -18695,8 +18501,9 @@ pc.extend(pc, function() {
       this.rollOffFactor = options.rollOffFactor !== undefined ? Number(options.rollOffFactor) : 1;
       this.distanceModel = options.distanceModel !== undefined ? options.distanceModel : pc.DISTANCE_LINEAR;
     };
-    SoundInstance3d = pc.inherits(SoundInstance3d, pc.SoundInstance);
-    SoundInstance3d.prototype = pc.extend(SoundInstance3d.prototype, {_initializeNodes:function() {
+    SoundInstance3d.prototype = Object.create(pc.SoundInstance.prototype);
+    SoundInstance3d.prototype.constructor = SoundInstance3d;
+    Object.assign(SoundInstance3d.prototype, {_initializeNodes:function() {
       this.gain = this._manager.context.createGain();
       this.panner = this._manager.context.createPanner();
       this.panner.connect(this.gain);
@@ -18747,24 +18554,24 @@ pc.extend(pc, function() {
         } else {
           if (distance > maxDistance) {
             return 0;
-          } else {
-            var result = 0;
-            if (distanceModel === pc.DISTANCE_LINEAR) {
-              result = 1 - rollOffFactor * (distance - refDistance) / (maxDistance - refDistance);
-            } else {
-              if (distanceModel === pc.DISTANCE_INVERSE) {
-                result = refDistance / (refDistance + rollOffFactor * (distance - refDistance));
-              } else {
-                if (distanceModel === pc.DISTANCE_EXPONENTIAL) {
-                  result = Math.pow(distance / refDistance, -rollOffFactor);
-                }
-              }
-            }
-            return pc.math.clamp(result, 0, 1);
           }
         }
+        var result = 0;
+        if (distanceModel === pc.DISTANCE_LINEAR) {
+          result = 1 - rollOffFactor * (distance - refDistance) / (maxDistance - refDistance);
+        } else {
+          if (distanceModel === pc.DISTANCE_INVERSE) {
+            result = refDistance / (refDistance + rollOffFactor * (distance - refDistance));
+          } else {
+            if (distanceModel === pc.DISTANCE_EXPONENTIAL) {
+              result = Math.pow(distance / refDistance, -rollOffFactor);
+            }
+          }
+        }
+        return pc.math.clamp(result, 0, 1);
       };
       SoundInstance3d = function(manager, sound, options) {
+        pc.SoundInstance.call(this, manager, sound, options);
         options = options || {};
         this._position = new pc.Vec3;
         if (options.position) {
@@ -18779,7 +18586,8 @@ pc.extend(pc, function() {
         this._rollOffFactor = options.rollOffFactor !== undefined ? Number(options.rollOffFactor) : 1;
         this._distanceModel = options.distanceModel !== undefined ? options.distanceModel : pc.DISTANCE_LINEAR;
       };
-      SoundInstance3d = pc.inherits(SoundInstance3d, pc.SoundInstance);
+      SoundInstance3d.prototype = Object.create(pc.SoundInstance.prototype);
+      SoundInstance3d.prototype.constructor = SoundInstance3d;
       Object.defineProperty(SoundInstance3d.prototype, "position", {get:function() {
         return this._position;
       }, set:function(position) {
@@ -18824,7 +18632,7 @@ pc.extend(pc, function() {
   }
   return {SoundInstance3d:SoundInstance3d};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Channel;
   if (pc.AudioManager.hasAudioContext()) {
     Channel = function(manager, sound, options) {
@@ -18842,7 +18650,7 @@ pc.extend(pc, function() {
       var context = manager.context;
       this.gain = context.createGain();
     };
-    Channel.prototype = {play:function() {
+    Object.assign(Channel.prototype, {play:function() {
       if (this.source) {
         throw new Error("Call stop() before calling play()");
       }
@@ -18910,11 +18718,7 @@ pc.extend(pc, function() {
     }, isPlaying:function() {
       return !this.paused && this.source.playbackState === this.source.PLAYING_STATE;
     }, getDuration:function() {
-      if (this.source) {
-        return this.source.buffer.duration;
-      } else {
-        return 0;
-      }
+      return this.source ? this.source.buffer.duration : 0;
     }, _createSource:function() {
       var context = this.manager.context;
       if (this.sound.buffer) {
@@ -18926,7 +18730,7 @@ pc.extend(pc, function() {
           this.source.onended = this.pause.bind(this);
         }
       }
-    }};
+    }});
   } else {
     if (pc.AudioManager.hasAudio()) {
       Channel = function(manager, sound, options) {
@@ -18942,7 +18746,7 @@ pc.extend(pc, function() {
           this.source.pause();
         }
       };
-      Channel.prototype = {play:function() {
+      Object.assign(Channel.prototype, {play:function() {
         if (this.source) {
           this.paused = false;
           this.setVolume(this.volume);
@@ -18990,22 +18794,16 @@ pc.extend(pc, function() {
           this.source.playbackRate = pitch;
         }
       }, getDuration:function() {
-        if (this.source) {
-          var d = this.source.duration;
-          if (d === d) {
-            return d;
-          }
-        }
-        return 0;
+        return this.source && !isNaN(this.source.duration) ? this.source.duration : 0;
       }, isPlaying:function() {
         return !this.source.paused;
-      }};
+      }});
     } else {
       Channel = function() {
       };
     }
   }
-  pc.extend(Channel.prototype, {getVolume:function() {
+  Object.assign(Channel.prototype, {getVolume:function() {
     return this.volume;
   }, getLoop:function() {
     return this.loop;
@@ -19026,18 +18824,20 @@ pc.extend(pc, function() {
   }});
   return {Channel:Channel};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var MAX_DISTANCE = 10000;
   var Channel3d;
   if (pc.AudioManager.hasAudioContext()) {
     Channel3d = function(manager, sound, options) {
+      pc.Channel.call(this, manager, sound, options);
       this.position = new pc.Vec3;
       this.velocity = new pc.Vec3;
       var context = manager.context;
       this.panner = context.createPanner();
     };
-    Channel3d = pc.inherits(Channel3d, pc.Channel);
-    Channel3d.prototype = pc.extend(Channel3d.prototype, {getPosition:function() {
+    Channel3d.prototype = Object.create(pc.Channel.prototype);
+    Channel3d.prototype.constructor = Channel3d;
+    Object.assign(Channel3d.prototype, {getPosition:function() {
       return this.position;
     }, setPosition:function(position) {
       this.position.copy(position);
@@ -19085,24 +18885,24 @@ pc.extend(pc, function() {
         } else {
           if (distance > maxDistance) {
             return 0;
-          } else {
-            var result = 0;
-            if (distanceModel === pc.DISTANCE_LINEAR) {
-              result = 1 - rolloffFactor * (distance - refDistance) / (maxDistance - refDistance);
-            } else {
-              if (distanceModel === pc.DISTANCE_INVERSE) {
-                result = refDistance / (refDistance + rolloffFactor * (distance - refDistance));
-              } else {
-                if (distanceModel === pc.DISTANCE_EXPONENTIAL) {
-                  result = Math.pow(distance / refDistance, -rolloffFactor);
-                }
-              }
-            }
-            return pc.math.clamp(result, 0, 1);
           }
         }
+        var result = 0;
+        if (distanceModel === pc.DISTANCE_LINEAR) {
+          result = 1 - rolloffFactor * (distance - refDistance) / (maxDistance - refDistance);
+        } else {
+          if (distanceModel === pc.DISTANCE_INVERSE) {
+            result = refDistance / (refDistance + rolloffFactor * (distance - refDistance));
+          } else {
+            if (distanceModel === pc.DISTANCE_EXPONENTIAL) {
+              result = Math.pow(distance / refDistance, -rolloffFactor);
+            }
+          }
+        }
+        return pc.math.clamp(result, 0, 1);
       };
       Channel3d = function(manager, sound) {
+        pc.Channel.call(this, manager, sound);
         this.position = new pc.Vec3;
         this.velocity = new pc.Vec3;
         this.maxDistance = MAX_DISTANCE;
@@ -19110,8 +18910,9 @@ pc.extend(pc, function() {
         this.rollOffFactor = 1;
         this.distanceModel = pc.DISTANCE_INVERSE;
       };
-      Channel3d = pc.inherits(Channel3d, pc.Channel);
-      Channel3d.prototype = pc.extend(Channel3d.prototype, {getPosition:function() {
+      Channel3d.prototype = Object.create(pc.Channel.prototype);
+      Channel3d.prototype.constructor = Channel3d;
+      Object.assign(Channel3d.prototype, {getPosition:function() {
         return this.position;
       }, setPosition:function(position) {
         this.position.copy(position);
@@ -19156,11 +18957,11 @@ pc.extend(pc, function() {
   KEY_F:70, KEY_G:71, KEY_H:72, KEY_I:73, KEY_J:74, KEY_K:75, KEY_L:76, KEY_M:77, KEY_N:78, KEY_O:79, KEY_P:80, KEY_Q:81, KEY_R:82, KEY_S:83, KEY_T:84, KEY_U:85, KEY_V:86, KEY_W:87, KEY_X:88, KEY_Y:89, KEY_Z:90, KEY_WINDOWS:91, KEY_CONTEXT_MENU:93, KEY_NUMPAD_0:96, KEY_NUMPAD_1:97, KEY_NUMPAD_2:98, KEY_NUMPAD_3:99, KEY_NUMPAD_4:100, KEY_NUMPAD_5:101, KEY_NUMPAD_6:102, KEY_NUMPAD_7:103, KEY_NUMPAD_8:104, KEY_NUMPAD_9:105, KEY_MULTIPLY:106, KEY_ADD:107, KEY_SEPARATOR:108, KEY_SUBTRACT:109, KEY_DECIMAL:110, 
   KEY_DIVIDE:111, KEY_F1:112, KEY_F2:113, KEY_F3:114, KEY_F4:115, KEY_F5:116, KEY_F6:117, KEY_F7:118, KEY_F8:119, KEY_F9:120, KEY_F10:121, KEY_F11:122, KEY_F12:123, KEY_COMMA:188, KEY_PERIOD:190, KEY_SLASH:191, KEY_OPEN_BRACKET:219, KEY_BACK_SLASH:220, KEY_CLOSE_BRACKET:221, KEY_META:224, MOUSEBUTTON_NONE:-1, MOUSEBUTTON_LEFT:0, MOUSEBUTTON_MIDDLE:1, MOUSEBUTTON_RIGHT:2, PAD_1:0, PAD_2:1, PAD_3:2, PAD_4:3, PAD_FACE_1:0, PAD_FACE_2:1, PAD_FACE_3:2, PAD_FACE_4:3, PAD_L_SHOULDER_1:4, PAD_R_SHOULDER_1:5, 
   PAD_L_SHOULDER_2:6, PAD_R_SHOULDER_2:7, PAD_SELECT:8, PAD_START:9, PAD_L_STICK_BUTTON:10, PAD_R_STICK_BUTTON:11, PAD_UP:12, PAD_DOWN:13, PAD_LEFT:14, PAD_RIGHT:15, PAD_VENDOR:16, PAD_L_STICK_X:0, PAD_L_STICK_Y:1, PAD_R_STICK_X:2, PAD_R_STICK_Y:3};
-  pc.extend(pc, enums);
+  Object.assign(pc, enums);
   pc.input = {};
-  pc.extend(pc.input, enums);
+  Object.assign(pc.input, enums);
 })();
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var MouseEvent = function(mouse, event) {
     var coords = {x:0, y:0};
     if (event) {
@@ -19231,7 +19032,7 @@ pc.extend(pc, function() {
   Mouse.isPointerLocked = function() {
     return !!(document.pointerLockElement || document.mozPointerLockElement || document.webkitPointerLockElement);
   };
-  Mouse.prototype = {attach:function(element) {
+  Object.assign(Mouse.prototype, {attach:function(element) {
     this._target = element;
     if (this._attached) {
       return;
@@ -19342,55 +19143,10 @@ pc.extend(pc, function() {
       return null;
     }
     return {x:event.clientX - left, y:event.clientY - top};
-  }};
-  (function() {
-    if (typeof navigator === "undefined" || typeof document === "undefined") {
-      return;
-    }
-    navigator.pointer = navigator.pointer || navigator.webkitPointer || navigator.mozPointer;
-    var pointerlockchange = function() {
-      var e = document.createEvent("CustomEvent");
-      e.initCustomEvent("pointerlockchange", true, false, null);
-      document.dispatchEvent(e);
-    };
-    var pointerlockerror = function() {
-      var e = document.createEvent("CustomEvent");
-      e.initCustomEvent("pointerlockerror", true, false, null);
-      document.dispatchEvent(e);
-    };
-    document.addEventListener("webkitpointerlockchange", pointerlockchange, false);
-    document.addEventListener("webkitpointerlocklost", pointerlockchange, false);
-    document.addEventListener("mozpointerlockchange", pointerlockchange, false);
-    document.addEventListener("mozpointerlocklost", pointerlockchange, false);
-    document.addEventListener("webkitpointerlockerror", pointerlockerror, false);
-    document.addEventListener("mozpointerlockerror", pointerlockerror, false);
-    if (Element.prototype.mozRequestPointerLock) {
-      Element.prototype.requestPointerLock = function() {
-        this.mozRequestPointerLock();
-      };
-    } else {
-      Element.prototype.requestPointerLock = Element.prototype.requestPointerLock || Element.prototype.webkitRequestPointerLock || Element.prototype.mozRequestPointerLock;
-    }
-    if (!Element.prototype.requestPointerLock && navigator.pointer) {
-      Element.prototype.requestPointerLock = function() {
-        var el = this;
-        document.pointerLockElement = el;
-        navigator.pointer.lock(el, pointerlockchange, pointerlockerror);
-      };
-    }
-    document.exitPointerLock = document.exitPointerLock || document.webkitExitPointerLock || document.mozExitPointerLock;
-    if (!document.exitPointerLock) {
-      document.exitPointerLock = function() {
-        if (navigator.pointer) {
-          document.pointerLockElement = null;
-          navigator.pointer.unlock();
-        }
-      };
-    }
-  })();
+  }});
   return {Mouse:Mouse, MouseEvent:MouseEvent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var KeyboardEvent = function(keyboard, event) {
     if (event) {
       this.key = event.keyCode;
@@ -19410,11 +19166,10 @@ pc.extend(pc, function() {
     return _keyboardEvent;
   }
   function toKeyCode(s) {
-    if (typeof s == "string") {
+    if (typeof s === "string") {
       return s.toUpperCase().charCodeAt(0);
-    } else {
-      return s;
     }
+    return s;
   }
   var _keyCodeToKeyIdentifier = {9:"Tab", 13:"Enter", 16:"Shift", 17:"Control", 18:"Alt", 27:"Escape", 37:"Left", 38:"Up", 39:"Right", 40:"Down", 46:"Delete", 91:"Win"};
   var Keyboard = function(element, options) {
@@ -19530,7 +19285,7 @@ pc.extend(pc, function() {
   };
   return {Keyboard:Keyboard, KeyboardEvent:KeyboardEvent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var GamePads = function() {
     this.gamepadsSupported = !!navigator.getGamepads || !!navigator.webkitGetGamepads;
     this.current = [];
@@ -19540,7 +19295,7 @@ pc.extend(pc, function() {
   var MAPS = {DEFAULT:{buttons:["PAD_FACE_1", "PAD_FACE_2", "PAD_FACE_3", "PAD_FACE_4", "PAD_L_SHOULDER_1", "PAD_R_SHOULDER_1", "PAD_L_SHOULDER_2", "PAD_R_SHOULDER_2", "PAD_SELECT", "PAD_START", "PAD_L_STICK_BUTTON", "PAD_R_STICK_BUTTON", "PAD_UP", "PAD_DOWN", "PAD_LEFT", "PAD_RIGHT", "PAD_VENDOR"], axes:["PAD_L_STICK_X", "PAD_L_STICK_Y", "PAD_R_STICK_X", "PAD_R_STICK_Y"]}, PS3:{buttons:["PAD_FACE_1", "PAD_FACE_2", "PAD_FACE_4", "PAD_FACE_3", "PAD_L_SHOULDER_1", "PAD_R_SHOULDER_1", "PAD_L_SHOULDER_2", 
   "PAD_R_SHOULDER_2", "PAD_SELECT", "PAD_START", "PAD_L_STICK_BUTTON", "PAD_R_STICK_BUTTON", "PAD_UP", "PAD_DOWN", "PAD_LEFT", "PAD_RIGHT", "PAD_VENDOR"], axes:["PAD_L_STICK_X", "PAD_L_STICK_Y", "PAD_R_STICK_X", "PAD_R_STICK_Y"]}};
   var PRODUCT_CODES = {"Product: 0268":"PS3"};
-  GamePads.prototype = {update:function() {
+  Object.assign(GamePads.prototype, {update:function() {
     var i, j, l;
     var buttons, buttonsLen;
     for (i = 0, l = this.current.length;i < l;i++) {
@@ -19599,10 +19354,18 @@ pc.extend(pc, function() {
       value = 0;
     }
     return value;
-  }};
+  }});
   return {GamePads:GamePads};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
+  var Touch = function(touch) {
+    var coords = pc.getTouchTargetCoords(touch);
+    this.id = touch.identifier;
+    this.x = coords.x;
+    this.y = coords.y;
+    this.target = touch.target;
+    this.touch = touch;
+  };
   var TouchEvent = function(device, event) {
     this.element = event.target;
     this.event = event;
@@ -19619,7 +19382,7 @@ pc.extend(pc, function() {
       }
     }
   };
-  TouchEvent.prototype = {getTouchById:function(id, list) {
+  Object.assign(TouchEvent.prototype, {getTouchById:function(id, list) {
     var i, l = list.length;
     for (i = 0;i < l;i++) {
       if (list[i].id === id) {
@@ -19627,15 +19390,7 @@ pc.extend(pc, function() {
       }
     }
     return null;
-  }};
-  var Touch = function(touch) {
-    var coords = pc.getTouchTargetCoords(touch);
-    this.id = touch.identifier;
-    this.x = coords.x;
-    this.y = coords.y;
-    this.target = touch.target;
-    this.touch = touch;
-  };
+  }});
   var TouchDevice = function(element) {
     this._startHandler = this._handleTouchStart.bind(this);
     this._endHandler = this._handleTouchEnd.bind(this);
@@ -19644,7 +19399,7 @@ pc.extend(pc, function() {
     this.attach(element);
     pc.events.attach(this);
   };
-  TouchDevice.prototype = {attach:function(element) {
+  Object.assign(TouchDevice.prototype, {attach:function(element) {
     if (this._element) {
       this.detach();
     }
@@ -19670,7 +19425,7 @@ pc.extend(pc, function() {
     this.fire("touchmove", new TouchEvent(this, e));
   }, _handleTouchCancel:function(e) {
     this.fire("touchcancel", new TouchEvent(this, e));
-  }};
+  }});
   return {getTouchTargetCoords:function(touch) {
     var totalOffsetX = 0;
     var totalOffsetY = 0;
@@ -19687,7 +19442,7 @@ pc.extend(pc, function() {
     return {x:touch.pageX - totalOffsetX, y:touch.pageY - totalOffsetY};
   }, TouchDevice:TouchDevice, TouchEvent:TouchEvent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Controller = function(element, options) {
     options = options || {};
     this._keyboard = options.keyboard || null;
@@ -19946,7 +19701,7 @@ pc.extend(pc, function() {
   };
   return {Controller:Controller};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var targetX, targetY;
   var vecA = new pc.Vec3;
   var vecB = new pc.Vec3;
@@ -19957,6 +19712,19 @@ pc.extend(pc, function() {
   var _pd = new pc.Vec3;
   var _m = new pc.Vec3;
   var _sct = new pc.Vec3;
+  var _accumulatedScale = new pc.Vec2;
+  var _paddingTop = new pc.Vec3;
+  var _paddingBottom = new pc.Vec3;
+  var _paddingLeft = new pc.Vec3;
+  var _paddingRight = new pc.Vec3;
+  var _cornerBottomLeft = new pc.Vec3;
+  var _cornerBottomRight = new pc.Vec3;
+  var _cornerTopRight = new pc.Vec3;
+  var _cornerTopLeft = new pc.Vec3;
+  var ZERO_VEC4 = new pc.Vec4;
+  var scalarTriple = function(p1, p2, p3) {
+    return _sct.cross(p1, p2).dot(p3);
+  };
   var intersectLineQuad = function(p, q, corners) {
     _pq.sub2(q, p);
     _pa.sub2(corners[0], p);
@@ -19980,22 +19748,27 @@ pc.extend(pc, function() {
         return false;
       }
     }
+    if (_pq.sub2(corners[0], corners[2]).lengthSq() < 0.0001 * 0.0001) {
+      return false;
+    }
+    if (_pq.sub2(corners[1], corners[3]).lengthSq() < 0.0001 * 0.0001) {
+      return false;
+    }
     return true;
   };
-  var scalarTriple = function(p1, p2, p3) {
-    return _sct.cross(p1, p2).dot(p3);
-  };
-  var ElementInputEvent = function(event, element) {
+  var ElementInputEvent = function(event, element, camera) {
     this.event = event;
     this.element = element;
+    this.camera = camera;
     this._stopPropagation = false;
   };
-  ElementInputEvent.prototype = {stopPropagation:function() {
+  Object.assign(ElementInputEvent.prototype, {stopPropagation:function() {
     this._stopPropagation = true;
     this.event.stopImmediatePropagation();
     this.event.stopPropagation();
-  }};
-  var ElementMouseEvent = function(event, element, x, y, lastX, lastY) {
+  }});
+  var ElementMouseEvent = function(event, element, camera, x, y, lastX, lastY) {
+    ElementInputEvent.call(this, event, element, camera);
     this.x = x;
     this.y = y;
     this.ctrlKey = event.ctrlKey || false;
@@ -20020,16 +19793,22 @@ pc.extend(pc, function() {
       }
     }
   };
-  ElementMouseEvent = pc.inherits(ElementMouseEvent, ElementInputEvent);
-  var ElementTouchEvent = function(event, element, input) {
+  ElementMouseEvent.prototype = Object.create(ElementInputEvent.prototype);
+  ElementMouseEvent.prototype.constructor = ElementMouseEvent;
+  var ElementTouchEvent = function(event, element, camera, x, y, input) {
+    ElementInputEvent.call(this, event, element, camera);
     this.touches = event.touches;
     this.changedTouches = event.changedTouches;
+    this.x = x;
+    this.y = y;
   };
-  ElementTouchEvent = pc.inherits(ElementTouchEvent, ElementInputEvent);
+  ElementTouchEvent.prototype = Object.create(ElementInputEvent.prototype);
+  ElementTouchEvent.prototype.constructor = ElementTouchEvent;
   var ElementInput = function(domElement) {
     this._app = null;
     this._attached = false;
     this._target = null;
+    this._enabled = true;
     this._lastX = 0;
     this._lastY = 0;
     this._upHandler = this._handleUp.bind(this);
@@ -20044,12 +19823,13 @@ pc.extend(pc, function() {
     this._hoveredElement = null;
     this._pressedElement = null;
     this._touchedElements = {};
+    this._touchesForWhichTouchLeaveHasFired = {};
     if ("ontouchstart" in window) {
       this._clickedEntities = {};
     }
     this.attach(domElement);
   };
-  ElementInput.prototype = {attach:function(domElement) {
+  Object.assign(ElementInput.prototype, {attach:function(domElement) {
     if (this._attached) {
       this._attached = false;
       this.detach();
@@ -20063,7 +19843,7 @@ pc.extend(pc, function() {
     window.addEventListener("DOMMouseScroll", this._wheelHandler, {passive:true});
     if ("ontouchstart" in window) {
       this._target.addEventListener("touchstart", this._touchstartHandler, {passive:true});
-      this._target.addEventListener("touchend", this._touchendHandler, {passive:true});
+      this._target.addEventListener("touchend", this._touchendHandler, false);
       this._target.addEventListener("touchmove", this._touchmoveHandler, false);
       this._target.addEventListener("touchcancel", this._touchcancelHandler, {passive:true});
     }
@@ -20092,6 +19872,9 @@ pc.extend(pc, function() {
       this._elements.splice(idx, 1);
     }
   }, _handleUp:function(event) {
+    if (!this._enabled) {
+      return;
+    }
     if (pc.Mouse.isPointerLocked()) {
       return;
     }
@@ -20101,6 +19884,9 @@ pc.extend(pc, function() {
     }
     this._onElementMouseEvent(event);
   }, _handleDown:function(event) {
+    if (!this._enabled) {
+      return;
+    }
     if (pc.Mouse.isPointerLocked()) {
       return;
     }
@@ -20110,6 +19896,9 @@ pc.extend(pc, function() {
     }
     this._onElementMouseEvent(event);
   }, _handleMove:function(event) {
+    if (!this._enabled) {
+      return;
+    }
     this._calcMouseCoords(event);
     if (targetX === null) {
       return;
@@ -20118,18 +19907,23 @@ pc.extend(pc, function() {
     this._lastX = targetX;
     this._lastY = targetY;
   }, _handleWheel:function(event) {
+    if (!this._enabled) {
+      return;
+    }
     this._calcMouseCoords(event);
     if (targetX === null) {
       return;
     }
     this._onElementMouseEvent(event);
-  }, _handleTouchStart:function(event) {
+  }, _determineTouchedElements:function(event) {
+    var touchedElements = {};
     var cameras = this.app.systems.camera.cameras;
-    for (var i = cameras.length - 1;i >= 0;i--) {
+    var i, j, len;
+    for (i = cameras.length - 1;i >= 0;i--) {
       var camera = cameras[i];
       var done = 0;
-      for (var j = 0, len = event.changedTouches.length;j < len;j++) {
-        if (this._touchedElements[event.changedTouches[j].identifier]) {
+      for (j = 0, len = event.changedTouches.length;j < len;j++) {
+        if (touchedElements[event.changedTouches[j].identifier]) {
           done++;
           continue;
         }
@@ -20137,34 +19931,59 @@ pc.extend(pc, function() {
         var element = this._getTargetElement(camera, coords.x, coords.y);
         if (element) {
           done++;
-          this._touchedElements[event.changedTouches[j].identifier] = element;
-          this._fireEvent(event.type, new ElementTouchEvent(event, element, this));
+          touchedElements[event.changedTouches[j].identifier] = {element:element, camera:camera, x:coords.x, y:coords.y};
         }
       }
       if (done === len) {
         break;
       }
     }
+    return touchedElements;
+  }, _handleTouchStart:function(event) {
+    if (!this._enabled) {
+      return;
+    }
+    var newTouchedElements = this._determineTouchedElements(event);
+    for (var i = 0, len = event.changedTouches.length;i < len;i++) {
+      var touch = event.changedTouches[i];
+      var newTouchInfo = newTouchedElements[touch.identifier];
+      var oldTouchInfo = this._touchedElements[touch.identifier];
+      if (newTouchInfo && (!oldTouchInfo || newTouchInfo.element !== oldTouchInfo.element)) {
+        this._fireEvent(event.type, new ElementTouchEvent(event, newTouchInfo.element, newTouchInfo.camera, newTouchInfo.x, newTouchInfo.y, this));
+        this._touchesForWhichTouchLeaveHasFired[touch.identifier] = false;
+      }
+    }
+    for (var touchId in newTouchedElements) {
+      this._touchedElements[touchId] = newTouchedElements[touchId];
+    }
   }, _handleTouchEnd:function(event) {
+    if (!this._enabled) {
+      return;
+    }
     var cameras = this.app.systems.camera.cameras;
     for (var key in this._clickedEntities) {
       delete this._clickedEntities[key];
     }
     for (var i = 0, len = event.changedTouches.length;i < len;i++) {
       var touch = event.changedTouches[i];
-      var element = this._touchedElements[touch.identifier];
-      if (!element) {
+      var touchInfo = this._touchedElements[touch.identifier];
+      if (!touchInfo) {
         continue;
       }
+      var element = touchInfo.element;
+      var camera = touchInfo.camera;
+      var x = touchInfo.x;
+      var y = touchInfo.y;
       delete this._touchedElements[touch.identifier];
-      this._fireEvent(event.type, new ElementTouchEvent(event, element, this));
+      delete this._touchesForWhichTouchLeaveHasFired[touch.identifier];
+      this._fireEvent(event.type, new ElementTouchEvent(event, element, camera, x, y, this));
       if (event.touches.length === 0) {
         var coords = this._calcTouchCoords(touch);
         for (var c = cameras.length - 1;c >= 0;c--) {
           var hovered = this._getTargetElement(cameras[c], coords.x, coords.y);
           if (hovered === element) {
             if (!this._clickedEntities[element.entity.getGuid()]) {
-              this._fireEvent("click", new ElementTouchEvent(event, element, this));
+              this._fireEvent("click", new ElementTouchEvent(event, element, camera, x, y, this));
               this._clickedEntities[element.entity.getGuid()] = true;
             }
           }
@@ -20172,11 +19991,22 @@ pc.extend(pc, function() {
       }
     }
   }, _handleTouchMove:function(event) {
+    if (!this._enabled) {
+      return;
+    }
     event.preventDefault();
+    var newTouchedElements = this._determineTouchedElements(event);
     for (var i = 0, len = event.changedTouches.length;i < len;i++) {
-      var element = this._touchedElements[event.changedTouches[i].identifier];
-      if (element) {
-        this._fireEvent(event.type, new ElementTouchEvent(event, element, this));
+      var touch = event.changedTouches[i];
+      var newTouchInfo = newTouchedElements[touch.identifier];
+      var oldTouchInfo = this._touchedElements[touch.identifier];
+      if (oldTouchInfo) {
+        var coords = this._calcTouchCoords(touch);
+        if ((!newTouchInfo || newTouchInfo.element !== oldTouchInfo.element) && !this._touchesForWhichTouchLeaveHasFired[touch.identifier]) {
+          this._fireEvent("touchleave", new ElementTouchEvent(event, oldTouchInfo.element, oldTouchInfo.camera, coords.x, coords.y, this));
+          this._touchesForWhichTouchLeaveHasFired[touch.identifier] = true;
+        }
+        this._fireEvent("touchmove", new ElementTouchEvent(event, oldTouchInfo.element, oldTouchInfo.camera, coords.x, coords.y, this));
       }
     }
   }, _onElementMouseEvent:function(event) {
@@ -20184,15 +20014,16 @@ pc.extend(pc, function() {
     var hovered = this._hoveredElement;
     this._hoveredElement = null;
     var cameras = this.app.systems.camera.cameras;
+    var camera;
     for (var i = cameras.length - 1;i >= 0;i--) {
-      var camera = cameras[i];
+      camera = cameras[i];
       element = this._getTargetElement(camera, targetX, targetY);
       if (element) {
         break;
       }
     }
     if (element) {
-      this._fireEvent(event.type, new ElementMouseEvent(event, element, targetX, targetY, this._lastX, this._lastY));
+      this._fireEvent(event.type, new ElementMouseEvent(event, element, camera, targetX, targetY, this._lastX, this._lastY));
       this._hoveredElement = element;
       if (event.type === pc.EVENT_MOUSEDOWN) {
         this._pressedElement = element;
@@ -20200,17 +20031,17 @@ pc.extend(pc, function() {
     }
     if (hovered !== this._hoveredElement) {
       if (hovered) {
-        this._fireEvent("mouseleave", new ElementMouseEvent(event, hovered, targetX, targetY, this._lastX, this._lastY));
+        this._fireEvent("mouseleave", new ElementMouseEvent(event, hovered, camera, targetX, targetY, this._lastX, this._lastY));
       }
       if (this._hoveredElement) {
-        this._fireEvent("mouseenter", new ElementMouseEvent(event, this._hoveredElement, targetX, targetY, this._lastX, this._lastY));
+        this._fireEvent("mouseenter", new ElementMouseEvent(event, this._hoveredElement, camera, targetX, targetY, this._lastX, this._lastY));
       }
     }
     if (event.type === pc.EVENT_MOUSEUP && this._pressedElement) {
       if (this._pressedElement === this._hoveredElement) {
         this._pressedElement = null;
         if (!this._clickedEntities || !this._clickedEntities[this._hoveredElement.entity.getGuid()]) {
-          this._fireEvent("click", new ElementMouseEvent(event, this._hoveredElement, targetX, targetY, this._lastX, this._lastY));
+          this._fireEvent("click", new ElementMouseEvent(event, this._hoveredElement, camera, targetX, targetY, this._lastX, this._lastY));
         }
       } else {
         this._pressedElement = null;
@@ -20291,6 +20122,35 @@ pc.extend(pc, function() {
       }
     }
     return result;
+  }, _buildHitCorners:function(element, screenOrWorldCorners, scaleX, scaleY) {
+    var hitCorners = screenOrWorldCorners;
+    var button = element.entity && element.entity.button;
+    if (button) {
+      var hitPadding = element.entity.button.hitPadding || ZERO_VEC4;
+      _paddingTop.copy(element.entity.up);
+      _paddingBottom.copy(_paddingTop).scale(-1);
+      _paddingRight.copy(element.entity.right);
+      _paddingLeft.copy(_paddingRight).scale(-1);
+      _paddingTop.scale(hitPadding.data[3] * scaleY);
+      _paddingBottom.scale(hitPadding.data[1] * scaleY);
+      _paddingRight.scale(hitPadding.data[2] * scaleX);
+      _paddingLeft.scale(hitPadding.data[0] * scaleX);
+      _cornerBottomLeft.copy(hitCorners[0]).add(_paddingBottom).add(_paddingLeft);
+      _cornerBottomRight.copy(hitCorners[1]).add(_paddingBottom).add(_paddingRight);
+      _cornerTopRight.copy(hitCorners[2]).add(_paddingTop).add(_paddingRight);
+      _cornerTopLeft.copy(hitCorners[3]).add(_paddingTop).add(_paddingLeft);
+      hitCorners = [_cornerBottomLeft, _cornerBottomRight, _cornerTopRight, _cornerTopLeft];
+    }
+    return hitCorners;
+  }, _calculateScaleToScreen:function(element) {
+    var current = element.entity;
+    var screenScale = element.screen.screen.scale;
+    _accumulatedScale.set(screenScale, screenScale);
+    while (current && !current.screen) {
+      _accumulatedScale.mul(current.getLocalScale());
+      current = current.parent;
+    }
+    return _accumulatedScale;
   }, _checkElement2d:function(x, y, element, camera) {
     var sw = this.app.graphicsDevice.width;
     var sh = this.app.graphicsDevice.height;
@@ -20306,10 +20166,11 @@ pc.extend(pc, function() {
       _x = sw * (_x - cameraLeft) / cameraWidth;
       _y = sh * (_y - cameraTop) / cameraHeight;
       _y = sh - _y;
-      var screenCorners = element.screenCorners;
+      var scale = this._calculateScaleToScreen(element);
+      var hitCorners = this._buildHitCorners(element, element.screenCorners, scale.x, scale.y);
       vecA.set(_x, _y, 1);
       vecB.set(_x, _y, -1);
-      if (intersectLineQuad(vecA, vecB, screenCorners)) {
+      if (intersectLineQuad(vecA, vecB, hitCorners)) {
         return true;
       }
     }
@@ -20328,16 +20189,23 @@ pc.extend(pc, function() {
     if (x >= cameraLeft && x <= cameraRight && y <= cameraBottom && _y >= cameraTop) {
       _x = sw * (_x - cameraLeft) / cameraWidth;
       _y = sh * (_y - cameraTop) / cameraHeight;
-      var worldCorners = element.worldCorners;
-      var start = camera.entity.getPosition();
-      var end = vecA;
+      var scale = element.entity.getWorldTransform().getScale();
+      var worldCorners = this._buildHitCorners(element, element.worldCorners, scale.x, scale.y);
+      var start = vecA;
+      var end = vecB;
+      camera.screenToWorld(_x, _y, camera.nearClip, start);
       camera.screenToWorld(_x, _y, camera.farClip, end);
       if (intersectLineQuad(start, end, worldCorners)) {
         return true;
       }
     }
     return false;
-  }};
+  }});
+  Object.defineProperty(ElementInput.prototype, "enabled", {get:function() {
+    return this._enabled;
+  }, set:function(value) {
+    this._enabled = value;
+  }});
   Object.defineProperty(ElementInput.prototype, "app", {get:function() {
     return this._app || pc.app;
   }, set:function(value) {
@@ -20345,7 +20213,7 @@ pc.extend(pc, function() {
   }});
   return {ElementInput:ElementInput, ElementInputEvent:ElementInputEvent, ElementMouseEvent:ElementMouseEvent, ElementTouchEvent:ElementTouchEvent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var VrManager = function(app) {
     pc.events.attach(this);
     var self = this;
@@ -20374,7 +20242,7 @@ pc.extend(pc, function() {
   };
   VrManager.isSupported = !!navigator.getVRDisplays;
   VrManager.usesPolyfill = !!window.InitializeWebVRPolyfill;
-  VrManager.prototype = {_attach:function() {
+  Object.assign(VrManager.prototype, {_attach:function() {
     window.addEventListener("vrdisplayconnect", this._onDisplayConnect);
     window.addEventListener("vrdisplaydisconnect", this._onDisplayDisconnect);
   }, _detach:function() {
@@ -20444,10 +20312,10 @@ pc.extend(pc, function() {
       }
     }
     this.fire("displaydisconnect", display);
-  }};
+  }});
   return {VrManager:VrManager};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var VrDisplay = function(app, display) {
     var self = this;
     this._app = app;
@@ -20510,7 +20378,7 @@ pc.extend(pc, function() {
     window.addEventListener("vrdisplaypresentchange", self._presentChange, false);
     pc.events.attach(this);
   };
-  VrDisplay.prototype = {destroy:function() {
+  Object.assign(VrDisplay.prototype, {destroy:function() {
     window.removeEventListener("vrdisplaypresentchange", self._presentChange);
     if (this._camera) {
       this._camera.vrDisplay = null;
@@ -20650,7 +20518,7 @@ pc.extend(pc, function() {
     if (this.display) {
       return this._frameData;
     }
-  }};
+  }});
   Object.defineProperty(VrDisplay.prototype, "capabilities", {get:function() {
     if (this.display) {
       return this.display.capabilities;
@@ -20659,13 +20527,13 @@ pc.extend(pc, function() {
   }});
   return {VrDisplay:VrDisplay};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Http = function Http() {
   };
   Http.ContentType = {FORM_URLENCODED:"application/x-www-form-urlencoded", GIF:"image/gif", JPEG:"image/jpeg", DDS:"image/dds", JSON:"application/json", PNG:"image/png", TEXT:"text/plain", XML:"application/xml", WAV:"audio/x-wav", OGG:"audio/ogg", MP3:"audio/mpeg", MP4:"audio/mp4", AAC:"audio/aac", BIN:"application/octet-stream"};
   Http.ResponseType = {TEXT:"text", ARRAY_BUFFER:"arraybuffer", BLOB:"blob", DOCUMENT:"document"};
   Http.binaryExtensions = [".model", ".wav", ".ogg", ".mp3", ".mp4", ".m4a", ".aac", ".dds"];
-  Http.prototype = {ContentType:Http.ContentType, ResponseType:Http.ResponseType, binaryExtensions:Http.binaryExtensions, get:function(url, options, callback) {
+  Object.assign(Http.prototype, {ContentType:Http.ContentType, ResponseType:Http.ResponseType, binaryExtensions:Http.binaryExtensions, get:function(url, options, callback) {
     if (typeof options === "function") {
       callback = options;
       options = {};
@@ -20861,10 +20729,10 @@ pc.extend(pc, function() {
     options.callback(null, response);
   }, _onError:function(method, url, options, xhr) {
     options.callback(xhr.status, null);
-  }};
+  }});
   return {Http:Http, http:new Http};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ScriptRegistry = function(app) {
     pc.events.attach(this);
     this.app = app;
@@ -20935,10 +20803,9 @@ pc.extend(pc, function() {
     });
     return true;
   };
-  ScriptRegistry.prototype.remove = function(script) {
-    var name = script;
-    if (typeof script === "function") {
-      name = script.__name;
+  ScriptRegistry.prototype.remove = function(name) {
+    if (typeof name === "function") {
+      name = name.__name;
     }
     if (!this._scripts.hasOwnProperty(name)) {
       return false;
@@ -20962,7 +20829,7 @@ pc.extend(pc, function() {
   };
   return {ScriptRegistry:ScriptRegistry};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var rawToValue = function(app, args, value, old) {
     var i;
     switch(args.type) {
@@ -20981,80 +20848,49 @@ pc.extend(pc, function() {
           } else {
             if (typeof value === "boolean") {
               return 0 + value;
-            } else {
-              return null;
             }
           }
         }
-        break;
+        return null;
       case "json":
         if (typeof value === "object") {
           return value;
-        } else {
-          try {
-            return JSON.parse(value);
-          } catch (ex) {
-            return null;
-          }
         }
-        break;
+        try {
+          return JSON.parse(value);
+        } catch (ex) {
+          return null;
+        }
       case "asset":
-        if (args.array) {
-          var result = [];
-          if (value instanceof Array) {
-            for (i = 0;i < value.length;i++) {
-              if (value[i] instanceof pc.Asset) {
-                result.push(value[i]);
-              } else {
-                if (typeof value[i] === "number") {
-                  result.push(app.assets.get(value[i]) || null);
-                } else {
-                  if (typeof value[i] === "string") {
-                    result.push(app.assets.get(parseInt(value[i], 10)) || null);
-                  } else {
-                    result.push(null);
-                  }
-                }
-              }
-            }
-          }
-          return result;
+        if (value instanceof pc.Asset) {
+          return value;
         } else {
-          if (value instanceof pc.Asset) {
-            return value;
+          if (typeof value === "number") {
+            return app.assets.get(value) || null;
           } else {
-            if (typeof value === "number") {
-              return app.assets.get(value) || null;
-            } else {
-              if (typeof value === "string") {
-                return app.assets.get(parseInt(value, 10)) || null;
-              } else {
-                return null;
-              }
+            if (typeof value === "string") {
+              return app.assets.get(parseInt(value, 10)) || null;
             }
           }
         }
-        break;
+        return null;
       case "entity":
         if (value instanceof pc.GraphNode) {
           return value;
         } else {
           if (typeof value === "string") {
             return app.root.findByGuid(value);
-          } else {
-            return null;
           }
         }
-        break;
+        return null;
       case "rgb":
       case "rgba":
         if (value instanceof pc.Color) {
           if (old instanceof pc.Color) {
             old.copy(value);
             return old;
-          } else {
-            return value.clone();
           }
+          return value.clone();
         } else {
           if (value instanceof Array && value.length >= 3 && value.length <= 4) {
             for (i = 0;i < value.length;i++) {
@@ -21076,12 +20912,10 @@ pc.extend(pc, function() {
               }
               old.fromString(value);
               return old;
-            } else {
-              return null;
             }
           }
         }
-        break;
+        return null;
       case "vec2":
       case "vec3":
       case "vec4":
@@ -21090,9 +20924,8 @@ pc.extend(pc, function() {
           if (old instanceof pc["Vec" + len]) {
             old.copy(value);
             return old;
-          } else {
-            return value.clone();
           }
+          return value.clone();
         } else {
           if (value instanceof Array && value.length === len) {
             for (i = 0;i < value.length;i++) {
@@ -21107,11 +20940,9 @@ pc.extend(pc, function() {
               old.data[i] = value[i];
             }
             return old;
-          } else {
-            return null;
           }
         }
-        break;
+        return null;
       case "curve":
         if (value) {
           var curve;
@@ -21134,11 +20965,9 @@ pc.extend(pc, function() {
   };
   ScriptAttributes.prototype.add = function(name, args) {
     if (this.index[name]) {
-      console.warn("attribute '" + name + "' is already defined for script type '" + this.scriptType.name + "'");
       return;
     } else {
       if (pc.createScript.reservedAttributes[name]) {
-        console.warn("attribute '" + name + "' is a reserved attribute name");
         return;
       }
     }
@@ -21147,7 +20976,18 @@ pc.extend(pc, function() {
       return this.__attributes[name];
     }, set:function(raw) {
       var old = this.__attributes[name];
-      this.__attributes[name] = rawToValue(this.app, args, raw, old);
+      if (args.array) {
+        this.__attributes[name] = [];
+        if (raw) {
+          var i;
+          var len;
+          for (i = 0, len = raw.length;i < len;i++) {
+            this.__attributes[name].push(rawToValue(this.app, args, raw[i], old ? old[i] : null));
+          }
+        }
+      } else {
+        this.__attributes[name] = rawToValue(this.app, args, raw, old);
+      }
       this.fire("attr", name, this.__attributes[name], old);
       this.fire("attr:" + name, this.__attributes[name], old);
     }});
@@ -21168,21 +21008,18 @@ pc.extend(pc, function() {
   };
   var createScript = function(name, app) {
     if (pc.script.legacy) {
-      console.error("This project is using the legacy script system. You cannot call pc.createScript(). See: http://developer.playcanvas.com/en/user-manual/scripting/legacy/");
       return null;
     }
     if (createScript.reservedScripts[name]) {
       throw new Error("script name: '" + name + "' is reserved, please change script name");
     }
     var script = function(args) {
-      if (!args || !args.app || !args.entity) {
-        console.warn("script '" + name + "' has missing arguments in consructor");
-      }
       pc.events.attach(this);
       this.app = args.app;
       this.entity = args.entity;
       this._enabled = typeof args.enabled === "boolean" ? args.enabled : true;
       this._enabledOld = this.enabled;
+      this.__destroyed = false;
       this.__attributes = {};
       this.__attributesRaw = args.attributes || null;
       this.__scriptType = script;
@@ -21217,7 +21054,7 @@ pc.extend(pc, function() {
       }
     };
     Object.defineProperty(script.prototype, "enabled", {get:function() {
-      return this._enabled && this.entity.script.enabled && this.entity.enabled;
+      return this._enabled && !this._destroyed && this.entity.script.enabled && this.entity.enabled;
     }, set:function(value) {
       this._enabled = !!value;
       if (this.enabled === this._enabledOld) {
@@ -21252,7 +21089,7 @@ pc.extend(pc, function() {
     reservedScripts[createScript.reservedScripts[i]] = 1;
   }
   createScript.reservedScripts = reservedScripts;
-  createScript.reservedAttributes = ["app", "entity", "enabled", "_enabled", "_enabledOld", "__attributes", "__attributesRaw", "__scriptType", "_callbacks", "has", "on", "off", "fire", "once", "hasEvent"];
+  createScript.reservedAttributes = ["app", "entity", "enabled", "_enabled", "_enabledOld", "_destroyed", "__attributes", "__attributesRaw", "__scriptType", "_callbacks", "has", "on", "off", "fire", "once", "hasEvent"];
   var reservedAttributes = {};
   for (i = 0;i < createScript.reservedAttributes.length;i++) {
     reservedAttributes[createScript.reservedAttributes[i]] = 1;
@@ -21288,7 +21125,7 @@ pc.script = function() {
   pc.events.attach(script);
   return script;
 }();
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Application = function(canvas, options) {
     options = options || {};
     pc.log.open();
@@ -21321,6 +21158,7 @@ pc.extend(pc, function() {
     }
     this.scriptsOrder = options.scriptsOrder || [];
     this.scripts = new pc.ScriptRegistry(this);
+    this._sceneRegistry = new pc.SceneRegistry(this);
     var self = this;
     this.defaultLayerWorld = new pc.Layer({name:"World", id:pc.LAYERID_WORLD});
     if (this.graphicsDevice.webgl2) {
@@ -21534,7 +21372,12 @@ pc.extend(pc, function() {
     new pc.ParticleSystemComponentSystem(this);
     new pc.ScreenComponentSystem(this);
     new pc.ElementComponentSystem(this);
+    new pc.ButtonComponentSystem(this);
+    new pc.ScrollViewComponentSystem(this);
+    new pc.ScrollbarComponentSystem(this);
     new pc.SpriteComponentSystem(this);
+    new pc.LayoutGroupComponentSystem(this);
+    new pc.LayoutChildComponentSystem(this);
     new pc.ZoneComponentSystem(this);
     this._visibilityChangeHandler = this.onVisibilityChange.bind(this);
     if (document.hidden !== undefined) {
@@ -21561,11 +21404,7 @@ pc.extend(pc, function() {
   Application._currentApplication = null;
   Application._applications = {};
   Application.getApplication = function(id) {
-    if (id) {
-      return Application._applications[id];
-    } else {
-      return Application._currentApplication;
-    }
+    return id ? Application._applications[id] : Application._currentApplication;
   };
   var Progress = function(length) {
     this.length = length;
@@ -21577,7 +21416,7 @@ pc.extend(pc, function() {
       return this.count === this.length;
     };
   };
-  Application.prototype = {configure:function(url, callback) {
+  Object.assign(Application.prototype, {configure:function(url, callback) {
     var self = this;
     pc.http.get(url, function(err, response) {
       if (err) {
@@ -21585,9 +21424,11 @@ pc.extend(pc, function() {
         return;
       }
       var props = response.application_properties;
+      var scenes = response.scenes;
       var assets = response.assets;
       self._parseApplicationProperties(props, function(err) {
         self._onVrChange(props.vr);
+        self._parseScenes(scenes);
         self._parseAssets(assets);
         if (!err) {
           callback(null);
@@ -21648,78 +21489,18 @@ pc.extend(pc, function() {
     } else {
       done();
     }
+  }, getSceneUrl:function(name) {
+    var entry = this._sceneRegistry.find(name);
+    if (entry) {
+      return entry.url;
+    }
+    return null;
   }, loadSceneHierarchy:function(url, callback) {
-    var self = this;
-    var handler = this.loader.getHandler("hierarchy");
-    if (this.assets && this.assets.prefix && !pc.ABSOLUTE_URL.test(url)) {
-      url = pc.path.join(this.assets.prefix, url);
-    }
-    handler.load(url, function(err, data) {
-      if (err) {
-        if (callback) {
-          callback(err);
-        }
-        return;
-      }
-      var _loaded = function() {
-        self.systems.script.preloading = true;
-        var entity = handler.open(url, data);
-        self.systems.script.preloading = false;
-        self.loader.clearCache(url, "hierarchy");
-        self.root.addChild(entity);
-        pc.ComponentSystem.initialize(entity);
-        pc.ComponentSystem.postInitialize(entity);
-        if (callback) {
-          callback(err, entity);
-        }
-      };
-      self._preloadScripts(data, _loaded);
-    });
+    this._sceneRegistry.loadSceneHierarchy(url, callback);
   }, loadSceneSettings:function(url, callback) {
-    if (this.assets && this.assets.prefix && !pc.ABSOLUTE_URL.test(url)) {
-      url = pc.path.join(this.assets.prefix, url);
-    }
-    this.loader.load(url, "scenesettings", function(err, settings) {
-      if (!err) {
-        this.applySceneSettings(settings);
-        if (callback) {
-          callback(null);
-        }
-      } else {
-        if (callback) {
-          callback(err);
-        }
-      }
-    }.bind(this));
+    this._sceneRegistry.loadSceneSettings(url, callback);
   }, loadScene:function(url, callback) {
-    var self = this;
-    var handler = this.loader.getHandler("scene");
-    if (this.assets && this.assets.prefix && !pc.ABSOLUTE_URL.test(url)) {
-      url = pc.path.join(this.assets.prefix, url);
-    }
-    handler.load(url, function(err, data) {
-      if (!err) {
-        var _loaded = function() {
-          self.systems.script.preloading = true;
-          var scene = handler.open(url, data);
-          self.systems.script.preloading = false;
-          self.loader.clearCache(url, "scene");
-          self.loader.patch({resource:scene, type:"scene"}, self.assets);
-          self.root.addChild(scene.root);
-          if (self.systems.rigidbody && typeof Ammo !== "undefined") {
-            self.systems.rigidbody.setGravity(scene._gravity.x, scene._gravity.y, scene._gravity.z);
-          }
-          if (callback) {
-            callback(null, scene);
-          }
-        };
-        this._preloadScripts(data, _loaded);
-      } else {
-        if (callback) {
-          callback(err);
-        }
-      }
-    }.bind(this));
+    this._sceneRegistry.loadScene(url, callback);
   }, _preloadScripts:function(sceneData, callback) {
     if (!pc.script.legacy) {
       callback();
@@ -21839,6 +21620,13 @@ pc.extend(pc, function() {
     } else {
       callback(null);
     }
+  }, _parseScenes:function(scenes) {
+    if (!scenes) {
+      return;
+    }
+    for (var i = 0;i < scenes.length;i++) {
+      this._sceneRegistry.add(scenes[i].name, scenes[i].url);
+    }
   }, _parseAssets:function(assets) {
     var i, id;
     var list = [];
@@ -21866,7 +21654,7 @@ pc.extend(pc, function() {
     for (i = 0;i < list.length;i++) {
       var data = list[i];
       var asset = new pc.Asset(data.name, data.type, data.file, data.data);
-      asset.id = parseInt(data.id);
+      asset.id = parseInt(data.id, 10);
       asset.preload = data.preload ? data.preload : false;
       asset.tags.add(data.tags);
       this.assets.add(asset);
@@ -22243,7 +22031,8 @@ pc.extend(pc, function() {
     pc.http = new pc.Http;
     pc.ParticleEmitter.DEFAULT_PARAM_TEXTURE = null;
     pc.destroyPostEffectQuad();
-  }};
+  }});
+  var _frameEndData = {};
   var makeTick = function(_app) {
     var app = _app;
     return function(timestamp) {
@@ -22280,7 +22069,6 @@ pc.extend(pc, function() {
       }
     };
   };
-  var _frameEndData = {};
   return {FILLMODE_NONE:"NONE", FILLMODE_FILL_WINDOW:"FILL_WINDOW", FILLMODE_KEEP_ASPECT:"KEEP_ASPECT", RESOLUTION_AUTO:"AUTO", RESOLUTION_FIXED:"FIXED", Application:Application};
 }());
 pc.ApplicationStats = function(device) {
@@ -22304,10 +22092,138 @@ pc.ApplicationStats = function(device) {
   }});
   pc.events.attach(this);
 };
-pc.extend(pc, function() {
+Object.assign(pc, function() {
+  var SceneRegistryItem = function(name, url) {
+    this.name = name;
+    this.url = url;
+  };
+  var SceneRegistry = function(app) {
+    this._app = app;
+    this._list = [];
+    this._index = {};
+    this._urlIndex = {};
+  };
+  SceneRegistry.prototype.list = function() {
+    return this._list;
+  };
+  SceneRegistry.prototype.add = function(name, url) {
+    if (this._index.hasOwnProperty(name)) {
+      return false;
+    }
+    var item = new pc.SceneRegistryItem(name, url);
+    var i = this._list.push(item);
+    this._index[item.name] = i - 1;
+    this._urlIndex[item.url] = i - 1;
+    return true;
+  };
+  SceneRegistry.prototype.find = function(name) {
+    if (this._index.hasOwnProperty(name)) {
+      return this._list[this._index[name]];
+    }
+    return null;
+  };
+  SceneRegistry.prototype.findByUrl = function(url) {
+    if (this._urlIndex.hasOwnProperty(url)) {
+      return this._list[this._urlIndex[url]];
+    }
+    return null;
+  };
+  SceneRegistry.prototype.remove = function(name) {
+    if (this._index.hasOwnProperty(name)) {
+      var i = this._index[name];
+      var item = this._list[i];
+      delete this._urlIndex[item.url];
+      delete this._index[name];
+      this._list.splice(i, 1);
+      for (i = 0;i < this._list.length;i++) {
+        item = this._list[i];
+        this._index[item.name] = i;
+        this._urlIndex[item.url] = i;
+      }
+    }
+  };
+  SceneRegistry.prototype.loadSceneHierarchy = function(url, callback) {
+    var self = this;
+    var handler = this._app.loader.getHandler("hierarchy");
+    if (this._app.assets && this._app.assets.prefix && !pc.ABSOLUTE_URL.test(url)) {
+      url = pc.path.join(this._app.assets.prefix, url);
+    }
+    handler.load(url, function(err, data) {
+      if (err) {
+        if (callback) {
+          callback(err);
+        }
+        return;
+      }
+      var _loaded = function() {
+        self._app.systems.script.preloading = true;
+        var entity = handler.open(url, data);
+        self._app.systems.script.preloading = false;
+        self._app.loader.clearCache(url, "hierarchy");
+        self._app.root.addChild(entity);
+        pc.ComponentSystem.initialize(entity);
+        pc.ComponentSystem.postInitialize(entity);
+        if (callback) {
+          callback(err, entity);
+        }
+      };
+      self._app._preloadScripts(data, _loaded);
+    });
+  };
+  SceneRegistry.prototype.loadSceneSettings = function(url, callback) {
+    var self = this;
+    if (this._app.assets && this._app.assets.prefix && !pc.ABSOLUTE_URL.test(url)) {
+      url = pc.path.join(this._app.assets.prefix, url);
+    }
+    this._app.loader.load(url, "scenesettings", function(err, settings) {
+      if (!err) {
+        self._app.applySceneSettings(settings);
+        if (callback) {
+          callback(null);
+        }
+      } else {
+        if (callback) {
+          callback(err);
+        }
+      }
+    });
+  };
+  SceneRegistry.prototype.loadScene = function(url, callback) {
+    var self = this;
+    var handler = this._app.loader.getHandler("scene");
+    if (this._app.assets && this._app.assets.prefix && !pc.ABSOLUTE_URL.test(url)) {
+      url = pc.path.join(this._app.assets.prefix, url);
+    }
+    handler.load(url, function(err, data) {
+      if (!err) {
+        var _loaded = function() {
+          self._app.systems.script.preloading = true;
+          var scene = handler.open(url, data);
+          self._app.systems.script.preloading = false;
+          self._app.loader.clearCache(url, "scene");
+          self._app.loader.patch({resource:scene, type:"scene"}, self._app.assets);
+          self._app.root.addChild(scene.root);
+          if (self._app.systems.rigidbody && typeof Ammo !== "undefined") {
+            self._app.systems.rigidbody.setGravity(scene._gravity.x, scene._gravity.y, scene._gravity.z);
+          }
+          if (callback) {
+            callback(null, scene);
+          }
+        };
+        self._app._preloadScripts(data, _loaded);
+      } else {
+        if (callback) {
+          callback(err);
+        }
+      }
+    });
+  };
+  return {SceneRegistry:SceneRegistry, SceneRegistryItem:SceneRegistryItem};
+}());
+Object.assign(pc, function() {
   var ComponentSystemRegistry = function() {
   };
-  ComponentSystemRegistry.prototype = {add:function(name, system) {
+  Object.assign(ComponentSystemRegistry.prototype, {add:function(name, system) {
     if (!this[name]) {
       this[name] = system;
       system.name = name;
@@ -22348,17 +22264,17 @@ pc.extend(pc, function() {
     names.splice(index, 1);
     names.unshift("collisioncircle");
     return names;
-  }};
+  }});
   return {ComponentSystemRegistry:ComponentSystemRegistry};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ComponentSystem = function(app) {
     this.app = app;
     this.dataStore = {};
     this.schema = [];
     pc.events.attach(this);
   };
-  pc.extend(ComponentSystem, {initialize:function(root) {
+  Object.assign(ComponentSystem, {initialize:function(root) {
     ComponentSystem.fire("initialize", root);
   }, postInitialize:function(root) {
     ComponentSystem.fire("postInitialize", root);
@@ -22398,17 +22314,64 @@ pc.extend(pc, function() {
     return this.addComponent(clone, src.data);
   }, initializeComponentData:function(component, data, properties) {
     data = data || {};
-    properties.forEach(function(value) {
-      if (data[value] !== undefined) {
-        component[value] = data[value];
+    properties.forEach(function(descriptor) {
+      var name;
+      var type;
+      if (typeof descriptor === "object") {
+        name = descriptor.name;
+        type = descriptor.type;
       } else {
-        component[value] = component.data[value];
+        name = descriptor;
+      }
+      var value = data[name];
+      if (value !== undefined) {
+        if (type !== undefined) {
+          value = convertValue(value, type);
+        }
+        component[name] = value;
+      } else {
+        component[name] = component.data[name];
       }
     }, this);
     if (component.enabled && component.entity.enabled) {
       component.onEnable();
     }
+  }, getPropertiesOfType:function(type) {
+    var matchingProperties = [];
+    var schema = this.schema || [];
+    schema.forEach(function(descriptor) {
+      if (descriptor && typeof descriptor === "object" && descriptor.type === type) {
+        matchingProperties.push(descriptor);
+      }
+    });
+    return matchingProperties;
   }};
+  function convertValue(value, type) {
+    if (!value) {
+      return value;
+    }
+    value = value && value.data ? value.data : value;
+    switch(type) {
+      case "rgb":
+        return new pc.Color(value[0], value[1], value[2]);
+      case "rgba":
+        return new pc.Color(value[0], value[1], value[2], value[3]);
+      case "vec2":
+        return new pc.Vec2(value[0], value[1]);
+      case "vec3":
+        return new pc.Vec3(value[0], value[1], value[2]);
+      case "vec4":
+        return new pc.Vec4(value[0], value[1], value[2], value[3]);
+      case "boolean":
+      case "number":
+      case "string":
+        return value;
+      case "entity":
+        return value;
+      default:
+        throw new Error("Could not convert unhandled type: " + type);
+    }
+  }
   pc.events.attach(ComponentSystem);
   ComponentSystem.destroy = function() {
     ComponentSystem.off("initialize");
@@ -22420,7 +22383,7 @@ pc.extend(pc, function() {
   };
   return {ComponentSystem:ComponentSystem};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Component = function(system, entity) {
     this.system = system;
     this.entity = entity;
@@ -22434,25 +22397,22 @@ pc.extend(pc, function() {
     this.on("set_enabled", this.onSetEnabled, this);
   };
   Component._buildAccessors = function(obj, schema) {
-    schema.forEach(function(prop) {
-      Object.defineProperty(obj, prop, {get:function() {
-        return this.data[prop];
+    schema.forEach(function(descriptor) {
+      var name = typeof descriptor === "object" ? descriptor.name : descriptor;
+      Object.defineProperty(obj, name, {get:function() {
+        return this.data[name];
       }, set:function(value) {
         var data = this.data;
-        var oldValue = data[prop];
-        data[prop] = value;
-        this.fire("set", prop, oldValue, value);
+        var oldValue = data[name];
+        data[name] = value;
+        this.fire("set", name, oldValue, value);
       }, configurable:true});
     });
     obj._accessorsBuilt = true;
   };
   Component.prototype = {get data() {
     var record = this.system.store[this.entity._guid];
-    if (record) {
-      return record.data;
-    } else {
-      return null;
-    }
+    return record ? record.data : null;
   }, buildAccessors:function(schema) {
     Component._buildAccessors(this, schema);
   }, onSetEnabled:function(name, oldValue, newValue) {
@@ -22471,20 +22431,22 @@ pc.extend(pc, function() {
   }};
   return {Component:Component};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ComponentData = function() {
   };
   return {ComponentData:ComponentData};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var AnimationComponent = function(system, entity) {
+    pc.Component.call(this, system, entity);
     this.animationsIndex = {};
     this.on("set_animations", this.onSetAnimations, this);
     this.on("set_assets", this.onSetAssets, this);
     this.on("set_loop", this.onSetLoop, this);
   };
-  AnimationComponent = pc.inherits(AnimationComponent, pc.Component);
-  pc.extend(AnimationComponent.prototype, {play:function(name, blendTime) {
+  AnimationComponent.prototype = Object.create(pc.Component.prototype);
+  AnimationComponent.prototype.constructor = AnimationComponent;
+  Object.assign(AnimationComponent.prototype, {play:function(name, blendTime) {
     if (!this.data.animations[name]) {
       console.error(pc.string.format("Trying to play animation '{0}' which doesn't exist", name));
       return;
@@ -22624,11 +22586,7 @@ pc.extend(pc, function() {
       }
     }
     var ids = newValue.map(function(value) {
-      if (value instanceof pc.Asset) {
-        return value.id;
-      } else {
-        return value;
-      }
+      return value instanceof pc.Asset ? value.id : value;
     });
     this.loadAnimationAssets(ids);
   }, onSetLoop:function(name, oldValue, newValue) {
@@ -22640,7 +22598,7 @@ pc.extend(pc, function() {
     this.data.skeleton.addTime(0);
     this.data.skeleton.updateGraph();
   }, onEnable:function() {
-    AnimationComponent._super.onEnable.call(this);
+    pc.Component.prototype.onEnable.call(this);
     var assets = this.data.assets;
     var registry = this.system.app.assets;
     if (assets) {
@@ -22685,9 +22643,10 @@ pc.extend(pc, function() {
   }}});
   return {AnimationComponent:AnimationComponent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _schema = ["enabled", "assets", "speed", "loop", "activate", "animations", "skeleton", "model", "prevAnim", "currAnim", "fromSkel", "toSkel", "blending", "blendTimeRemaining", "playing"];
   var AnimationComponentSystem = function AnimationComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
     this.id = "animation";
     this.description = "Specifies the animation assets that can run on the model specified by the Entity's model Component.";
     app.systems.add(this.id, this);
@@ -22698,11 +22657,12 @@ pc.extend(pc, function() {
     this.on("update", this.onUpdate, this);
     pc.ComponentSystem.on("update", this.onUpdate, this);
   };
-  AnimationComponentSystem = pc.inherits(AnimationComponentSystem, pc.ComponentSystem);
+  AnimationComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  AnimationComponentSystem.prototype.constructor = AnimationComponentSystem;
   pc.Component._buildAccessors(pc.AnimationComponent.prototype, _schema);
-  pc.extend(AnimationComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
+  Object.assign(AnimationComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
     properties = ["activate", "enabled", "loop", "speed", "assets"];
-    AnimationComponentSystem._super.initializeComponentData.call(this, component, data, properties);
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, properties);
   }, cloneComponent:function(entity, clone) {
     var key;
     this.addComponent(clone, {});
@@ -22764,7 +22724,7 @@ pc.extend(pc, function() {
   }});
   return {AnimationComponentSystem:AnimationComponentSystem};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var AnimationComponentData = function() {
     this.assets = [];
     this.speed = 1.0;
@@ -22783,11 +22743,11 @@ pc.extend(pc, function() {
     this.blendTimeRemaining = 0;
     this.playing = false;
   };
-  AnimationComponentData = pc.inherits(AnimationComponentData, pc.ComponentData);
   return {AnimationComponentData:AnimationComponentData};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ModelComponent = function ModelComponent(system, entity) {
+    pc.Component.call(this, system, entity);
     this.on("set_type", this.onSetType, this);
     this.on("set_asset", this.onSetAsset, this);
     this.on("set_castShadows", this.onSetCastShadows, this);
@@ -22808,8 +22768,9 @@ pc.extend(pc, function() {
     this._dirtyMaterialAsset = false;
     this._clonedModel = false;
   };
-  ModelComponent = pc.inherits(ModelComponent, pc.Component);
-  pc.extend(ModelComponent.prototype, {setVisible:function(visible) {
+  ModelComponent.prototype = Object.create(pc.Component.prototype);
+  ModelComponent.prototype.constructor = ModelComponent;
+  Object.assign(ModelComponent.prototype, {setVisible:function(visible) {
     console.warn("WARNING: setVisible: Function is deprecated. Set enabled property instead.");
     this.enabled = visible;
   }, _onAssetLoad:function(asset) {
@@ -22967,6 +22928,7 @@ pc.extend(pc, function() {
     this._setModelAsset(id);
   }, onSetCastShadows:function(name, oldValue, newValue) {
     var layer;
+    var i;
     var model = this.data.model;
     if (model) {
       var layers = this.layers;
@@ -22981,12 +22943,12 @@ pc.extend(pc, function() {
         }
       }
       var meshInstances = model.meshInstances;
-      for (var i = 0;i < meshInstances.length;i++) {
+      for (i = 0;i < meshInstances.length;i++) {
         meshInstances[i].castShadow = newValue;
       }
       if (!oldValue && newValue) {
         for (i = 0;i < layers.length;i++) {
-          layer = this.system.app.scene.layers.getLayerById(this.layers[i]);
+          layer = scene.layers.getLayerById(layers[i]);
           if (!layer) {
             continue;
           }
@@ -23069,10 +23031,10 @@ pc.extend(pc, function() {
     layer.removeMeshInstances(this.meshInstances);
   }, onSetBatchGroupId:function(name, oldValue, newValue) {
     if (oldValue >= 0) {
-      this.system.app.batcher._markGroupDirty(oldValue);
+      this.system.app.batcher.markGroupDirty(oldValue);
     }
     if (newValue >= 0) {
-      this.system.app.batcher._markGroupDirty(newValue);
+      this.system.app.batcher.markGroupDirty(newValue);
     }
     if (newValue < 0 && oldValue >= 0 && this.enabled && this.entity.enabled) {
       this.addModelToLayers();
@@ -23313,7 +23275,7 @@ pc.extend(pc, function() {
       }
     }
   }, onEnable:function() {
-    ModelComponent._super.onEnable.call(this);
+    pc.Component.prototype.onEnable.call(this);
     this.system.app.scene.on("set:layers", this.onLayersChanged, this);
     if (this.system.app.scene.layers) {
       this.system.app.scene.layers.on("add", this.onLayerAdded, this);
@@ -23359,11 +23321,14 @@ pc.extend(pc, function() {
       }
     }
   }, onDisable:function() {
-    ModelComponent._super.onDisable.call(this);
+    pc.Component.prototype.onDisable.call(this);
     this.system.app.scene.off("set:layers", this.onLayersChanged, this);
     if (this.system.app.scene.layers) {
       this.system.app.scene.layers.off("add", this.onLayerAdded, this);
       this.system.app.scene.layers.off("remove", this.onLayerRemoved, this);
+    }
+    if (this.batchGroupId >= 0) {
+      this.system.app.batcher.markGroupDirty(this.batchGroupId);
     }
     var model = this.data.model;
     if (model) {
@@ -23401,9 +23366,10 @@ pc.extend(pc, function() {
   }});
   return {ModelComponent:ModelComponent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _schema = ["enabled", "type", "asset", "materialAsset", "castShadows", "receiveShadows", "castShadowsLightmap", "lightmapped", "lightmapSizeMultiplier", "isStatic", "material", "model", "layers", "batchGroupId", "mapping"];
   var ModelComponentSystem = function ModelComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
     this.id = "model";
     this.description = "Renders a 3D model at the location of the Entity.";
     app.systems.add(this.id, this);
@@ -23420,9 +23386,10 @@ pc.extend(pc, function() {
     this.defaultMaterial = new pc.StandardMaterial;
     this.on("beforeremove", this.onRemove, this);
   };
-  ModelComponentSystem = pc.inherits(ModelComponentSystem, pc.ComponentSystem);
+  ModelComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  ModelComponentSystem.prototype.constructor = ModelComponentSystem;
   pc.Component._buildAccessors(pc.ModelComponent.prototype, _schema);
-  pc.extend(ModelComponentSystem.prototype, {initializeComponentData:function(component, _data, properties) {
+  Object.assign(ModelComponentSystem.prototype, {initializeComponentData:function(component, _data, properties) {
     properties = ["enabled", "material", "materialAsset", "asset", "castShadows", "receiveShadows", "castShadowsLightmap", "lightmapped", "lightmapSizeMultiplier", "type", "mapping", "layers", "isStatic", "batchGroupId"];
     var data = {};
     var name;
@@ -23437,7 +23404,7 @@ pc.extend(pc, function() {
     if (data.layers && pc.type(data.layers) === "array") {
       data.layers = data.layers.slice(0);
     }
-    ModelComponentSystem._super.initializeComponentData.call(this, component, data, properties);
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, properties);
   }, removeComponent:function(entity) {
     var data = entity.model.data;
     entity.model.asset = null;
@@ -23446,7 +23413,7 @@ pc.extend(pc, function() {
       entity.removeChild(data.model.getGraph());
       data.model = null;
     }
-    ModelComponentSystem._super.removeComponent.call(this, entity);
+    pc.ComponentSystem.prototype.removeComponent.call(this, entity);
   }, cloneComponent:function(entity, clone) {
     var data = {type:entity.model.type, asset:entity.model.asset, castShadows:entity.model.castShadows, receiveShadows:entity.model.receiveShadows, castShadowsLightmap:entity.model.castShadowsLightmap, lightmapped:entity.model.lightmapped, lightmapSizeMultiplier:entity.model.lightmapSizeMultiplier, isStatic:entity.model.isStatic, enabled:entity.model.enabled, layers:entity.model.layers, batchGroupId:entity.model.batchGroupId, mapping:pc.extend({}, entity.model.mapping)};
     var materialAsset = entity.model.materialAsset;
@@ -23481,7 +23448,7 @@ pc.extend(pc, function() {
   }});
   return {ModelComponentSystem:ModelComponentSystem};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ModelComponentData = function() {
     this.enabled = true;
     this.type = "asset";
@@ -23499,11 +23466,11 @@ pc.extend(pc, function() {
     this.material = null;
     this.model = null;
   };
-  ModelComponentData = pc.inherits(ModelComponentData, pc.ComponentData);
   return {ModelComponentData:ModelComponentData};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var CameraComponent = function CameraComponent(system, entity) {
+    pc.Component.call(this, system, entity);
     this.on("set_aspectRatioMode", this.onSetAspectRatioMode, this);
     this.on("set_aspectRatio", this.onSetAspectRatio, this);
     this.on("set_camera", this.onSetCamera, this);
@@ -23528,7 +23495,8 @@ pc.extend(pc, function() {
     this.on("set_flipFaces", this.onSetFlipFaces, this);
     this.on("set_layers", this.onSetLayers, this);
   };
-  CameraComponent = pc.inherits(CameraComponent, pc.Component);
+  CameraComponent.prototype = Object.create(pc.Component.prototype);
+  CameraComponent.prototype.constructor = CameraComponent;
   Object.defineProperty(CameraComponent.prototype, "projectionMatrix", {get:function() {
     return this.data.camera.getProjectionMatrix();
   }});
@@ -23550,7 +23518,7 @@ pc.extend(pc, function() {
   Object.defineProperty(CameraComponent.prototype, "node", {get:function() {
     return this.data.camera._node;
   }});
-  pc.extend(CameraComponent.prototype, {screenToWorld:function(screenx, screeny, cameraz, worldCoord) {
+  Object.assign(CameraComponent.prototype, {screenToWorld:function(screenx, screeny, cameraz, worldCoord) {
     var device = this.system.app.graphicsDevice;
     return this.data.camera.screenToWorld(screenx, screeny, cameraz, device.clientRect.width, device.clientRect.height, worldCoord);
   }, worldToScreen:function(worldCoord, screenCoord) {
@@ -23662,13 +23630,13 @@ pc.extend(pc, function() {
   }, updateClearFlags:function() {
     var flags = 0;
     if (this.clearColorBuffer) {
-      flags = flags | pc.CLEARFLAG_COLOR;
+      flags |= pc.CLEARFLAG_COLOR;
     }
     if (this.clearDepthBuffer) {
-      flags = flags | pc.CLEARFLAG_DEPTH;
+      flags |= pc.CLEARFLAG_DEPTH;
     }
     if (this.clearStencilBuffer) {
-      flags = flags | pc.CLEARFLAG_STENCIL;
+      flags |= pc.CLEARFLAG_STENCIL;
     }
     this.data.camera.clearFlags = flags;
   }, onSetRenderTarget:function(name, oldValue, newValue) {
@@ -23678,7 +23646,7 @@ pc.extend(pc, function() {
   }, onSetScissorRect:function(name, oldValue, newValue) {
     this.data.camera.setScissorRect(newValue.data[0], newValue.data[1], newValue.data[2], newValue.data[3]);
   }, onEnable:function() {
-    CameraComponent._super.onEnable.call(this);
+    pc.Component.prototype.onEnable.call(this);
     this.system.addCamera(this);
     this.system.app.scene.on("set:layers", this.onLayersChanged, this);
     if (this.system.app.scene.layers) {
@@ -23690,7 +23658,7 @@ pc.extend(pc, function() {
     }
     this.postEffects.enable();
   }, onDisable:function() {
-    CameraComponent._super.onDisable.call(this);
+    pc.Component.prototype.onDisable.call(this);
     this.postEffects.disable();
     this.removeCameraFromLayers();
     this.system.app.scene.off("set:layers", this.onLayersChanged, this);
@@ -23759,9 +23727,10 @@ pc.extend(pc, function() {
   }});
   return {CameraComponent:CameraComponent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _schema = ["enabled", "clearColorBuffer", "clearColor", "clearDepthBuffer", "clearStencilBuffer", "frustumCulling", "projection", "fov", "orthoHeight", "nearClip", "farClip", "priority", "rect", "scissorRect", "camera", "aspectRatio", "aspectRatioMode", "horizontalFov", "model", "renderTarget", "calculateTransform", "calculateProjection", "cullFaces", "flipFaces", "layers"];
   var CameraComponentSystem = function(app) {
+    pc.ComponentSystem.call(this, app);
     this.id = "camera";
     this.description = "Renders the scene from the location of the Entity.";
     app.systems.add(this.id, this);
@@ -23773,9 +23742,10 @@ pc.extend(pc, function() {
     this.on("remove", this.onRemove, this);
     pc.ComponentSystem.on("update", this.onUpdate, this);
   };
-  CameraComponentSystem = pc.inherits(CameraComponentSystem, pc.ComponentSystem);
+  CameraComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  CameraComponentSystem.prototype.constructor = CameraComponentSystem;
   pc.Component._buildAccessors(pc.CameraComponent.prototype, _schema);
-  pc.extend(CameraComponentSystem.prototype, {initializeComponentData:function(component, _data, properties) {
+  Object.assign(CameraComponentSystem.prototype, {initializeComponentData:function(component, _data, properties) {
     properties = ["postEffects", "enabled", "model", "camera", "aspectRatio", "aspectRatioMode", "horizontalFov", "renderTarget", "clearColor", "fov", "orthoHeight", "nearClip", "farClip", "projection", "priority", "clearColorBuffer", "clearDepthBuffer", "clearStencilBuffer", "frustumCulling", "rect", "scissorRect", "calculateTransform", "calculateProjection", "cullFaces", "flipFaces", "layers"];
     var data = {};
     properties.forEach(function(prop) {
@@ -23817,7 +23787,7 @@ pc.extend(pc, function() {
       return self._calculateProjection(mat, mode);
     };
     data.postEffects = new pc.PostEffectQueue(this.app, component);
-    CameraComponentSystem._super.initializeComponentData.call(this, component, data, properties);
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, properties);
   }, onBeforeRemove:function(entity, component) {
     this.removeCamera(component);
   }, onRemove:function(entity, data) {
@@ -23857,7 +23827,7 @@ pc.extend(pc, function() {
   }});
   return {CameraComponentSystem:CameraComponentSystem};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var CameraComponentData = function() {
     this.clearColor = new pc.Color(0.722, 0.722, 0.722, 1);
     this.clearColorBuffer = true;
@@ -23885,10 +23855,9 @@ pc.extend(pc, function() {
     this.calculateTransform = null;
     this.calculateProjection = null;
   };
-  CameraComponentData = pc.inherits(CameraComponentData, pc.ComponentData);
   return {CameraComponentData:CameraComponentData};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   function PostEffectQueue(app, camera) {
     var self = this;
     this.app = app;
@@ -23904,7 +23873,7 @@ pc.extend(pc, function() {
     };
     camera.on("set_rect", this.onCameraRectChanged, this);
   }
-  PostEffectQueue.prototype = {_createOffscreenTarget:function(useDepth, hdr) {
+  Object.assign(PostEffectQueue.prototype, {_createOffscreenTarget:function(useDepth, hdr) {
     var rect = this.camera.rect;
     var width = Math.floor(rect.z * this.app.graphicsDevice.width * this.renderTargetScale);
     var height = Math.floor(rect.w * this.app.graphicsDevice.height * this.renderTargetScale);
@@ -24056,7 +24025,6 @@ pc.extend(pc, function() {
       this.app.graphicsDevice.off("resizecanvas", this._onCanvasResized, this);
       this.camera.renderTarget = null;
       this.releaseDepthMap();
-      var rect = this.camera.rect;
       var i = this.layer._commandList.indexOf(this.command);
       if (i >= 0) {
         this.layer._commandList.splice(i, 1);
@@ -24094,10 +24062,10 @@ pc.extend(pc, function() {
     if (this.enabled) {
       this.resizeRenderTargets();
     }
-  }};
+  }});
   return {PostEffectQueue:PostEffectQueue};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _backbufferRt = [null, null];
   var _constInput = null;
   var _constScreenSize;
@@ -24458,10 +24426,19 @@ pc.extend(pc, function() {
   };
   return {PostEffectPass:PostEffectPass};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
+  var LightComponent = function LightComponent(system, entity) {
+    pc.Component.call(this, system, entity);
+    this._cookieAsset = null;
+    this._cookieAssetId = null;
+    this._cookieAssetAdd = false;
+    this._cookieMatrix = null;
+  };
+  LightComponent.prototype = Object.create(pc.Component.prototype);
+  LightComponent.prototype.constructor = LightComponent;
   var _props = [];
   var _propsDefault = [];
-  function _defineProperty(name, defaultValue, setFunc, skipEqualsCheck) {
+  var _defineProperty = function(name, defaultValue, setFunc, skipEqualsCheck) {
     var c = LightComponent.prototype;
     _props.push(name);
     _propsDefault.push(defaultValue);
@@ -24478,15 +24455,8 @@ pc.extend(pc, function() {
         setFunc.call(this, value, oldValue);
       }
     }, configurable:true});
-  }
-  var LightComponent = function LightComponent(system, entity) {
-    this._cookieAsset = null;
-    this._cookieAssetId = null;
-    this._cookieAssetAdd = false;
-    this._cookieMatrix = null;
   };
-  LightComponent = pc.inherits(LightComponent, pc.Component);
-  var _defineProps = function(c, d, s) {
+  var _defineProps = function() {
     _defineProperty("enabled", true, function(newValue, oldValue) {
       this.onSetEnabled(null, oldValue, newValue);
     });
@@ -24688,7 +24658,7 @@ pc.extend(pc, function() {
     console.warn("WARNING: enable: Property is deprecated. Set enabled property instead.");
     this.enabled = value;
   }});
-  pc.extend(LightComponent.prototype, {addLightToLayers:function() {
+  Object.assign(LightComponent.prototype, {addLightToLayers:function() {
     var layer;
     for (var i = 0;i < this.layers.length;i++) {
       layer = this.system.app.scene.layers.getLayerById(this.layers[i]);
@@ -24781,7 +24751,7 @@ pc.extend(pc, function() {
     }
     this.cookie = null;
   }, onEnable:function() {
-    LightComponent._super.onEnable.call(this);
+    pc.Component.prototype.onEnable.call(this);
     this.light.enabled = true;
     this.system.app.scene.on("set:layers", this.onLayersChanged, this);
     if (this.system.app.scene.layers) {
@@ -24795,7 +24765,7 @@ pc.extend(pc, function() {
       this.onCookieAssetSet();
     }
   }, onDisable:function() {
-    LightComponent._super.onDisable.call(this);
+    pc.Component.prototype.onDisable.call(this);
     this.light.enabled = false;
     this.system.app.scene.off("set:layers", this.onLayersChanged, this);
     if (this.system.app.scene.layers) {
@@ -24806,18 +24776,19 @@ pc.extend(pc, function() {
   }});
   return {LightComponent:LightComponent, _lightProps:_props, _lightPropsDefault:_propsDefault};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var lightTypes = {"directional":pc.LIGHTTYPE_DIRECTIONAL, "point":pc.LIGHTTYPE_POINT, "spot":pc.LIGHTTYPE_SPOT};
   var LightComponentSystem = function(app) {
+    pc.ComponentSystem.call(this, app);
     this.id = "light";
     this.description = "Enables the Entity to emit light.";
     app.systems.add(this.id, this);
     this.ComponentType = pc.LightComponent;
     this.DataType = pc.LightComponentData;
-    this.on("remove", this.onRemove, this);
   };
-  LightComponentSystem = pc.inherits(LightComponentSystem, pc.ComponentSystem);
-  pc.extend(LightComponentSystem.prototype, {initializeComponentData:function(component, _data) {
+  LightComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  LightComponentSystem.prototype.constructor = LightComponentSystem;
+  Object.assign(LightComponentSystem.prototype, {initializeComponentData:function(component, _data) {
     var data = {};
     var _props = pc._lightProps;
     var name;
@@ -24850,7 +24821,11 @@ pc.extend(pc, function() {
     light._node = component.entity;
     light._scene = this.app.scene;
     component.data.light = light;
-    LightComponentSystem._super.initializeComponentData.call(this, component, data, _props);
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, _props);
+  }, removeComponent:function(entity) {
+    var data = entity.light.data;
+    data.light.destroy();
+    pc.ComponentSystem.prototype.removeComponent.call(this, entity);
   }, cloneComponent:function(entity, clone) {
     var light = entity.light;
     var data = [];
@@ -24875,7 +24850,7 @@ pc.extend(pc, function() {
   }});
   return {LightComponentSystem:LightComponentSystem};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var LightComponentData = function() {
     var _props = pc._lightProps;
     var _propsDefault = pc._lightPropsDefault;
@@ -24889,22 +24864,26 @@ pc.extend(pc, function() {
       }
     }
   };
-  LightComponentData = pc.inherits(LightComponentData, pc.ComponentData);
   return {LightComponentData:LightComponentData};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ScriptComponent = function ScriptComponent(system, entity) {
+    pc.Component.call(this, system, entity);
     this._scripts = [];
     this._scriptsIndex = {};
+    this._destroyedScripts = [];
+    this._destroyed = false;
     this._scriptsData = null;
     this._oldState = true;
     this._beingEnabled = false;
+    this._isLoopingThroughScripts = false;
     this.on("set_enabled", this._onSetEnabled, this);
   };
-  ScriptComponent = pc.inherits(ScriptComponent, pc.Component);
+  ScriptComponent.prototype = Object.create(pc.Component.prototype);
+  ScriptComponent.prototype.constructor = ScriptComponent;
   ScriptComponent.scriptMethods = {initialize:"initialize", postInitialize:"postInitialize", update:"update", postUpdate:"postUpdate", swap:"swap"};
-  pc.extend(ScriptComponent.prototype, {onEnable:function() {
-    ScriptComponent._super.onEnable.call(this);
+  Object.assign(ScriptComponent.prototype, {onEnable:function() {
+    pc.Component.prototype.onEnable.call(this);
     this._beingEnabled = true;
     this._checkState();
     if (!this.entity._beingEnabled) {
@@ -24912,10 +24891,11 @@ pc.extend(pc, function() {
     }
     this._beingEnabled = false;
   }, onDisable:function() {
-    ScriptComponent._super.onDisable.call(this);
+    pc.Component.prototype.onDisable.call(this);
     this._checkState();
   }, onPostStateChange:function() {
     var script;
+    var wasLooping = this._beginLooping();
     for (var i = 0, len = this.scripts.length;i < len;i++) {
       script = this.scripts[i];
       if (script._initialized && !script._postInitialized && script.enabled) {
@@ -24924,6 +24904,16 @@ pc.extend(pc, function() {
           this._scriptMethod(script, ScriptComponent.scriptMethods.postInitialize);
         }
       }
+    }
+    this._endLooping(wasLooping);
+  }, _beginLooping:function() {
+    var looping = this._isLoopingThroughScripts;
+    this._isLoopingThroughScripts = true;
+    return looping;
+  }, _endLooping:function(wasLoopingBefore) {
+    this._isLoopingThroughScripts = wasLoopingBefore;
+    if (!this._isLoopingThroughScripts) {
+      this._removeDestroyedScripts();
     }
   }, _onSetEnabled:function(prop, old, value) {
     this._beingEnabled = true;
@@ -24937,17 +24927,36 @@ pc.extend(pc, function() {
     this._oldState = state;
     this.fire(state ? "enable" : "disable");
     this.fire("state", state);
+    var wasLooping = this._beginLooping();
     var script;
     for (var i = 0, len = this.scripts.length;i < len;i++) {
       script = this.scripts[i];
       script.enabled = script._enabled;
     }
+    this._endLooping(wasLooping);
   }, _onBeforeRemove:function() {
     this.fire("remove");
-    var destroyed = true;
-    while (this.scripts.length > 0 && destroyed) {
-      destroyed = this.destroy(this.scripts[0].__scriptType.__name);
+    var wasLooping = this._beginLooping();
+    for (var i = 0;i < this.scripts.length;i++) {
+      var script = this.scripts[i];
+      if (!script) {
+        continue;
+      }
+      this.destroy(script.__scriptType.__name);
     }
+    this._endLooping(wasLooping);
+  }, _removeDestroyedScripts:function() {
+    var len = this._destroyedScripts.length;
+    if (!len) {
+      return;
+    }
+    for (var i = 0;i < len;i++) {
+      var idx = this._scripts.indexOf(this._destroyedScripts[i]);
+      if (idx >= 0) {
+        this._scripts.splice(idx, 1);
+      }
+    }
+    this._destroyedScripts.length = 0;
   }, _onInitializeAttributes:function() {
     for (var i = 0, len = this.scripts.length;i < len;i++) {
       this.scripts[i].__initializeAttributes();
@@ -24966,6 +24975,7 @@ pc.extend(pc, function() {
     }
   }, _onInitialize:function() {
     var script, scripts = this._scripts;
+    var wasLooping = this._beginLooping();
     for (var i = 0, len = scripts.length;i < len;i++) {
       script = scripts[i];
       if (!script._initialized && script.enabled) {
@@ -24975,24 +24985,31 @@ pc.extend(pc, function() {
         }
       }
     }
+    this._endLooping(wasLooping);
   }, _onPostInitialize:function() {
     this.onPostStateChange();
   }, _onUpdate:function(dt) {
     var script, scripts = this._scripts;
+    var wasLooping = this._beginLooping();
     for (var i = 0, len = scripts.length;i < len;i++) {
       script = scripts[i];
       if (script.update && script.enabled) {
         this._scriptMethod(script, ScriptComponent.scriptMethods.update, dt);
       }
     }
+    this._endLooping(wasLooping);
   }, _onPostUpdate:function(dt) {
+    var i;
+    var len;
+    var wasLooping = this._beginLooping();
     var script, scripts = this._scripts;
-    for (var i = 0, len = scripts.length;i < len;i++) {
+    for (i = 0, len = scripts.length;i < len;i++) {
       script = scripts[i];
       if (script.postUpdate && script.enabled) {
         this._scriptMethod(script, ScriptComponent.scriptMethods.postUpdate, dt);
       }
     }
+    this._endLooping(wasLooping);
   }, has:function(name) {
     var scriptType = name;
     if (typeof scriptType === "string") {
@@ -25048,9 +25065,8 @@ pc.extend(pc, function() {
           }
         }
         return scriptInstance;
-      } else {
-        console.warn("script '" + scriptName + "' is already added to entity '" + this.entity.name + "'");
       }
+      console.warn("script '" + scriptName + "' is already added to entity '" + this.entity.name + "'");
     } else {
       this._scriptsIndex[scriptName] = {awaiting:true, ind:this._scripts.length};
       console.warn("script '" + scriptName + "' is not found, awaiting it to be added to registry");
@@ -25070,9 +25086,15 @@ pc.extend(pc, function() {
     if (!scriptData) {
       return false;
     }
-    if (scriptData.instance) {
-      var ind = this._scripts.indexOf(scriptData.instance);
-      this._scripts.splice(ind, 1);
+    if (scriptData.instance && !scriptData.instance._destroyed) {
+      scriptData.instance.enabled = false;
+      scriptData.instance._destroyed = true;
+      if (!this._isLoopingThroughScripts) {
+        var ind = this._scripts.indexOf(scriptData.instance);
+        this._scripts.splice(ind, 1);
+      } else {
+        this._destroyedScripts.push(scriptData.instance);
+      }
     }
     this.system.app.scripts.off("swap:" + scriptName, scriptData.onSwap);
     delete this[scriptName];
@@ -25160,9 +25182,10 @@ pc.extend(pc, function() {
   }});
   return {ScriptComponent:ScriptComponent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _schema = ["enabled"];
   var ScriptComponentSystem = function ScriptComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
     this.id = "script";
     this.app = app;
     app.systems.add(this.id, this);
@@ -25170,6 +25193,8 @@ pc.extend(pc, function() {
     this.DataType = pc.ScriptComponentData;
     this.schema = _schema;
     this._components = [];
+    this._destroyedComponents = [];
+    this._isLoopingThroughComponents = false;
     this.preloading = true;
     this.on("beforeremove", this._onBeforeRemove, this);
     pc.ComponentSystem.on("initialize", this._onInitialize, this);
@@ -25177,9 +25202,10 @@ pc.extend(pc, function() {
     pc.ComponentSystem.on("update", this._onUpdate, this);
     pc.ComponentSystem.on("postUpdate", this._onPostUpdate, this);
   };
-  ScriptComponentSystem = pc.inherits(ScriptComponentSystem, pc.ComponentSystem);
+  ScriptComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  ScriptComponentSystem.prototype.constructor = ScriptComponentSystem;
   pc.Component._buildAccessors(pc.ScriptComponent.prototype, _schema);
-  pc.extend(ScriptComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
+  Object.assign(ScriptComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
     this._components.push(component);
     component.enabled = data.hasOwnProperty("enabled") ? !!data.enabled : true;
     if (data.hasOwnProperty("order") && data.hasOwnProperty("scripts")) {
@@ -25210,11 +25236,31 @@ pc.extend(pc, function() {
     var data = {enabled:entity.script.enabled, order:order, scripts:scripts};
     return this.addComponent(clone, data);
   }, _callComponentMethod:function(name, dt) {
+    var wasLooping = this._beginLooping();
     for (var i = 0;i < this._components.length;i++) {
-      if (!this._components[i].entity.enabled || !this._components[i].enabled) {
+      if (this._components[i]._destroyed || !this._components[i].entity.enabled || !this._components[i].enabled) {
         continue;
       }
       this._components[i][name](dt);
+    }
+    this._endLooping(wasLooping);
+  }, _beginLooping:function() {
+    var looping = this._isLoopingThroughComponents;
+    this._isLoopingThroughComponents = true;
+    return looping;
+  }, _endLooping:function(wasLooping) {
+    this._isLoopingThroughComponents = wasLooping;
+    if (!this._isLoopingThroughComponents) {
+      var len = this._destroyedComponents.length;
+      if (len) {
+        for (var i = 0;i < len;i++) {
+          var idx = this._components.indexOf(this._destroyedComponents[i]);
+          if (idx >= 0) {
+            this._components.splice(idx, 1);
+          }
+        }
+        this._destroyedComponents.length = 0;
+      }
     }
   }, _onInitialize:function() {
     this.preloading = false;
@@ -25234,23 +25280,29 @@ pc.extend(pc, function() {
       return;
     }
     component._onBeforeRemove();
-    this._components.splice(ind, 1);
+    if (!this._isLoopingThroughComponents) {
+      this._components.splice(ind, 1);
+    } else {
+      component._destroyed = true;
+      this._destroyedComponents.push(component);
+    }
   }});
   return {ScriptComponentSystem:ScriptComponentSystem};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ScriptComponentData = function() {
     this.enabled = true;
   };
-  ScriptComponentData = pc.inherits(ScriptComponentData, pc.ComponentData);
   return {ScriptComponentData:ScriptComponentData};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ScriptLegacyComponent = function ScriptLegacyComponent(system, entity) {
+    pc.Component.call(this, system, entity);
     this.on("set_scripts", this.onSetScripts, this);
   };
-  ScriptLegacyComponent = pc.inherits(ScriptLegacyComponent, pc.Component);
-  pc.extend(ScriptLegacyComponent.prototype, {send:function(name, functionName) {
+  ScriptLegacyComponent.prototype = Object.create(pc.Component.prototype);
+  ScriptLegacyComponent.prototype.constructor = ScriptLegacyComponent;
+  Object.assign(ScriptLegacyComponent.prototype, {send:function(name, functionName) {
     console.warn("DEPRECATED: ScriptLegacyComponent.send() is deprecated and will be removed soon. Please use: http://developer.playcanvas.com/user-manual/scripting/communication/");
     var args = pc.makeArray(arguments).slice(2);
     var instances = this.entity.script.instances;
@@ -25262,7 +25314,7 @@ pc.extend(pc, function() {
       }
     }
   }, onEnable:function() {
-    ScriptLegacyComponent._super.onEnable.call(this);
+    pc.Component.prototype.onEnable.call(this);
     if (this.data.areScriptsLoaded && !this.system.preloading) {
       if (!this.data.initialized) {
         this.system._initializeScriptComponent(this);
@@ -25274,7 +25326,7 @@ pc.extend(pc, function() {
       }
     }
   }, onDisable:function() {
-    ScriptLegacyComponent._super.onDisable.call(this);
+    pc.Component.prototype.onDisable.call(this);
     this.system._disableScriptComponent(this);
   }, onSetScripts:function(name, oldValue, newValue) {
     if (!this.system._inTools || this.runInTools) {
@@ -25329,9 +25381,8 @@ pc.extend(pc, function() {
       var type = this.system.app.loader.getFromCache(url, "script");
       if (!type) {
         return false;
-      } else {
-        cached.push(type);
       }
+      cached.push(type);
     }
     for (i = 0, len = cached.length;i < len;i++) {
       var ScriptType = cached[i];
@@ -25390,7 +25441,7 @@ pc.extend(pc, function() {
   }});
   return {ScriptLegacyComponent:ScriptLegacyComponent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _schema = ["enabled", "scripts", "instances", "runInTools"];
   var INITIALIZE = "initialize";
   var POST_INITIALIZE = "postInitialize";
@@ -25401,6 +25452,7 @@ pc.extend(pc, function() {
   var ON_ENABLE = "onEnable";
   var ON_DISABLE = "onDisable";
   var ScriptLegacyComponentSystem = function ScriptLegacyComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
     this.id = "script";
     this.description = "Allows the Entity to run JavaScript fragments to implement custom behavior.";
     app.systems.add(this.id, this);
@@ -25420,9 +25472,10 @@ pc.extend(pc, function() {
     pc.ComponentSystem.on(POST_UPDATE, this.onPostUpdate, this);
     pc.ComponentSystem.on(TOOLS_UPDATE, this.onToolsUpdate, this);
   };
-  ScriptLegacyComponentSystem = pc.inherits(ScriptLegacyComponentSystem, pc.ComponentSystem);
+  ScriptLegacyComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  ScriptLegacyComponentSystem.prototype.constructor = ScriptLegacyComponentSystem;
   pc.Component._buildAccessors(pc.ScriptLegacyComponent.prototype, _schema);
-  pc.extend(ScriptLegacyComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
+  Object.assign(ScriptLegacyComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
     properties = ["runInTools", "enabled", "scripts"];
     if (data.scripts && data.scripts.length) {
       data.scripts.forEach(function(script) {
@@ -25435,7 +25488,7 @@ pc.extend(pc, function() {
         }
       });
     }
-    ScriptLegacyComponentSystem._super.initializeComponentData.call(this, component, data, properties);
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, properties);
   }, cloneComponent:function(entity, clone) {
     var src = this.dataStore[entity._guid];
     var data = {runInTools:src.data.runInTools, scripts:[], enabled:src.data.enabled};
@@ -25490,7 +25543,7 @@ pc.extend(pc, function() {
       if (instances.hasOwnProperty(name)) {
         var instance = instances[name].instance;
         if (instance[method]) {
-          instance[method].call(instance);
+          instance[method]();
         }
       }
     }
@@ -25551,7 +25604,7 @@ pc.extend(pc, function() {
     for (var i = 0, len = updateList.length;i < len;i++) {
       item = updateList[i];
       if (item && item.entity && item.entity.enabled && item.entity.script.enabled) {
-        item[method].call(item, dt);
+        item[method](dt);
       }
     }
   }, onUpdate:function(dt) {
@@ -25761,7 +25814,7 @@ pc.extend(pc, function() {
   }});
   return {ScriptLegacyComponentSystem:ScriptLegacyComponentSystem};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ScriptLegacyComponentData = function() {
     this.scripts = [];
     this.enabled = true;
@@ -25773,11 +25826,10 @@ pc.extend(pc, function() {
     this.postInitialized = false;
     this.areScriptsLoaded = false;
   };
-  ScriptLegacyComponentData = pc.inherits(ScriptLegacyComponentData, pc.ComponentData);
   return {ScriptLegacyComponentData:ScriptLegacyComponentData};
 }());
-pc.extend(pc, {DISTANCE_LINEAR:"linear", DISTANCE_INVERSE:"inverse", DISTANCE_EXPONENTIAL:"exponential"});
-pc.extend(pc, function() {
+Object.assign(pc, {DISTANCE_LINEAR:"linear", DISTANCE_INVERSE:"inverse", DISTANCE_EXPONENTIAL:"exponential"});
+Object.assign(pc, function() {
   var instanceOptions = {volume:0, pitch:0, loop:false, startTime:0, duration:0, position:new pc.Vec3, maxDistance:0, refDistance:0, rollOffFactor:0, distanceModel:0, onPlay:null, onPause:null, onResume:null, onStop:null, onEnd:null};
   var SoundSlot = function(component, name, options) {
     options = options || {};
@@ -25806,7 +25858,7 @@ pc.extend(pc, function() {
     this.instances = [];
     pc.events.attach(this);
   };
-  SoundSlot.prototype = {play:function() {
+  Object.assign(SoundSlot.prototype, {play:function() {
     if (!this.overlap && (this.isPlaying || this.isPaused)) {
       this.stop();
     }
@@ -25970,7 +26022,7 @@ pc.extend(pc, function() {
     for (var i = 0, len = instances.length;i < len;i++) {
       instances[i].position = position;
     }
-  }};
+  }});
   Object.defineProperty(SoundSlot.prototype, "name", {get:function() {
     return this._name;
   }, set:function(value) {
@@ -26036,9 +26088,8 @@ pc.extend(pc, function() {
     }
     if (this._duration != null) {
       return this._duration % (assetDuration || 1);
-    } else {
-      return assetDuration;
     }
+    return assetDuration;
   }, set:function(value) {
     this._duration = Math.max(0, Number(value) || 0) || null;
     if (!this._overlap) {
@@ -26109,8 +26160,9 @@ pc.extend(pc, function() {
   }});
   return {SoundSlot:SoundSlot};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var SoundComponent = function(system, entity) {
+    pc.Component.call(this, system, entity);
     this.on("set_slots", this.onSetSlots, this);
     this.on("set_volume", this.onSetVolume, this);
     this.on("set_pitch", this.onSetPitch, this);
@@ -26120,8 +26172,9 @@ pc.extend(pc, function() {
     this.on("set_distanceModel", this.onSetDistanceModel, this);
     this.on("set_positional", this.onSetPositional, this);
   };
-  SoundComponent = pc.inherits(SoundComponent, pc.Component);
-  pc.extend(SoundComponent.prototype, {onSetSlots:function(name, oldValue, newValue) {
+  SoundComponent.prototype = Object.create(pc.Component.prototype);
+  SoundComponent.prototype.constructor = SoundComponent;
+  Object.assign(SoundComponent.prototype, {onSetSlots:function(name, oldValue, newValue) {
     var key;
     if (oldValue) {
       for (key in oldValue) {
@@ -26229,7 +26282,7 @@ pc.extend(pc, function() {
       }
     }
   }, onEnable:function() {
-    SoundComponent._super.onEnable.call(this);
+    pc.Component.prototype.onEnable.call(this);
     if (this.system._inTools) {
       return;
     }
@@ -26250,7 +26303,7 @@ pc.extend(pc, function() {
       }
     }
   }, onDisable:function() {
-    SoundComponent._super.onDisable.call(this);
+    pc.Component.prototype.onDisable.call(this);
     var slots = this.data.slots;
     var playingBeforeDisable = {};
     for (var key in slots) {
@@ -26342,9 +26395,10 @@ pc.extend(pc, function() {
   }});
   return {SoundComponent:SoundComponent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _schema = ["enabled", "volume", "pitch", "positional", "refDistance", "maxDistance", "rollOffFactor", "distanceModel", "slots"];
   var SoundComponentSystem = function(app, manager) {
+    pc.ComponentSystem.call(this, app);
     this.id = "sound";
     this.description = "Allows an Entity to play sounds";
     app.systems.add(this.id, this);
@@ -26355,11 +26409,12 @@ pc.extend(pc, function() {
     pc.ComponentSystem.on("update", this.onUpdate, this);
     this.on("beforeremove", this.onBeforeRemove, this);
   };
-  SoundComponentSystem = pc.inherits(SoundComponentSystem, pc.ComponentSystem);
+  SoundComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  SoundComponentSystem.prototype.constructor = SoundComponentSystem;
   pc.Component._buildAccessors(pc.SoundComponent.prototype, _schema);
-  pc.extend(SoundComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
+  Object.assign(SoundComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
     properties = ["volume", "pitch", "positional", "refDistance", "maxDistance", "rollOffFactor", "distanceModel", "slots", "enabled"];
-    SoundComponentSystem._super.initializeComponentData.call(this, component, data, properties);
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, properties);
   }, cloneComponent:function(entity, clone) {
     var key;
     var oldData = entity.sound.data;
@@ -26430,8 +26485,9 @@ pc.SoundComponentData = function SoundComponentData() {
   this.slots = {};
   this.playingBeforeDisable = {};
 };
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var AudioSourceComponent = function(system, entity) {
+    pc.Component.call(this, system, entity);
     this.on("set_assets", this.onSetAssets, this);
     this.on("set_loop", this.onSetLoop, this);
     this.on("set_volume", this.onSetVolume, this);
@@ -26442,8 +26498,9 @@ pc.extend(pc, function() {
     this.on("set_distanceModel", this.onSetDistanceModel, this);
     this.on("set_3d", this.onSet3d, this);
   };
-  AudioSourceComponent = pc.inherits(AudioSourceComponent, pc.Component);
-  pc.extend(AudioSourceComponent.prototype, {play:function(name) {
+  AudioSourceComponent.prototype = Object.create(pc.Component.prototype);
+  AudioSourceComponent.prototype.constructor = AudioSourceComponent;
+  Object.assign(AudioSourceComponent.prototype, {play:function(name) {
     if (!this.enabled || !this.entity.enabled) {
       return;
     }
@@ -26593,7 +26650,7 @@ pc.extend(pc, function() {
       }
     }
   }, onEnable:function() {
-    AudioSourceComponent._super.onEnable.call(this);
+    pc.Component.prototype.onEnable.call(this);
     var assets = this.data.assets;
     if (assets) {
       var registry = this.system.app.assets;
@@ -26615,7 +26672,7 @@ pc.extend(pc, function() {
       }
     }
   }, onDisable:function() {
-    AudioSourceComponent._super.onDisable.call(this);
+    pc.Component.prototype.onDisable.call(this);
     this.pause();
   }, loadAudioSourceAssets:function(ids) {
     var self = this;
@@ -26672,9 +26729,10 @@ pc.extend(pc, function() {
   }});
   return {AudioSourceComponent:AudioSourceComponent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _schema = ["enabled", "assets", "volume", "pitch", "loop", "activate", "3d", "minDistance", "maxDistance", "rollOffFactor", "distanceModel", "sources", "currentSource", "channel"];
   var AudioSourceComponentSystem = function(app, manager) {
+    pc.ComponentSystem.call(this, app);
     this.id = "audiosource";
     this.description = "Specifies audio assets that can be played at the position of the Entity.";
     app.systems.add(this.id, this);
@@ -26687,11 +26745,12 @@ pc.extend(pc, function() {
     pc.ComponentSystem.on("update", this.onUpdate, this);
     this.on("remove", this.onRemove, this);
   };
-  AudioSourceComponentSystem = pc.inherits(AudioSourceComponentSystem, pc.ComponentSystem);
+  AudioSourceComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  AudioSourceComponentSystem.prototype.constructor = AudioSourceComponentSystem;
   pc.Component._buildAccessors(pc.AudioSourceComponent.prototype, _schema);
-  pc.extend(AudioSourceComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
+  Object.assign(AudioSourceComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
     properties = ["activate", "volume", "pitch", "loop", "3d", "minDistance", "maxDistance", "rollOffFactor", "distanceModel", "enabled", "assets"];
-    AudioSourceComponentSystem._super.initializeComponentData.call(this, component, data, properties);
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, properties);
     component.paused = !(component.enabled && component.activate);
   }, onInitialize:function(root) {
     if (root.audiosource && root.enabled && root.audiosource.enabled && root.audiosource.activate) {
@@ -26745,30 +26804,33 @@ pc.AudioSourceComponentData = function AudioSourceComponentData() {
   this.currentSource = null;
   this.channel = null;
 };
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var AudioListenerComponent = function(system, entity) {
+    pc.Component.call(this, system, entity);
   };
-  AudioListenerComponent = pc.inherits(AudioListenerComponent, pc.Component);
-  pc.extend(AudioListenerComponent.prototype, {setCurrentListener:function() {
+  AudioListenerComponent.prototype = Object.create(pc.Component.prototype);
+  AudioListenerComponent.prototype.constructor = AudioListenerComponent;
+  Object.assign(AudioListenerComponent.prototype, {setCurrentListener:function() {
     if (this.enabled && this.entity.audiolistener && this.entity.enabled) {
       this.system.current = this.entity;
       var position = this.system.current.getPosition();
       this.system.manager.listener.setPosition(position);
     }
   }, onEnable:function() {
-    AudioListenerComponent._super.onEnable.call(this);
+    pc.Component.prototype.onEnable.call(this);
     this.setCurrentListener();
   }, onDisable:function() {
-    AudioListenerComponent._super.onDisable.call(this);
+    pc.Component.prototype.onDisable.call(this);
     if (this.system.current === this.entity) {
       this.system.current = null;
     }
   }});
   return {AudioListenerComponent:AudioListenerComponent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _schema = ["enabled"];
   var AudioListenerComponentSystem = function(app, manager) {
+    pc.ComponentSystem.call(this, app);
     this.id = "audiolistener";
     this.description = "Specifies the location of the listener for 3D audio playback.";
     app.systems.add(this.id, this);
@@ -26779,11 +26841,12 @@ pc.extend(pc, function() {
     this.current = null;
     pc.ComponentSystem.on("update", this.onUpdate, this);
   };
-  AudioListenerComponentSystem = pc.inherits(AudioListenerComponentSystem, pc.ComponentSystem);
+  AudioListenerComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  AudioListenerComponentSystem.prototype.constructor = AudioListenerComponentSystem;
   pc.Component._buildAccessors(pc.AudioListenerComponent.prototype, _schema);
-  pc.extend(AudioListenerComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
+  Object.assign(AudioListenerComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
     properties = ["enabled"];
-    AudioListenerComponentSystem._super.initializeComponentData.call(this, component, data, properties);
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, properties);
   }, onUpdate:function(dt) {
     if (this.current) {
       var position = this.current.getPosition();
@@ -26794,19 +26857,19 @@ pc.extend(pc, function() {
   }});
   return {AudioListenerComponentSystem:AudioListenerComponentSystem};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var AudioListenerComponentData = function() {
     this.enabled = true;
   };
-  AudioListenerComponentData = pc.inherits(AudioListenerComponentData, pc.ComponentData);
   return {AudioListenerComponentData:AudioListenerComponentData};
 }());
-pc.extend(pc, {BODYTYPE_STATIC:"static", BODYTYPE_DYNAMIC:"dynamic", BODYTYPE_KINEMATIC:"kinematic", BODYFLAG_STATIC_OBJECT:1, BODYFLAG_KINEMATIC_OBJECT:2, BODYFLAG_NORESPONSE_OBJECT:4, BODYSTATE_ACTIVE_TAG:1, BODYSTATE_ISLAND_SLEEPING:2, BODYSTATE_WANTS_DEACTIVATION:3, BODYSTATE_DISABLE_DEACTIVATION:4, BODYSTATE_DISABLE_SIMULATION:5, BODYGROUP_NONE:0, BODYGROUP_DEFAULT:1, BODYGROUP_DYNAMIC:1, BODYGROUP_STATIC:2, BODYGROUP_KINEMATIC:4, BODYGROUP_ENGINE_1:8, BODYGROUP_TRIGGER:16, BODYGROUP_ENGINE_2:32, 
+Object.assign(pc, {BODYTYPE_STATIC:"static", BODYTYPE_DYNAMIC:"dynamic", BODYTYPE_KINEMATIC:"kinematic", BODYFLAG_STATIC_OBJECT:1, BODYFLAG_KINEMATIC_OBJECT:2, BODYFLAG_NORESPONSE_OBJECT:4, BODYSTATE_ACTIVE_TAG:1, BODYSTATE_ISLAND_SLEEPING:2, BODYSTATE_WANTS_DEACTIVATION:3, BODYSTATE_DISABLE_DEACTIVATION:4, BODYSTATE_DISABLE_SIMULATION:5, BODYGROUP_NONE:0, BODYGROUP_DEFAULT:1, BODYGROUP_DYNAMIC:1, BODYGROUP_STATIC:2, BODYGROUP_KINEMATIC:4, BODYGROUP_ENGINE_1:8, BODYGROUP_TRIGGER:16, BODYGROUP_ENGINE_2:32, 
 BODYGROUP_ENGINE_3:64, BODYGROUP_USER_1:128, BODYGROUP_USER_2:256, BODYGROUP_USER_3:512, BODYGROUP_USER_4:1024, BODYGROUP_USER_5:2048, BODYGROUP_USER_6:4096, BODYGROUP_USER_7:8192, BODYGROUP_USER_8:16384, BODYMASK_NONE:0, BODYMASK_ALL:65535, BODYMASK_STATIC:2, BODYMASK_NOT_STATIC:65535 ^ 2, BODYMASK_NOT_STATIC_KINEMATIC:65535 ^ (2 | 4)});
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ammoTransform;
   var ammoVec1, ammoVec2, ammoQuat, ammoOrigin;
   var RigidBodyComponent = function RigidBodyComponent(system, entity) {
+    pc.Component.call(this, system, entity);
     if (typeof Ammo !== "undefined" && !ammoTransform) {
       ammoTransform = new Ammo.btTransform;
       ammoVec1 = new Ammo.btVector3;
@@ -26829,7 +26892,8 @@ pc.extend(pc, function() {
     this._linearVelocity = new pc.Vec3(0, 0, 0);
     this._angularVelocity = new pc.Vec3(0, 0, 0);
   };
-  RigidBodyComponent = pc.inherits(RigidBodyComponent, pc.Component);
+  RigidBodyComponent.prototype = Object.create(pc.Component.prototype);
+  RigidBodyComponent.prototype.constructor = RigidBodyComponent;
   Object.defineProperty(RigidBodyComponent.prototype, "bodyType", {get:function() {
     console.warn("WARNING: bodyType: Function is deprecated. Query type property instead.");
     return this.type;
@@ -26873,7 +26937,7 @@ pc.extend(pc, function() {
     }
     this._angularVelocity.copy(av);
   }});
-  pc.extend(RigidBodyComponent.prototype, {createBody:function() {
+  Object.assign(RigidBodyComponent.prototype, {createBody:function() {
     var entity = this.entity;
     var shape;
     if (entity.collision) {
@@ -27011,7 +27075,6 @@ pc.extend(pc, function() {
         z = arguments[2];
         break;
       default:
-        console.error("ERROR: applyTorque: function takes 1 or 3 arguments");
         return;
     }
     var body = this.body;
@@ -27046,10 +27109,12 @@ pc.extend(pc, function() {
         x = arguments[0];
         y = arguments[1];
         z = arguments[2];
-        px = arguments[0];
-        py = arguments[1];
-        pz = arguments[2];
+        px = arguments[3];
+        py = arguments[4];
+        pz = arguments[5];
         break;
+      default:
+        return;
     }
     var body = this.body;
     if (body) {
@@ -27076,7 +27141,6 @@ pc.extend(pc, function() {
         z = arguments[2];
         break;
       default:
-        console.error("ERROR: applyTorqueImpulse: function takes 1 or 3 arguments");
         return;
     }
     var body = this.body;
@@ -27153,13 +27217,13 @@ pc.extend(pc, function() {
       this.body.getMotionState().setWorldTransform(ammoTransform);
     }
   }, onEnable:function() {
-    RigidBodyComponent._super.onEnable.call(this);
+    pc.Component.prototype.onEnable.call(this);
     if (!this.body) {
       this.createBody();
     }
     this.enableSimulation();
   }, onDisable:function() {
-    RigidBodyComponent._super.onDisable.call(this);
+    pc.Component.prototype.onDisable.call(this);
     this.disableSimulation();
   }, onSetMass:function(name, oldValue, newValue) {
     var body = this.data.body;
@@ -27241,7 +27305,7 @@ pc.extend(pc, function() {
   }});
   return {RigidBodyComponent:RigidBodyComponent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ammoRayStart, ammoRayEnd;
   var collisions = {};
   var frameCollisions = {};
@@ -27291,6 +27355,7 @@ pc.extend(pc, function() {
   };
   var _schema = ["enabled", "type", "mass", "linearDamping", "angularDamping", "linearFactor", "angularFactor", "friction", "restitution", "group", "mask", "body"];
   var RigidBodyComponentSystem = function RigidBodyComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
     this.id = "rigidbody";
     this.description = "Adds the entity to the scene's physical simulation.";
     app.systems.add(this.id, this);
@@ -27305,9 +27370,10 @@ pc.extend(pc, function() {
     this.fixedTimeStep = 1 / 60;
     this.on("remove", this.onRemove, this);
   };
-  RigidBodyComponentSystem = pc.inherits(RigidBodyComponentSystem, pc.ComponentSystem);
+  RigidBodyComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  RigidBodyComponentSystem.prototype.constructor = RigidBodyComponentSystem;
   pc.Component._buildAccessors(pc.RigidBodyComponent.prototype, _schema);
-  pc.extend(RigidBodyComponentSystem.prototype, {onLibraryLoaded:function() {
+  Object.assign(RigidBodyComponentSystem.prototype, {onLibraryLoaded:function() {
     if (typeof Ammo !== "undefined") {
       var collisionConfiguration = new Ammo.btDefaultCollisionConfiguration;
       var dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
@@ -27338,7 +27404,7 @@ pc.extend(pc, function() {
     if (data.angularFactor && pc.type(data.angularFactor) === "array") {
       data.angularFactor = new pc.Vec3(data.angularFactor[0], data.angularFactor[1], data.angularFactor[2]);
     }
-    RigidBodyComponentSystem._super.initializeComponentData.call(this, component, data, properties);
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, properties);
   }, cloneComponent:function(entity, clone) {
     var data = {enabled:entity.rigidbody.enabled, mass:entity.rigidbody.mass, linearDamping:entity.rigidbody.linearDamping, angularDamping:entity.rigidbody.angularDamping, linearFactor:[entity.rigidbody.linearFactor.x, entity.rigidbody.linearFactor.y, entity.rigidbody.linearFactor.z], angularFactor:[entity.rigidbody.angularFactor.x, entity.rigidbody.angularFactor.y, entity.rigidbody.angularFactor.z], friction:entity.rigidbody.friction, restitution:entity.rigidbody.restitution, type:entity.rigidbody.type, 
     group:entity.rigidbody.group, mask:entity.rigidbody.mask};
@@ -27376,7 +27442,7 @@ pc.extend(pc, function() {
     }
     this._ammoGravity.setValue(x, y, z);
     this.dynamicsWorld.setGravity(this._ammoGravity);
-  }, raycastFirst:function(start, end, callback) {
+  }, raycastFirst:function(start, end) {
     var result = null;
     ammoRayStart.setValue(start.x, start.y, start.z);
     ammoRayEnd.setValue(end.x, end.y, end.z);
@@ -27389,7 +27455,8 @@ pc.extend(pc, function() {
         var point = rayCallback.get_m_hitPointWorld();
         var normal = rayCallback.get_m_hitNormalWorld();
         result = new RaycastResult(body.entity, new pc.Vec3(point.x(), point.y(), point.z()), new pc.Vec3(normal.x(), normal.y(), normal.z()));
-        if (callback) {
+        if (arguments.length > 2) {
+          var callback = arguments[2];
           callback(result);
           if (!WARNED_RAYCAST_CALLBACK) {
             console.warn("[DEPRECATED]: pc.RigidBodyComponentSystem#rayCastFirst no longer requires a callback. The result of the raycast is returned by the function instead.");
@@ -27579,7 +27646,7 @@ pc.extend(pc, function() {
   }});
   return {RIGIDBODY_TYPE_STATIC:"static", RIGIDBODY_TYPE_DYNAMIC:"dynamic", RIGIDBODY_TYPE_KINEMATIC:"kinematic", RIGIDBODY_CF_STATIC_OBJECT:1, RIGIDBODY_CF_KINEMATIC_OBJECT:2, RIGIDBODY_CF_NORESPONSE_OBJECT:4, RIGIDBODY_ACTIVE_TAG:1, RIGIDBODY_ISLAND_SLEEPING:2, RIGIDBODY_WANTS_DEACTIVATION:3, RIGIDBODY_DISABLE_DEACTIVATION:4, RIGIDBODY_DISABLE_SIMULATION:5, RigidBodyComponentSystem:RigidBodyComponentSystem};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var RigidBodyComponentData = function() {
     this.enabled = true;
     this.mass = 1;
@@ -27595,10 +27662,9 @@ pc.extend(pc, function() {
     this.body = null;
     this.simulationEnabled = false;
   };
-  RigidBodyComponentData = pc.inherits(RigidBodyComponentData, pc.ComponentData);
   return {RigidBodyComponentData:RigidBodyComponentData};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ammoVec1, ammoQuat;
   var Trigger = function Trigger(app, component, data) {
     this.entity = component.entity;
@@ -27610,7 +27676,7 @@ pc.extend(pc, function() {
     }
     this.initialize(data);
   };
-  Trigger.prototype = {initialize:function(data) {
+  Object.assign(Trigger.prototype, {initialize:function(data) {
     var entity = this.entity;
     var shape = data.shape;
     if (shape && typeof Ammo !== "undefined") {
@@ -27674,11 +27740,12 @@ pc.extend(pc, function() {
     }
     this.app.systems.rigidbody.removeBody(body);
     body.forceActivationState(pc.BODYSTATE_DISABLE_SIMULATION);
-  }};
+  }});
   return {Trigger:Trigger};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var CollisionComponent = function CollisionComponent(system, entity) {
+    pc.Component.call(this, system, entity);
     this.on("set_type", this.onSetType, this);
     this.on("set_halfExtents", this.onSetHalfExtents, this);
     this.on("set_radius", this.onSetRadius, this);
@@ -27687,8 +27754,9 @@ pc.extend(pc, function() {
     this.on("set_asset", this.onSetAsset, this);
     this.on("set_model", this.onSetModel, this);
   };
-  CollisionComponent = pc.inherits(CollisionComponent, pc.Component);
-  pc.extend(CollisionComponent.prototype, {onSetType:function(name, oldValue, newValue) {
+  CollisionComponent.prototype = Object.create(pc.Component.prototype);
+  CollisionComponent.prototype.constructor = CollisionComponent;
+  Object.assign(CollisionComponent.prototype, {onSetType:function(name, oldValue, newValue) {
     if (oldValue !== newValue) {
       this.system.changeType(this, oldValue, newValue);
     }
@@ -27743,7 +27811,7 @@ pc.extend(pc, function() {
       this.asset = null;
     }
   }, onEnable:function() {
-    CollisionComponent._super.onEnable.call(this);
+    pc.Component.prototype.onEnable.call(this);
     if (this.data.type === "mesh" && this.data.asset && this.data.initialized) {
       var asset = this.system.app.assets.get(this.data.asset);
       if (asset && (!asset.resource || !this.data.shape)) {
@@ -27761,7 +27829,7 @@ pc.extend(pc, function() {
       }
     }
   }, onDisable:function() {
-    CollisionComponent._super.onDisable.call(this);
+    pc.Component.prototype.onDisable.call(this);
     if (this.entity.trigger) {
       this.entity.trigger.disable();
     } else {
@@ -27772,112 +27840,12 @@ pc.extend(pc, function() {
   }});
   return {CollisionComponent:CollisionComponent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _schema = ["enabled", "type", "halfExtents", "radius", "axis", "height", "asset", "shape", "model"];
-  var CollisionComponentSystem = function CollisionComponentSystem(app) {
-    this.id = "collision";
-    this.description = "Specifies a collision volume.";
-    app.systems.add(this.id, this);
-    this.ComponentType = pc.CollisionComponent;
-    this.DataType = pc.CollisionComponentData;
-    this.schema = _schema;
-    this.implementations = {};
-    this.on("remove", this.onRemove, this);
-    pc.ComponentSystem.on("update", this.onUpdate, this);
-  };
-  CollisionComponentSystem = pc.inherits(CollisionComponentSystem, pc.ComponentSystem);
-  pc.Component._buildAccessors(pc.CollisionComponent.prototype, _schema);
-  CollisionComponentSystem.prototype = pc.extend(CollisionComponentSystem.prototype, {onLibraryLoaded:function() {
-    if (typeof Ammo !== "undefined") {
-    } else {
-      pc.ComponentSystem.off("update", this.onUpdate, this);
-    }
-  }, initializeComponentData:function(component, _data, properties) {
-    var idx;
-    var data = {};
-    properties = ["type", "halfExtents", "radius", "axis", "height", "shape", "model", "asset", "enabled"];
-    properties.forEach(function(prop) {
-      data[prop] = _data[prop];
-    });
-    if (_data.hasOwnProperty("asset")) {
-      idx = properties.indexOf("model");
-      if (idx !== -1) {
-        properties.splice(idx, 1);
-      }
-    } else {
-      if (_data.hasOwnProperty("model")) {
-        idx = properties.indexOf("asset");
-        if (idx !== -1) {
-          properties.splice(idx, 1);
-        }
-      }
-    }
-    if (!data.type) {
-      data.type = component.data.type;
-    }
-    component.data.type = data.type;
-    if (data.halfExtents && pc.type(data.halfExtents) === "array") {
-      data.halfExtents = new pc.Vec3(data.halfExtents[0], data.halfExtents[1], data.halfExtents[2]);
-    }
-    var impl = this._createImplementation(data.type);
-    impl.beforeInitialize(component, data);
-    CollisionComponentSystem._super.initializeComponentData.call(this.system, component, data, properties);
-    impl.afterInitialize(component, data);
-  }, _createImplementation:function(type) {
-    if (this.implementations[type] === undefined) {
-      var impl;
-      switch(type) {
-        case "box":
-          impl = new CollisionBoxSystemImpl(this);
-          break;
-        case "sphere":
-          impl = new CollisionSphereSystemImpl(this);
-          break;
-        case "capsule":
-          impl = new CollisionCapsuleSystemImpl(this);
-          break;
-        case "cylinder":
-          impl = new CollisionCylinderSystemImpl(this);
-          break;
-        case "mesh":
-          impl = new CollisionMeshSystemImpl(this);
-          break;
-        default:
-          throw "Invalid collision system type: " + type;
-      }
-      this.implementations[type] = impl;
-    }
-    return this.implementations[type];
-  }, _getImplementation:function(entity) {
-    return this.implementations[entity.collision.data.type];
-  }, cloneComponent:function(entity, clone) {
-    return this._getImplementation(entity).clone(entity, clone);
-  }, onRemove:function(entity, data) {
-    this.implementations[data.type].remove(entity, data);
-  }, onUpdate:function(dt) {
-    var id, entity, data;
-    var components = this.store;
-    for (id in components) {
-      entity = components[id].entity;
-      data = components[id].data;
-      if (data.enabled && entity.enabled) {
-        if (!entity.rigidbody && entity.trigger) {
-          entity.trigger.syncEntityToBody();
-        }
-      }
-    }
-  }, onTransformChanged:function(component, position, rotation, scale) {
-    this.implementations[component.data.type].updateTransform(component, position, rotation, scale);
-  }, changeType:function(component, previousType, newType) {
-    this.implementations[previousType].remove(component.entity, component.data);
-    this._createImplementation(newType).reset(component, component.data);
-  }, recreatePhysicalShapes:function(component) {
-    this.implementations[component.data.type].recreatePhysicalShapes(component);
-  }});
   var CollisionSystemImpl = function(system) {
     this.system = system;
   };
-  CollisionSystemImpl.prototype = {beforeInitialize:function(component, data) {
+  Object.assign(CollisionSystemImpl.prototype, {beforeInitialize:function(component, data) {
     data.shape = this.createPhysicalShape(component.entity, data);
     data.model = new pc.Model;
     data.model.graph = new pc.GraphNode;
@@ -27927,33 +27895,37 @@ pc.extend(pc, function() {
     var src = this.system.dataStore[entity._guid];
     var data = {enabled:src.data.enabled, type:src.data.type, halfExtents:[src.data.halfExtents.x, src.data.halfExtents.y, src.data.halfExtents.z], radius:src.data.radius, axis:src.data.axis, height:src.data.height, asset:src.data.asset, model:src.data.model};
     return this.system.addComponent(clone, data);
-  }};
+  }});
   var CollisionBoxSystemImpl = function(system) {
+    CollisionSystemImpl.call(this, system);
   };
-  CollisionBoxSystemImpl = pc.inherits(CollisionBoxSystemImpl, CollisionSystemImpl);
-  CollisionBoxSystemImpl.prototype = pc.extend(CollisionBoxSystemImpl.prototype, {createPhysicalShape:function(entity, data) {
+  CollisionBoxSystemImpl.prototype = Object.create(CollisionSystemImpl.prototype);
+  CollisionBoxSystemImpl.prototype.constructor = CollisionBoxSystemImpl;
+  Object.assign(CollisionBoxSystemImpl.prototype, {createPhysicalShape:function(entity, data) {
     if (typeof Ammo !== "undefined") {
       var he = data.halfExtents;
       var ammoHe = new Ammo.btVector3(he ? he.x : 0.5, he ? he.y : 0.5, he ? he.z : 0.5);
       return new Ammo.btBoxShape(ammoHe);
-    } else {
-      return undefined;
     }
+    return undefined;
   }});
   var CollisionSphereSystemImpl = function(system) {
+    CollisionSystemImpl.call(this, system);
   };
-  CollisionSphereSystemImpl = pc.inherits(CollisionSphereSystemImpl, CollisionSystemImpl);
-  CollisionSphereSystemImpl.prototype = pc.extend(CollisionSphereSystemImpl.prototype, {createPhysicalShape:function(entity, data) {
+  CollisionSphereSystemImpl.prototype = Object.create(CollisionSystemImpl.prototype);
+  CollisionSphereSystemImpl.prototype.constructor = CollisionSphereSystemImpl;
+  Object.assign(CollisionSphereSystemImpl.prototype, {createPhysicalShape:function(entity, data) {
     if (typeof Ammo !== "undefined") {
       return new Ammo.btSphereShape(data.radius);
-    } else {
-      return undefined;
     }
+    return undefined;
   }});
   var CollisionCapsuleSystemImpl = function(system) {
+    CollisionSystemImpl.call(this, system);
   };
-  CollisionCapsuleSystemImpl = pc.inherits(CollisionCapsuleSystemImpl, CollisionSystemImpl);
-  CollisionCapsuleSystemImpl.prototype = pc.extend(CollisionCapsuleSystemImpl.prototype, {createPhysicalShape:function(entity, data) {
+  CollisionCapsuleSystemImpl.prototype = Object.create(CollisionSystemImpl.prototype);
+  CollisionCapsuleSystemImpl.prototype.constructor = CollisionCapsuleSystemImpl;
+  Object.assign(CollisionCapsuleSystemImpl.prototype, {createPhysicalShape:function(entity, data) {
     var shape = null;
     var axis = data.axis !== undefined ? data.axis : 1;
     var radius = data.radius || 0.5;
@@ -27974,9 +27946,11 @@ pc.extend(pc, function() {
     return shape;
   }});
   var CollisionCylinderSystemImpl = function(system) {
+    CollisionSystemImpl.call(this, system);
   };
-  CollisionCylinderSystemImpl = pc.inherits(CollisionCylinderSystemImpl, CollisionSystemImpl);
-  CollisionCylinderSystemImpl.prototype = pc.extend(CollisionCylinderSystemImpl.prototype, {createPhysicalShape:function(entity, data) {
+  CollisionCylinderSystemImpl.prototype = Object.create(CollisionSystemImpl.prototype);
+  CollisionCylinderSystemImpl.prototype.constructor = CollisionCylinderSystemImpl;
+  Object.assign(CollisionCylinderSystemImpl.prototype, {createPhysicalShape:function(entity, data) {
     var halfExtents = null;
     var shape = null;
     var axis = data.axis !== undefined ? data.axis : 1;
@@ -28001,9 +27975,11 @@ pc.extend(pc, function() {
     return shape;
   }});
   var CollisionMeshSystemImpl = function(system) {
+    CollisionSystemImpl.call(this, system);
   };
-  CollisionMeshSystemImpl = pc.inherits(CollisionMeshSystemImpl, CollisionSystemImpl);
-  CollisionMeshSystemImpl.prototype = pc.extend(CollisionMeshSystemImpl.prototype, {beforeInitialize:function(component, data) {
+  CollisionMeshSystemImpl.prototype = Object.create(CollisionSystemImpl.prototype);
+  CollisionMeshSystemImpl.prototype.constructor = CollisionMeshSystemImpl;
+  Object.assign(CollisionMeshSystemImpl.prototype, {beforeInitialize:function(component, data) {
   }, createPhysicalShape:function(entity, data) {
     if (typeof Ammo !== "undefined" && data.model) {
       var model = data.model;
@@ -28061,9 +28037,8 @@ pc.extend(pc, function() {
       vec.setValue(scale.x, scale.y, scale.z);
       shape.setLocalScaling(vec);
       return shape;
-    } else {
-      return undefined;
     }
+    return undefined;
   }, recreatePhysicalShapes:function(component) {
     var data = component.data;
     if (data.asset !== null && component.enabled && component.entity.enabled) {
@@ -28121,11 +28096,112 @@ pc.extend(pc, function() {
         this.doRecreatePhysicalShape(component);
       }
     }
-    CollisionMeshSystemImpl._super.updateTransform.call(this, component, position, rotation, scale);
+    pc.CollisionSystemImpl.prototype.updateTransform.call(this, component, position, rotation, scale);
+  }});
+  var CollisionComponentSystem = function CollisionComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
+    this.id = "collision";
+    this.description = "Specifies a collision volume.";
+    app.systems.add(this.id, this);
+    this.ComponentType = pc.CollisionComponent;
+    this.DataType = pc.CollisionComponentData;
+    this.schema = _schema;
+    this.implementations = {};
+    this.on("remove", this.onRemove, this);
+    pc.ComponentSystem.on("update", this.onUpdate, this);
+  };
+  CollisionComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  CollisionComponentSystem.prototype.constructor = CollisionComponentSystem;
+  pc.Component._buildAccessors(pc.CollisionComponent.prototype, _schema);
+  Object.assign(CollisionComponentSystem.prototype, {onLibraryLoaded:function() {
+    if (typeof Ammo !== "undefined") {
+    } else {
+      pc.ComponentSystem.off("update", this.onUpdate, this);
+    }
+  }, initializeComponentData:function(component, _data, properties) {
+    var idx;
+    var data = {};
+    properties = ["type", "halfExtents", "radius", "axis", "height", "shape", "model", "asset", "enabled"];
+    properties.forEach(function(prop) {
+      data[prop] = _data[prop];
+    });
+    if (_data.hasOwnProperty("asset")) {
+      idx = properties.indexOf("model");
+      if (idx !== -1) {
+        properties.splice(idx, 1);
+      }
+    } else {
+      if (_data.hasOwnProperty("model")) {
+        idx = properties.indexOf("asset");
+        if (idx !== -1) {
+          properties.splice(idx, 1);
+        }
+      }
+    }
+    if (!data.type) {
+      data.type = component.data.type;
+    }
+    component.data.type = data.type;
+    if (data.halfExtents && pc.type(data.halfExtents) === "array") {
+      data.halfExtents = new pc.Vec3(data.halfExtents[0], data.halfExtents[1], data.halfExtents[2]);
+    }
+    var impl = this._createImplementation(data.type);
+    impl.beforeInitialize(component, data);
+    pc.ComponentSystem.prototype.initializeComponentData.call(this.system, component, data, properties);
+    impl.afterInitialize(component, data);
+  }, _createImplementation:function(type) {
+    if (this.implementations[type] === undefined) {
+      var impl;
+      switch(type) {
+        case "box":
+          impl = new CollisionBoxSystemImpl(this);
+          break;
+        case "sphere":
+          impl = new CollisionSphereSystemImpl(this);
+          break;
+        case "capsule":
+          impl = new CollisionCapsuleSystemImpl(this);
+          break;
+        case "cylinder":
+          impl = new CollisionCylinderSystemImpl(this);
+          break;
+        case "mesh":
+          impl = new CollisionMeshSystemImpl(this);
+          break;
+        default:
+      }
+      this.implementations[type] = impl;
+    }
+    return this.implementations[type];
+  }, _getImplementation:function(entity) {
+    return this.implementations[entity.collision.data.type];
+  }, cloneComponent:function(entity, clone) {
+    return this._getImplementation(entity).clone(entity, clone);
+  }, onRemove:function(entity, data) {
+    this.implementations[data.type].remove(entity, data);
+  }, onUpdate:function(dt) {
+    var id, entity, data;
+    var components = this.store;
+    for (id in components) {
+      entity = components[id].entity;
+      data = components[id].data;
+      if (data.enabled && entity.enabled) {
+        if (!entity.rigidbody && entity.trigger) {
+          entity.trigger.syncEntityToBody();
+        }
+      }
+    }
+  }, onTransformChanged:function(component, position, rotation, scale) {
+    this.implementations[component.data.type].updateTransform(component, position, rotation, scale);
+  }, changeType:function(component, previousType, newType) {
+    this.implementations[previousType].remove(component.entity, component.data);
+    this._createImplementation(newType).reset(component, component.data);
+  }, recreatePhysicalShapes:function(component) {
+    this.implementations[component.data.type].recreatePhysicalShapes(component);
   }});
   return {CollisionComponentSystem:CollisionComponentSystem};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var CollisionComponentData = function() {
     this.enabled = true;
     this.type = "box";
@@ -28138,16 +28214,16 @@ pc.extend(pc, function() {
     this.model = null;
     this.initialized = false;
   };
-  CollisionComponentData = pc.inherits(CollisionComponentData, pc.ComponentData);
   return {CollisionComponentData:CollisionComponentData};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var SIMPLE_PROPERTIES = ["emitterExtents", "emitterRadius", "loop", "initialVelocity", "animSpeed", "normalMap"];
   var COMPLEX_PROPERTIES = ["numParticles", "lifetime", "rate", "rate2", "startAngle", "startAngle2", "lighting", "halfLambert", "intensity", "wrap", "wrapBounds", "depthWrite", "noFog", "sort", "stretch", "alignToMotion", "preWarm", "emitterShape", "animTilesX", "animTilesY", "animFrames", "animLoop", "colorMap", "localSpace"];
   var GRAPH_PROPERTIES = ["scaleGraph", "scaleGraph2", "colorGraph", "colorGraph2", "alphaGraph", "alphaGraph2", "velocityGraph", "velocityGraph2", "localVelocityGraph", "localVelocityGraph2", "rotationSpeedGraph", "rotationSpeedGraph2"];
   var ASSET_PROPERTIES = ["colorMapAsset", "normalMapAsset", "mesh"];
   var depthLayer;
   var ParticleSystemComponent = function ParticleSystemComponent(system, entity) {
+    pc.Component.call(this, system, entity);
     this.on("set_colorMapAsset", this.onSetColorMapAsset, this);
     this.on("set_normalMapAsset", this.onSetNormalMapAsset, this);
     this.on("set_mesh", this.onSetMesh, this);
@@ -28166,8 +28242,9 @@ pc.extend(pc, function() {
     }.bind(this));
     this._requestedDepth = false;
   };
-  ParticleSystemComponent = pc.inherits(ParticleSystemComponent, pc.Component);
-  pc.extend(ParticleSystemComponent.prototype, {addModelToLayers:function() {
+  ParticleSystemComponent.prototype = Object.create(pc.Component.prototype);
+  ParticleSystemComponent.prototype.constructor = ParticleSystemComponent;
+  Object.assign(ParticleSystemComponent.prototype, {addModelToLayers:function() {
     if (!this.data.model) {
       return;
     }
@@ -28452,8 +28529,9 @@ pc.extend(pc, function() {
       this.emitter.resetMaterial();
     }
   }, onEnable:function() {
+    var data = this.data;
     for (var i = 0, len = ASSET_PROPERTIES.length;i < len;i++) {
-      var asset = this.data[ASSET_PROPERTIES[i]];
+      var asset = data[ASSET_PROPERTIES[i]];
       if (asset) {
         if (!(asset instanceof pc.Asset)) {
           var id = parseInt(asset, 10);
@@ -28468,30 +28546,27 @@ pc.extend(pc, function() {
         }
       }
     }
-    var firstRun = false;
     if (!this.emitter) {
-      var mesh = this.data.mesh;
+      var mesh = data.mesh;
       if (!(mesh instanceof pc.Mesh)) {
         mesh = null;
       }
-      firstRun = true;
-      this.emitter = new pc.ParticleEmitter(this.system.app.graphicsDevice, {numParticles:this.data.numParticles, emitterExtents:this.data.emitterExtents, emitterRadius:this.data.emitterRadius, emitterShape:this.data.emitterShape, initialVelocity:this.data.initialVelocity, wrap:this.data.wrap, localSpace:this.data.localSpace, wrapBounds:this.data.wrapBounds, lifetime:this.data.lifetime, rate:this.data.rate, rate2:this.data.rate2, animTilesX:this.data.animTilesX, animTilesY:this.data.animTilesY, animNumFrames:this.data.animNumFrames, 
-      animSpeed:this.data.animSpeed, animLoop:this.data.animLoop, startAngle:this.data.startAngle, startAngle2:this.data.startAngle2, scaleGraph:this.data.scaleGraph, scaleGraph2:this.data.scaleGraph2, colorGraph:this.data.colorGraph, colorGraph2:this.data.colorGraph2, alphaGraph:this.data.alphaGraph, alphaGraph2:this.data.alphaGraph2, localVelocityGraph:this.data.localVelocityGraph, localVelocityGraph2:this.data.localVelocityGraph2, velocityGraph:this.data.velocityGraph, velocityGraph2:this.data.velocityGraph2, 
-      rotationSpeedGraph:this.data.rotationSpeedGraph, rotationSpeedGraph2:this.data.rotationSpeedGraph2, colorMap:this.data.colorMap, normalMap:this.data.normalMap, loop:this.data.loop, preWarm:this.data.preWarm, sort:this.data.sort, stretch:this.data.stretch, alignToMotion:this.data.alignToMotion, lighting:this.data.lighting, halfLambert:this.data.halfLambert, intensity:this.data.intensity, depthSoftening:this.data.depthSoftening, scene:this.system.app.scene, mesh:mesh, depthWrite:this.data.depthWrite, 
-      noFog:this.data.noFog, node:this.entity, blendType:this.data.blendType});
+      this.emitter = new pc.ParticleEmitter(this.system.app.graphicsDevice, {numParticles:data.numParticles, emitterExtents:data.emitterExtents, emitterRadius:data.emitterRadius, emitterShape:data.emitterShape, initialVelocity:data.initialVelocity, wrap:data.wrap, localSpace:data.localSpace, wrapBounds:data.wrapBounds, lifetime:data.lifetime, rate:data.rate, rate2:data.rate2, animTilesX:data.animTilesX, animTilesY:data.animTilesY, animNumFrames:data.animNumFrames, animSpeed:data.animSpeed, animLoop:data.animLoop, 
+      startAngle:data.startAngle, startAngle2:data.startAngle2, scaleGraph:data.scaleGraph, scaleGraph2:data.scaleGraph2, colorGraph:data.colorGraph, colorGraph2:data.colorGraph2, alphaGraph:data.alphaGraph, alphaGraph2:data.alphaGraph2, localVelocityGraph:data.localVelocityGraph, localVelocityGraph2:data.localVelocityGraph2, velocityGraph:data.velocityGraph, velocityGraph2:data.velocityGraph2, rotationSpeedGraph:data.rotationSpeedGraph, rotationSpeedGraph2:data.rotationSpeedGraph2, colorMap:data.colorMap, 
+      normalMap:data.normalMap, loop:data.loop, preWarm:data.preWarm, sort:data.sort, stretch:data.stretch, alignToMotion:data.alignToMotion, lighting:data.lighting, halfLambert:data.halfLambert, intensity:data.intensity, depthSoftening:data.depthSoftening, scene:this.system.app.scene, mesh:mesh, depthWrite:data.depthWrite, noFog:data.noFog, node:this.entity, blendType:data.blendType});
       this.emitter.meshInstance.node = this.entity;
       this.psys = new pc.Model;
       this.psys.graph = this.entity;
       this.psys.emitter = this.emitter;
       this.psys.meshInstances = [this.emitter.meshInstance];
-      this.data.model = this.psys;
+      data.model = this.psys;
       this.emitter.psys = this.psys;
-      if (!this.data.autoPlay) {
+      if (!data.autoPlay) {
         this.pause();
         this.emitter.meshInstance.visible = false;
       }
     }
-    if (this.data.model && this.emitter.colorMap) {
+    if (data.model && this.emitter.colorMap) {
       this.addModelToLayers();
     }
     this.system.app.scene.on("set:layers", this.onLayersChanged, this);
@@ -28499,12 +28574,12 @@ pc.extend(pc, function() {
       this.system.app.scene.layers.on("add", this.onLayerAdded, this);
       this.system.app.scene.layers.on("remove", this.onLayerRemoved, this);
     }
-    if (this.enabled && this.entity.enabled) {
+    if (this.enabled && this.entity.enabled && data.depthSoftening) {
       this._requestDepth();
     }
-    ParticleSystemComponent._super.onEnable.call(this);
+    pc.Component.prototype.onEnable.call(this);
   }, onDisable:function() {
-    ParticleSystemComponent._super.onDisable.call(this);
+    pc.Component.prototype.onDisable.call(this);
     this.system.app.scene.off("set:layers", this.onLayersChanged, this);
     if (this.system.app.scene.layers) {
       this.system.app.scene.layers.off("add", this.onLayerAdded, this);
@@ -28540,13 +28615,11 @@ pc.extend(pc, function() {
   }, isPlaying:function() {
     if (this.data.paused) {
       return false;
-    } else {
-      if (this.emitter && this.emitter.loop) {
-        return true;
-      } else {
-        return Date.now() <= this.emitter.endTime;
-      }
     }
+    if (this.emitter && this.emitter.loop) {
+      return true;
+    }
+    return Date.now() <= this.emitter.endTime;
   }, rebuild:function() {
     var enabled = this.enabled;
     this.enabled = false;
@@ -28559,10 +28632,11 @@ pc.extend(pc, function() {
   }});
   return {ParticleSystemComponent:ParticleSystemComponent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _schema = ["enabled", "autoPlay", "numParticles", "lifetime", "rate", "rate2", "startAngle", "startAngle2", "loop", "preWarm", "lighting", "halfLambert", "intensity", "depthWrite", "noFog", "depthSoftening", "sort", "blendType", "stretch", "alignToMotion", "emitterShape", "emitterExtents", "emitterRadius", "initialVelocity", "wrap", "wrapBounds", "localSpace", "colorMapAsset", "normalMapAsset", "mesh", "localVelocityGraph", "localVelocityGraph2", "velocityGraph", "velocityGraph2", "rotationSpeedGraph", 
   "rotationSpeedGraph2", "scaleGraph", "scaleGraph2", "colorGraph", "colorGraph2", "alphaGraph", "alphaGraph2", "colorMap", "normalMap", "animTilesX", "animTilesY", "animNumFrames", "animSpeed", "animLoop", "layers"];
   var ParticleSystemComponentSystem = function ParticleSystemComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
     this.id = "particlesystem";
     this.description = "Updates and renders particle system in the scene.";
     app.systems.add(this.id, this);
@@ -28573,9 +28647,10 @@ pc.extend(pc, function() {
     this.on("beforeremove", this.onRemove, this);
     pc.ComponentSystem.on("update", this.onUpdate, this);
   };
-  ParticleSystemComponentSystem = pc.inherits(ParticleSystemComponentSystem, pc.ComponentSystem);
+  ParticleSystemComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  ParticleSystemComponentSystem.prototype.constructor = ParticleSystemComponentSystem;
   pc.Component._buildAccessors(pc.ParticleSystemComponent.prototype, _schema);
-  pc.extend(ParticleSystemComponentSystem.prototype, {initializeComponentData:function(component, _data, properties) {
+  Object.assign(ParticleSystemComponentSystem.prototype, {initializeComponentData:function(component, _data, properties) {
     var data = {};
     properties = [];
     var types = this.propertyTypes;
@@ -28610,7 +28685,7 @@ pc.extend(pc, function() {
         data.layers = data.layers.slice(0);
       }
     }
-    ParticleSystemComponentSystem._super.initializeComponentData.call(this, component, data, properties);
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, properties);
   }, cloneComponent:function(entity, clone) {
     var source = entity.particlesystem.data;
     var schema = this.schema;
@@ -28709,7 +28784,7 @@ pc.extend(pc, function() {
   }});
   return {ParticleSystemComponentSystem:ParticleSystemComponentSystem};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ParticleSystemComponentData = function() {
     this.numParticles = 1;
     this.rate = 1;
@@ -28765,10 +28840,9 @@ pc.extend(pc, function() {
     this.autoPlay = true;
     this.layers = [pc.LAYERID_WORLD];
   };
-  ParticleSystemComponentData = pc.inherits(ParticleSystemComponentData, pc.ComponentData);
   return {ParticleSystemComponentData:ParticleSystemComponentData};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var SpriteAnimationClip = function(component, data) {
     this._component = component;
     this._frame = 0;
@@ -28783,7 +28857,7 @@ pc.extend(pc, function() {
     this._time = 0;
     pc.events.attach(this);
   };
-  SpriteAnimationClip.prototype = {_onSpriteAssetAdded:function(asset) {
+  Object.assign(SpriteAnimationClip.prototype, {_onSpriteAssetAdded:function(asset) {
     this._component.system.app.assets.off("add:" + asset.id, this._onSpriteAssetAdded, this);
     if (this._spriteAsset === asset.id) {
       this._bindSpriteAsset(asset);
@@ -28927,7 +29001,7 @@ pc.extend(pc, function() {
     this.frame = 0;
     this.fire("stop");
     this._component.fire("stop", this);
-  }};
+  }});
   Object.defineProperty(SpriteAnimationClip.prototype, "spriteAsset", {get:function() {
     return this._spriteAsset;
   }, set:function(value) {
@@ -29027,9 +29101,8 @@ pc.extend(pc, function() {
     if (this._sprite) {
       var fps = this.fps || Number.MIN_VALUE;
       return this._sprite.frameKeys.length / Math.abs(fps);
-    } else {
-      return 0;
     }
+    return 0;
   }});
   Object.defineProperty(SpriteAnimationClip.prototype, "time", {get:function() {
     return this._time;
@@ -29043,7 +29116,7 @@ pc.extend(pc, function() {
   }});
   return {SpriteAnimationClip:SpriteAnimationClip};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   pc.SPRITETYPE_SIMPLE = "simple";
   pc.SPRITETYPE_ANIMATED = "animated";
   var PARAM_EMISSIVE_MAP = "texture_emissiveMap";
@@ -29054,6 +29127,7 @@ pc.extend(pc, function() {
   var PARAM_OUTER_SCALE = "outerScale";
   var PARAM_ATLAS_RECT = "atlasRect";
   var SpriteComponent = function SpriteComponent(system, entity) {
+    pc.Component.call(this, system, entity);
     this._type = pc.SPRITETYPE_SIMPLE;
     this._material = system.defaultMaterial;
     this._color = new pc.Color(1, 1, 1, 1);
@@ -29082,9 +29156,10 @@ pc.extend(pc, function() {
     this._defaultClip = new pc.SpriteAnimationClip(this, {name:this.entity.name, fps:0, loop:false, spriteAsset:null});
     this._currentClip = this._defaultClip;
   };
-  SpriteComponent = pc.inherits(SpriteComponent, pc.Component);
-  pc.extend(SpriteComponent.prototype, {onEnable:function() {
-    SpriteComponent._super.onEnable.call(this);
+  SpriteComponent.prototype = Object.create(pc.Component.prototype);
+  SpriteComponent.prototype.constructor = SpriteComponent;
+  Object.assign(SpriteComponent.prototype, {onEnable:function() {
+    pc.Component.prototype.onEnable.call(this);
     this.system.app.scene.on("set:layers", this._onLayersChanged, this);
     if (this.system.app.scene.layers) {
       this.system.app.scene.layers.on("add", this._onLayerAdded, this);
@@ -29095,7 +29170,7 @@ pc.extend(pc, function() {
       this._tryAutoPlay();
     }
   }, onDisable:function() {
-    SpriteComponent._super.onDisable.call(this);
+    pc.Component.prototype.onDisable.call(this);
     this.system.app.scene.off("set:layers", this._onLayersChanged, this);
     if (this.system.app.scene.layers) {
       this.system.app.scene.layers.off("add", this._onLayerAdded, this);
@@ -29103,6 +29178,9 @@ pc.extend(pc, function() {
     }
     this.stop();
     this._hideModel();
+    if (this._batchGroupId >= 0) {
+      this.system.app.batcher.markGroupDirty(this.batchGroupId);
+    }
   }, onDestroy:function() {
     this._currentClip = null;
     if (this._defaultClip) {
@@ -29518,10 +29596,10 @@ pc.extend(pc, function() {
     var prev = this._batchGroupId;
     this._batchGroupId = value;
     if (prev >= 0) {
-      this.system.app.batcher._markGroupDirty(prev);
+      this.system.app.batcher.markGroupDirty(prev);
     }
     if (this._batchGroupId >= 0) {
-      this.system.app.batcher._markGroupDirty(this._batchGroupId);
+      this.system.app.batcher.markGroupDirty(this._batchGroupId);
     } else {
       if (prev >= 0) {
         if (this._currentClip && this._currentClip.sprite && this.enabled && this.entity.enabled) {
@@ -29547,12 +29625,9 @@ pc.extend(pc, function() {
   Object.defineProperty(SpriteComponent.prototype, "layers", {get:function() {
     return this._layers;
   }, set:function(value) {
-    var i;
-    var len;
     if (this._addedModel) {
       this._hideModel();
     }
-    var prev = this._layers;
     this._layers = value;
     if (!this._meshInstance) {
       return;
@@ -29563,12 +29638,13 @@ pc.extend(pc, function() {
   }});
   return {SpriteComponent:SpriteComponent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _schema = ["enabled"];
   var warningShown = false;
   var nineSliceBasePS = ["varying vec2 vMask;", "varying vec2 vTiledUv;", "uniform vec4 innerOffset;", "uniform vec2 outerScale;", "uniform vec4 atlasRect;", "vec2 nineSlicedUv;"].join("\n");
   var nineSliceUvPs = ["vec2 tileMask = step(vMask, vec2(0.99999));", "vec2 clampedUv = mix(innerOffset.xy*0.5, vec2(1.0) - innerOffset.zw*0.5, fract(vTiledUv));", "clampedUv = clampedUv * atlasRect.zw + atlasRect.xy;", "nineSlicedUv = vUv0 * tileMask + clampedUv * (vec2(1.0) - tileMask);"].join("\n");
   var SpriteComponentSystem = function SpriteComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
     this.id = "sprite";
     this.app = app;
     app.systems.add(this.id, this);
@@ -29621,9 +29697,10 @@ pc.extend(pc, function() {
     pc.ComponentSystem.on("update", this.onUpdate, this);
     this.on("beforeremove", this.onBeforeRemove, this);
   };
-  SpriteComponentSystem = pc.inherits(SpriteComponentSystem, pc.ComponentSystem);
+  SpriteComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  SpriteComponentSystem.prototype.constructor = SpriteComponentSystem;
   pc.Component._buildAccessors(pc.SpriteComponent.prototype, _schema);
-  pc.extend(SpriteComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
+  Object.assign(SpriteComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
     if (data.enabled !== undefined) {
       component.enabled = data.enabled;
     }
@@ -29678,7 +29755,7 @@ pc.extend(pc, function() {
       component.autoPlayClip = data.autoPlayClip;
     }
     component.batchGroupId = data.batchGroupId === undefined || data.batchGroupId === null ? -1 : data.batchGroupId;
-    SpriteComponentSystem._super.initializeComponentData.call(this, component, data, properties);
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, properties);
     if (!warningShown) {
       console.warn("The Sprite component is in beta and might change without notice.");
       warningShown = true;
@@ -29704,17 +29781,17 @@ pc.extend(pc, function() {
   }});
   return {SpriteComponentSystem:SpriteComponentSystem};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var SpriteComponentData = function() {
     this.enabled = true;
   };
-  SpriteComponentData = pc.inherits(SpriteComponentData, pc.ComponentData);
   return {SpriteComponentData:SpriteComponentData};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   pc.SCALEMODE_NONE = "none";
   pc.SCALEMODE_BLEND = "blend";
   var ScreenComponent = function ScreenComponent(system, entity) {
+    pc.Component.call(this, system, entity);
     this._resolution = new pc.Vec2(640, 320);
     this._referenceResolution = new pc.Vec2(640, 320);
     this._scaleMode = pc.SCALEMODE_NONE;
@@ -29724,9 +29801,10 @@ pc.extend(pc, function() {
     this._screenMatrix = new pc.Mat4;
     system.app.graphicsDevice.on("resizecanvas", this._onResize, this);
   };
-  ScreenComponent = pc.inherits(ScreenComponent, pc.Component);
+  ScreenComponent.prototype = Object.create(pc.Component.prototype);
+  ScreenComponent.prototype.constructor = ScreenComponent;
   var _transform = new pc.Mat4;
-  pc.extend(ScreenComponent.prototype, {syncDrawOrder:function() {
+  Object.assign(ScreenComponent.prototype, {syncDrawOrder:function() {
     var i = 1;
     var recurse = function(e) {
       if (e.element) {
@@ -29797,9 +29875,8 @@ pc.extend(pc, function() {
   }, get:function() {
     if (this._scaleMode === pc.SCALEMODE_NONE) {
       return this._resolution;
-    } else {
-      return this._referenceResolution;
     }
+    return this._referenceResolution;
   }});
   Object.defineProperty(ScreenComponent.prototype, "screenSpace", {set:function(value) {
     this._screenSpace = value;
@@ -29840,9 +29917,10 @@ pc.extend(pc, function() {
   }});
   return {ScreenComponent:ScreenComponent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _schema = ["enabled"];
   var ScreenComponentSystem = function ScreenComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
     this.id = "screen";
     this.app = app;
     app.systems.add(this.id, this);
@@ -29854,9 +29932,10 @@ pc.extend(pc, function() {
     pc.ComponentSystem.on("update", this._onUpdate, this);
     this.on("beforeremove", this.onRemoveComponent, this);
   };
-  ScreenComponentSystem = pc.inherits(ScreenComponentSystem, pc.ComponentSystem);
+  ScreenComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  ScreenComponentSystem.prototype.constructor = ScreenComponentSystem;
   pc.Component._buildAccessors(pc.ScreenComponent.prototype, _schema);
-  pc.extend(ScreenComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
+  Object.assign(ScreenComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
     if (data.screenSpace !== undefined) {
       component.screenSpace = data.screenSpace;
     }
@@ -29882,7 +29961,7 @@ pc.extend(pc, function() {
       }
       component.referenceResolution = component._referenceResolution;
     }
-    ScreenComponentSystem._super.initializeComponentData.call(this, component, data, properties);
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, properties);
   }, _onUpdate:function(dt) {
     var components = this.store;
     for (var id in components) {
@@ -29901,14 +29980,13 @@ pc.extend(pc, function() {
   }});
   return {ScreenComponentSystem:ScreenComponentSystem};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ScreenComponentData = function() {
     this.enabled = true;
   };
-  ScreenComponentData = pc.inherits(ScreenComponentData, pc.ComponentData);
   return {ScreenComponentData:ScreenComponentData};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var topMasks = [];
   var _debugLogging = false;
   pc.ELEMENTTYPE_GROUP = "group";
@@ -29921,11 +29999,12 @@ pc.extend(pc, function() {
   var matC = new pc.Mat4;
   var matD = new pc.Mat4;
   var ElementComponent = function ElementComponent(system, entity) {
+    pc.Component.call(this, system, entity);
     this._anchor = new pc.Vec4;
     this._localAnchor = new pc.Vec4;
     this._pivot = new pc.Vec2;
-    this._width = 32;
-    this._height = 32;
+    this._width = this._calculatedWidth = 32;
+    this._height = this._calculatedHeight = 32;
     this._margin = new pc.Vec4(0, 0, -32, -32);
     this._modelTransform = new pc.Mat4;
     this._screenToWorld = new pc.Mat4;
@@ -29951,8 +30030,9 @@ pc.extend(pc, function() {
     this._addedModel = null;
     this._batchGroupId = -1;
   };
-  ElementComponent = pc.inherits(ElementComponent, pc.Component);
-  pc.extend(ElementComponent.prototype, {_patch:function() {
+  ElementComponent.prototype = Object.create(pc.Component.prototype);
+  ElementComponent.prototype.constructor = ElementComponent;
+  Object.assign(ElementComponent.prototype, {_patch:function() {
     this.entity._sync = this._sync;
     this.entity.setPosition = this._setPosition;
     this.entity.setLocalPosition = this._setLocalPosition;
@@ -29988,10 +30068,10 @@ pc.extend(pc, function() {
     var element = this.element;
     var p = this.localPosition.data;
     var pvt = element._pivot.data;
-    element._margin.data[0] = p[0] - element._width * pvt[0];
-    element._margin.data[2] = element._localAnchor.data[2] - element._localAnchor.data[0] - element._width - element._margin.data[0];
-    element._margin.data[1] = p[1] - element._height * pvt[1];
-    element._margin.data[3] = element._localAnchor.data[3] - element._localAnchor.data[1] - element._height - element._margin.data[1];
+    element._margin.data[0] = p[0] - element._calculatedWidth * pvt[0];
+    element._margin.data[2] = element._localAnchor.data[2] - element._localAnchor.data[0] - element._calculatedWidth - element._margin.data[0];
+    element._margin.data[1] = p[1] - element._calculatedHeight * pvt[1];
+    element._margin.data[3] = element._localAnchor.data[3] - element._localAnchor.data[1] - element._calculatedHeight - element._margin.data[1];
     if (!this._dirtyLocal) {
       this._dirtify(true);
     }
@@ -30005,16 +30085,14 @@ pc.extend(pc, function() {
         var px = 0;
         var py = 1;
         if (this._parent && this._parent.element) {
-          resx = this._parent.element.width;
-          resy = this._parent.element.height;
+          resx = this._parent.element.calculatedWidth;
+          resy = this._parent.element.calculatedHeight;
           px = this._parent.element.pivot.x;
           py = this._parent.element.pivot.y;
         } else {
-          if (screen) {
-            var resolution = screen.screen.resolution;
-            resx = resolution.x / screen.screen.scale;
-            resy = resolution.y / screen.screen.scale;
-          }
+          var resolution = screen.screen.resolution;
+          resx = resolution.x / screen.screen.scale;
+          resy = resolution.y / screen.screen.scale;
         }
         element._anchorTransform.setTranslate(resx * (element.anchor.x - px), -(resy * (py - element.anchor.y)), 0);
         element._anchorDirty = false;
@@ -30028,10 +30106,10 @@ pc.extend(pc, function() {
       this.localTransform.setTRS(this.localPosition, this.localRotation, this.localScale);
       var p = this.localPosition.data;
       var pvt = element._pivot.data;
-      element._margin.data[0] = p[0] - element._width * pvt[0];
-      element._margin.data[2] = element._localAnchor.data[2] - element._localAnchor.data[0] - element._width - element._margin.data[0];
-      element._margin.data[1] = p[1] - element._height * pvt[1];
-      element._margin.data[3] = element._localAnchor.data[3] - element._localAnchor.data[1] - element._height - element._margin.data[1];
+      element._margin.data[0] = p[0] - element._calculatedWidth * pvt[0];
+      element._margin.data[2] = element._localAnchor.data[2] - element._localAnchor.data[0] - element._calculatedWidth - element._margin.data[0];
+      element._margin.data[1] = p[1] - element._calculatedHeight * pvt[1];
+      element._margin.data[3] = element._localAnchor.data[3] - element._localAnchor.data[1] - element._calculatedHeight - element._margin.data[1];
       this._dirtyLocal = false;
     }
     if (!screen) {
@@ -30068,7 +30146,7 @@ pc.extend(pc, function() {
           var depthOffset = vecA;
           depthOffset.set(0, 0, this.localPosition.z);
           var pivotOffset = vecB;
-          pivotOffset.set(element._absLeft + element._pivot.x * element.width, element._absBottom + element._pivot.y * element.height, 0);
+          pivotOffset.set(element._absLeft + element._pivot.x * element.calculatedWidth, element._absBottom + element._pivot.y * element.calculatedHeight, 0);
           matA.setTranslate(-pivotOffset.x, -pivotOffset.y, -pivotOffset.z);
           matB.setTRS(depthOffset, this.getLocalRotation(), this.getLocalScale());
           matC.setTranslate(pivotOffset.x, pivotOffset.y, pivotOffset.z);
@@ -30120,7 +30198,9 @@ pc.extend(pc, function() {
       if (_debugLogging) {
         console.log("prerender from: " + mask.name);
       }
-      ref = mask.element.syncMask(ref) + 1;
+      if (mask.element) {
+        ref = mask.element.syncMask(ref) + 1;
+      }
     }
     this.system._prerender.length = 0;
   }, _updateScreen:function(screen) {
@@ -30139,7 +30219,7 @@ pc.extend(pc, function() {
       this.screen.screen.on("set:screenspace", this._onScreenSpaceChange, this);
       this.screen.screen.on("remove", this._onScreenRemove, this);
     }
-    this._calculateSize();
+    this._calculateSize(this._hasSplitAnchorsX, this._hasSplitAnchorsY);
     this.fire("set:screen", this.screen);
     this._anchorDirty = true;
     var children = this.entity.getChildren();
@@ -30256,7 +30336,7 @@ pc.extend(pc, function() {
     this._anchorDirty = true;
     this._cornersDirty = true;
     this._worldCornersDirty = true;
-    this._calculateSize();
+    this._calculateSize(this._hasSplitAnchorsX, this._hasSplitAnchorsY);
     this.fire("screen:set:resolution", res);
   }, _onScreenSpaceChange:function() {
     this.fire("screen:set:screenspace", this.screen.screen.screenSpace);
@@ -30267,8 +30347,8 @@ pc.extend(pc, function() {
     var resy = 1000;
     var parent = this.entity._parent;
     if (parent && parent.element) {
-      resx = parent.element.width;
-      resy = parent.element.height;
+      resx = parent.element.calculatedWidth;
+      resy = parent.element.calculatedHeight;
     } else {
       if (this.screen) {
         var res = this.screen.screen.resolution;
@@ -30315,7 +30395,7 @@ pc.extend(pc, function() {
       }
     }
   }, onEnable:function() {
-    ElementComponent._super.onEnable.call(this);
+    pc.Component.prototype.onEnable.call(this);
     if (this._image) {
       this._image.onEnable();
     }
@@ -30342,8 +30422,9 @@ pc.extend(pc, function() {
       this.system.app.scene.layers.on("add", this.onLayerAdded, this);
       this.system.app.scene.layers.on("remove", this.onLayerRemoved, this);
     }
+    this.fire("enableelement");
   }, onDisable:function() {
-    ElementComponent._super.onDisable.call(this);
+    pc.Component.prototype.onDisable.call(this);
     this.system.app.scene.off("set:layers", this.onLayersChanged, this);
     if (this.system.app.scene.layers) {
       this.system.app.scene.layers.off("add", this.onLayerAdded, this);
@@ -30368,6 +30449,10 @@ pc.extend(pc, function() {
       }
       this._topMask = false;
     }
+    if (this._batchGroupId >= 0) {
+      this.system.app.batcher.markGroupDirty(this.batchGroupId);
+    }
+    this.fire("disableelement");
   }, onRemove:function() {
     this.entity.off("insert", this._onInsert, this);
     this._unpatch();
@@ -30387,32 +30472,65 @@ pc.extend(pc, function() {
       }
       this._topMask = false;
     }
-  }, _calculateSize:function() {
+  }, _calculateSize:function(propagateCalculatedWidth, propagateCalculatedHeight) {
     if (!this.entity._parent && !this.screen) {
       return;
     }
     this._calculateLocalAnchors();
+    var newWidth = this._absRight - this._absLeft;
+    var newHeight = this._absTop - this._absBottom;
+    if (propagateCalculatedWidth) {
+      this._setWidth(newWidth);
+    } else {
+      this._setCalculatedWidth(newWidth, false);
+    }
+    if (propagateCalculatedHeight) {
+      this._setHeight(newHeight);
+    } else {
+      this._setCalculatedHeight(newHeight, false);
+    }
     var p = this.entity.getLocalPosition();
-    this._setWidth(this._absRight - this._absLeft);
-    this._setHeight(this._absTop - this._absBottom);
-    p.x = this._margin.data[0] + this._width * this._pivot.data[0];
-    p.y = this._margin.data[1] + this._height * this._pivot.data[1];
+    p.x = this._margin.data[0] + this._calculatedWidth * this._pivot.data[0];
+    p.y = this._margin.data[1] + this._calculatedHeight * this._pivot.data[1];
     this.entity.setLocalPosition(p);
     this._sizeDirty = false;
   }, _setWidth:function(w) {
     this._width = w;
-    var i, l;
-    var c = this.entity._children;
-    for (i = 0, l = c.length;i < l;i++) {
-      if (c[i].element) {
-        c[i].element._anchorDirty = true;
-        c[i].element._sizeDirty = true;
-      }
-    }
+    this._setCalculatedWidth(w, false);
     this.fire("set:width", this._width);
-    this.fire("resize", this._width, this._height);
   }, _setHeight:function(h) {
     this._height = h;
+    this._setCalculatedHeight(h, false);
+    this.fire("set:height", this._height);
+  }, _setCalculatedWidth:function(value, updateMargins) {
+    var didChange = Math.abs(value - this._calculatedWidth) > 1e-4;
+    this._calculatedWidth = value;
+    if (updateMargins) {
+      var p = this.entity.getLocalPosition().data;
+      var pvt = this._pivot.data;
+      this._margin.data[0] = p[0] - this._calculatedWidth * pvt[0];
+      this._margin.data[2] = this._localAnchor.data[2] - this._localAnchor.data[0] - this._calculatedWidth - this._margin.data[0];
+    }
+    this._flagChildrenAsDirty();
+    this.fire("set:calculatedWidth", this._calculatedWidth);
+    if (didChange) {
+      this.fire("resize", this._calculatedWidth, this._calculatedHeight);
+    }
+  }, _setCalculatedHeight:function(value, updateMargins) {
+    var didChange = Math.abs(value - this._calculatedHeight) > 1e-4;
+    this._calculatedHeight = value;
+    if (updateMargins) {
+      var p = this.entity.getLocalPosition().data;
+      var pvt = this._pivot.data;
+      this._margin.data[1] = p[1] - this._calculatedHeight * pvt[1];
+      this._margin.data[3] = this._localAnchor.data[3] - this._localAnchor.data[1] - this._calculatedHeight - this._margin.data[1];
+    }
+    this._flagChildrenAsDirty();
+    this.fire("set:calculatedHeight", this._calculatedHeight);
+    if (didChange) {
+      this.fire("resize", this._calculatedWidth, this._calculatedHeight);
+    }
+  }, _flagChildrenAsDirty:function() {
     var i, l;
     var c = this.entity._children;
     for (i = 0, l = c.length;i < l;i++) {
@@ -30421,8 +30539,6 @@ pc.extend(pc, function() {
         c[i].element._sizeDirty = true;
       }
     }
-    this.fire("set:height", this._height);
-    this.fire("resize", this._width, this._height);
   }, addModelToLayers:function(model) {
     var layer;
     this._addedModel = model;
@@ -30511,7 +30627,8 @@ pc.extend(pc, function() {
     return this._margin;
   }, set:function(value) {
     this._margin.copy(value);
-    this._calculateSize();
+    this._calculateSize(true, true);
+    this.fire("set:margin", this._margin);
   }});
   Object.defineProperty(ElementComponent.prototype, "left", {get:function() {
     return this._margin.data[0];
@@ -30521,7 +30638,7 @@ pc.extend(pc, function() {
     var wr = this._absRight;
     var wl = this._localAnchor.data[0] + value;
     this._setWidth(wr - wl);
-    p.x = value + this._width * this._pivot.data[0];
+    p.x = value + this._calculatedWidth * this._pivot.data[0];
     this.entity.setLocalPosition(p);
   }});
   Object.defineProperty(ElementComponent.prototype, "right", {get:function() {
@@ -30532,7 +30649,7 @@ pc.extend(pc, function() {
     var wl = this._absLeft;
     var wr = this._localAnchor.data[2] - value;
     this._setWidth(wr - wl);
-    p.x = this._localAnchor.data[2] - this._localAnchor.data[0] - value - this._width * (1 - this._pivot.data[0]);
+    p.x = this._localAnchor.data[2] - this._localAnchor.data[0] - value - this._calculatedWidth * (1 - this._pivot.data[0]);
     this.entity.setLocalPosition(p);
   }});
   Object.defineProperty(ElementComponent.prototype, "top", {get:function() {
@@ -30543,7 +30660,7 @@ pc.extend(pc, function() {
     var wb = this._absBottom;
     var wt = this._localAnchor.data[3] - value;
     this._setHeight(wt - wb);
-    p.y = this._localAnchor.data[3] - this._localAnchor.data[1] - value - this._height * (1 - this._pivot.data[1]);
+    p.y = this._localAnchor.data[3] - this._localAnchor.data[1] - value - this._calculatedHeight * (1 - this._pivot.data[1]);
     this.entity.setLocalPosition(p);
   }});
   Object.defineProperty(ElementComponent.prototype, "bottom", {get:function() {
@@ -30554,46 +30671,32 @@ pc.extend(pc, function() {
     var wt = this._absTop;
     var wb = this._localAnchor.data[1] + value;
     this._setHeight(wt - wb);
-    p.y = value + this._height * this._pivot.data[1];
+    p.y = value + this._calculatedHeight * this._pivot.data[1];
     this.entity.setLocalPosition(p);
   }});
   Object.defineProperty(ElementComponent.prototype, "width", {get:function() {
     return this._width;
   }, set:function(value) {
     this._width = value;
-    var p = this.entity.getLocalPosition().data;
-    var pvt = this._pivot.data;
-    this._margin.data[0] = p[0] - this._width * pvt[0];
-    this._margin.data[2] = this._localAnchor.data[2] - this._localAnchor.data[0] - this._width - this._margin.data[0];
-    var i, l;
-    var c = this.entity._children;
-    for (i = 0, l = c.length;i < l;i++) {
-      if (c[i].element) {
-        c[i].element._anchorDirty = true;
-        c[i].element._sizeDirty = true;
-      }
-    }
+    this._setCalculatedWidth(value, true);
     this.fire("set:width", this._width);
-    this.fire("resize", this._width, this._height);
   }});
   Object.defineProperty(ElementComponent.prototype, "height", {get:function() {
     return this._height;
   }, set:function(value) {
     this._height = value;
-    var p = this.entity.getLocalPosition().data;
-    var pvt = this._pivot.data;
-    this._margin.data[1] = p[1] - this._height * pvt[1];
-    this._margin.data[3] = this._localAnchor.data[3] - this._localAnchor.data[1] - this._height - this._margin.data[1];
-    var i, l;
-    var c = this.entity._children;
-    for (i = 0, l = c.length;i < l;i++) {
-      if (c[i].element) {
-        c[i].element._anchorDirty = true;
-        c[i].element._sizeDirty = true;
-      }
-    }
+    this._setCalculatedHeight(value, true);
     this.fire("set:height", this._height);
-    this.fire("resize", this._width, this._height);
+  }});
+  Object.defineProperty(ElementComponent.prototype, "calculatedWidth", {get:function() {
+    return this._calculatedWidth;
+  }, set:function(value) {
+    this._setCalculatedWidth(value, true);
+  }});
+  Object.defineProperty(ElementComponent.prototype, "calculatedHeight", {get:function() {
+    return this._calculatedHeight;
+  }, set:function(value) {
+    this._setCalculatedHeight(value, true);
   }});
   Object.defineProperty(ElementComponent.prototype, "pivot", {get:function() {
     return this._pivot;
@@ -30613,7 +30716,10 @@ pc.extend(pc, function() {
     var dy = this._pivot.y - prevY;
     this._margin.data[1] += my * dy;
     this._margin.data[3] -= my * dy;
-    this._onScreenResize();
+    this._anchorDirty = true;
+    this._cornersDirty = true;
+    this._worldCornersDirty = true;
+    this._calculateSize();
     this.fire("set:pivot", this._pivot);
   }});
   Object.defineProperty(ElementComponent.prototype, "anchor", {get:function() {
@@ -30627,13 +30733,19 @@ pc.extend(pc, function() {
     if (!this.entity._parent && !this.screen) {
       this._calculateLocalAnchors();
     } else {
-      this._calculateSize();
+      this._calculateSize(this._hasSplitAnchorsX, this._hasSplitAnchorsY);
     }
     this._anchorDirty = true;
     if (!this.entity._dirtyLocal) {
       this.entity._dirtify(true);
     }
     this.fire("set:anchor", this._anchor);
+  }});
+  Object.defineProperty(ElementComponent.prototype, "_hasSplitAnchorsX", {get:function() {
+    return Math.abs(this._anchor.data[0] - this._anchor.data[2]) > 0.001;
+  }});
+  Object.defineProperty(ElementComponent.prototype, "_hasSplitAnchorsY", {get:function() {
+    return Math.abs(this._anchor.data[1] - this._anchor.data[3]) > 0.001;
   }});
   Object.defineProperty(ElementComponent.prototype, "screenCorners", {get:function() {
     if (!this._cornersDirty || !this.screen) {
@@ -30694,13 +30806,13 @@ pc.extend(pc, function() {
       matC.setTranslate(localPos.x, localPos.y, localPos.z);
       matD.copy(this.entity.parent.getWorldTransform());
       matD.mul(matC).mul(matB).mul(matA);
-      vecA.set(localPos.x - this.pivot.x * this.width, localPos.y - this.pivot.y * this.height, localPos.z);
+      vecA.set(localPos.x - this.pivot.x * this.calculatedWidth, localPos.y - this.pivot.y * this.calculatedHeight, localPos.z);
       matD.transformPoint(vecA, this._worldCorners[0]);
-      vecA.set(localPos.x + (1 - this.pivot.x) * this.width, localPos.y - this.pivot.y * this.height, localPos.z);
+      vecA.set(localPos.x + (1 - this.pivot.x) * this.calculatedWidth, localPos.y - this.pivot.y * this.calculatedHeight, localPos.z);
       matD.transformPoint(vecA, this._worldCorners[1]);
-      vecA.set(localPos.x + (1 - this.pivot.x) * this.width, localPos.y + (1 - this.pivot.y) * this.height, localPos.z);
+      vecA.set(localPos.x + (1 - this.pivot.x) * this.calculatedWidth, localPos.y + (1 - this.pivot.y) * this.calculatedHeight, localPos.z);
       matD.transformPoint(vecA, this._worldCorners[2]);
-      vecA.set(localPos.x - this.pivot.x * this.width, localPos.y + (1 - this.pivot.y) * this.height, localPos.z);
+      vecA.set(localPos.x - this.pivot.x * this.calculatedWidth, localPos.y + (1 - this.pivot.y) * this.calculatedHeight, localPos.z);
       matD.transformPoint(vecA, this._worldCorners[3]);
     }
     this._worldCornersDirty = false;
@@ -30737,10 +30849,10 @@ pc.extend(pc, function() {
       return;
     }
     if (this._batchGroupId >= 0) {
-      this.system.app.batcher._markGroupDirty(this._batchGroupId);
+      this.system.app.batcher.markGroupDirty(this._batchGroupId);
     }
     if (value >= 0) {
-      this.system.app.batcher._markGroupDirty(value);
+      this.system.app.batcher.markGroupDirty(value);
     }
     if (value < 0 && this._batchGroupId >= 0 && this.enabled && this.entity.enabled) {
       if (this._image._model) {
@@ -30760,10 +30872,9 @@ pc.extend(pc, function() {
       } else {
         if (this._image) {
           return this._image[name];
-        } else {
-          return null;
         }
       }
+      return null;
     }, set:function(value) {
       if (this._text) {
         this._text[name] = value;
@@ -30799,11 +30910,12 @@ pc.extend(pc, function() {
   _define("mask");
   return {ElementComponent:ElementComponent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _schema = ["enabled"];
   var nineSliceBasePS = ["varying vec2 vMask;", "varying vec2 vTiledUv;", "uniform vec4 innerOffset;", "uniform vec2 outerScale;", "uniform vec4 atlasRect;", "vec2 nineSlicedUv;"].join("\n");
   var nineSliceUvPs = ["vec2 tileMask = step(vMask, vec2(0.99999));", "vec2 clampedUv = mix(innerOffset.xy*0.5, vec2(1.0) - innerOffset.zw*0.5, fract(vTiledUv));", "clampedUv = clampedUv * atlasRect.zw + atlasRect.xy;", "nineSlicedUv = vUv0 * tileMask + clampedUv * (vec2(1.0) - tileMask);"].join("\n");
   var ElementComponentSystem = function ElementComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
     this.id = "element";
     this.app = app;
     app.systems.add(this.id, this);
@@ -30922,9 +31034,10 @@ pc.extend(pc, function() {
     this.defaultImageMaterials = [this.defaultImageMaterial, this.defaultImageMaskMaterial, this.defaultImage9SlicedMaterial, this.defaultImage9TiledMaterial, this.defaultImage9SlicedMaskMaterial, this.defaultImage9TiledMaskMaterial, this.defaultScreenSpaceImageMaterial, this.defaultScreenSpaceImage9SlicedMaterial, this.defaultScreenSpaceImage9TiledMaterial, this.defaultScreenSpaceImageMask9SlicedMaterial, this.defaultScreenSpaceImageMask9TiledMaterial, this.defaultScreenSpaceImageMaskMaterial];
     this.on("beforeremove", this.onRemoveComponent, this);
   };
-  ElementComponentSystem = pc.inherits(ElementComponentSystem, pc.ComponentSystem);
+  ElementComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  ElementComponentSystem.prototype.constructor = ElementComponentSystem;
   pc.Component._buildAccessors(pc.ElementComponent.prototype, _schema);
-  pc.extend(ElementComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
+  Object.assign(ElementComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
     if (data.anchor !== undefined) {
       if (data.anchor instanceof pc.Vec4) {
         component.anchor.copy(data.anchor);
@@ -30969,11 +31082,23 @@ pc.extend(pc, function() {
     if (_marginChange) {
       component.margin = component._margin;
     }
+    var shouldForceSetAnchor = false;
     if (data.width !== undefined && !splitHorAnchors) {
       component.width = data.width;
+    } else {
+      if (splitHorAnchors) {
+        shouldForceSetAnchor = true;
+      }
     }
     if (data.height !== undefined && !splitVerAnchors) {
       component.height = data.height;
+    } else {
+      if (splitVerAnchors) {
+        shouldForceSetAnchor = true;
+      }
+    }
+    if (shouldForceSetAnchor) {
+      component.anchor = component.anchor;
     }
     if (data.enabled !== undefined) {
       component.enabled = data.enabled;
@@ -31091,7 +31216,7 @@ pc.extend(pc, function() {
     if (result.screen) {
       component._updateScreen(result.screen);
     }
-    ElementComponentSystem._super.initializeComponentData.call(this, component, data, properties);
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, properties);
   }, onRemoveComponent:function(entity, component) {
     component.onRemove();
   }, cloneComponent:function(entity, clone) {
@@ -31101,14 +31226,13 @@ pc.extend(pc, function() {
   }});
   return {ElementComponentSystem:ElementComponentSystem};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ElementComponentData = function() {
     this.enabled = true;
   };
-  ElementComponentData = pc.inherits(ElementComponentData, pc.ComponentData);
   return {ElementComponentData:ElementComponentData};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ImageElement = function ImageElement(element) {
     this._element = element;
     this._entity = element.entity;
@@ -31146,26 +31270,48 @@ pc.extend(pc, function() {
     this._entity.addChild(this._model.graph);
     this._model._entity = this._entity;
     this._onScreenChange(this._element.screen);
-    this._element.on("resize", this._onParentResize, this);
+    this._element.on("resize", this._onParentResizeOrPivotChange, this);
+    this._element.on("set:pivot", this._onParentResizeOrPivotChange, this);
     this._element.on("screen:set:screenspace", this._onScreenSpaceChange, this);
     this._element.on("set:screen", this._onScreenChange, this);
     this._element.on("set:draworder", this._onDrawOrderChange, this);
     this._element.on("screen:set:resolution", this._onResolutionChange, this);
   };
-  pc.extend(ImageElement.prototype, {destroy:function() {
+  Object.assign(ImageElement.prototype, {destroy:function() {
     if (this._model) {
       this._element.removeModelFromLayers(this._model);
       this._meshInstance.mesh = this._defaultMesh;
       this._model.destroy();
       this._model = null;
     }
-    this._element.off("resize", this._onParentResize, this);
+    this._element.off("resize", this._onParentResizeOrPivotChange, this);
+    this._element.off("set:pivot", this._onParentResizeOrPivotChange, this);
     this._element.off("screen:set:screenspace", this._onScreenSpaceChange, this);
     this._element.off("set:screen", this._onScreenChange, this);
     this._element.off("set:draworder", this._onDrawOrderChange, this);
     this._element.off("screen:set:resolution", this._onResolutionChange, this);
+    var asset;
+    var app = this._system.app;
+    asset = this._textureAsset ? app.assets.get(this._textureAsset) : null;
+    if (asset) {
+      asset.off("load", this._onTextureLoad, this);
+      asset.off("change", this._onTextureChange, this);
+      asset.off("remove", this._onTextureRemove, this);
+    }
+    asset = this._spriteAsset ? app.assets.get(this._spriteAsset) : null;
+    if (asset) {
+      asset.off("load", this._onSpriteAssetLoad, this);
+      asset.off("change", this._onSpriteAssetChange, this);
+      asset.off("remove", this._onSpriteAssetRemove, this);
+    }
+    asset = this._materialAsset ? app.assets.get(this._materialAsset) : null;
+    if (asset) {
+      asset.off("load", this._onMaterialLoad, this);
+      asset.off("change", this._onMaterialChange, this);
+      asset.off("remove", this._onMaterialRemove, this);
+    }
   }, _onResolutionChange:function(res) {
-  }, _onParentResize:function() {
+  }, _onParentResizeOrPivotChange:function() {
     if (this._mesh) {
       this._updateMesh(this._mesh);
     }
@@ -31264,8 +31410,8 @@ pc.extend(pc, function() {
       this._meshInstance.layer = screenSpace ? pc.scene.LAYER_HUD : pc.scene.LAYER_WORLD;
     }
   }, _createMesh:function() {
-    var w = this._element.width;
-    var h = this._element.height;
+    var w = this._element.calculatedWidth;
+    var h = this._element.calculatedHeight;
     this._positions[0] = 0;
     this._positions[1] = 0;
     this._positions[2] = 0;
@@ -31302,8 +31448,8 @@ pc.extend(pc, function() {
     return mesh;
   }, _updateMesh:function(mesh) {
     var i;
-    var w = this._element.width;
-    var h = this._element.height;
+    var w = this._element.calculatedWidth;
+    var h = this._element.calculatedHeight;
     if (this._element.screen) {
       this._updateMaterial(this._element.screen.screen.screenSpace);
     } else {
@@ -31519,12 +31665,18 @@ pc.extend(pc, function() {
     if (this._meshInstance) {
       this._meshInstance.setParameter("material_emissive", this._color.data3);
     }
+    if (this._element) {
+      this._element.fire("set:color", this._color);
+    }
   }});
   Object.defineProperty(ImageElement.prototype, "opacity", {get:function() {
     return this._color.data[3];
   }, set:function(value) {
     this._color.data[3] = value;
     this._meshInstance.setParameter("material_opacity", value);
+    if (this._element) {
+      this._element.fire("set:opacity", this._color.data[3]);
+    }
   }});
   Object.defineProperty(ImageElement.prototype, "rect", {get:function() {
     return this._rect;
@@ -31549,7 +31701,7 @@ pc.extend(pc, function() {
     this._material = value;
     if (value) {
       this._meshInstance.material = value;
-      if (value !== this._system.defaultScreenSpaceImageMaterial && value !== this._system.defaultImageMaterial && value !== this._system.defaultImageMaskMaterial && value !== this._system.defaultScreenSpaceImageMaskMaterial) {
+      if (this._hasUserMaterial()) {
         this._meshInstance.deleteParameter("material_opacity");
         this._meshInstance.deleteParameter("material_emissive");
       } else {
@@ -31663,6 +31815,9 @@ pc.extend(pc, function() {
       } else {
         this.sprite = null;
       }
+      if (this._element) {
+        this._element.fire("set:spriteAsset", _id);
+      }
     }
   }});
   Object.defineProperty(ImageElement.prototype, "sprite", {get:function() {
@@ -31714,6 +31869,9 @@ pc.extend(pc, function() {
     if (this.mesh) {
       this._updateMesh(this.mesh);
     }
+    if (this._element) {
+      this._element.fire("set:spriteFrame", value);
+    }
   }});
   Object.defineProperty(ImageElement.prototype, "mesh", {get:function() {
     return this._mesh;
@@ -31751,7 +31909,7 @@ pc.extend(pc, function() {
   }});
   return {ImageElement:ImageElement};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var TextElement = function TextElement(element) {
     this._element = element;
     this._system = element.system;
@@ -31789,7 +31947,7 @@ pc.extend(pc, function() {
   var LINE_BREAK_CHAR = /^[\r\n]$/;
   var WHITESPACE_CHAR = /^[ \t]$/;
   var WORD_BOUNDARY_CHAR = /^[ \t\-]$/;
-  pc.extend(TextElement.prototype, {destroy:function() {
+  Object.assign(TextElement.prototype, {destroy:function() {
     if (this._model) {
       this._element.removeModelFromLayers(this._model);
       this._model.destroy();
@@ -31983,7 +32141,7 @@ pc.extend(pc, function() {
     var numWordsThisLine = 0;
     var numCharsThisLine = 0;
     var splitHorizontalAnchors = Math.abs(this._element.anchor.x - this._element.anchor.z) >= 0.0001;
-    var maxLineWidth = this._element.width;
+    var maxLineWidth = this._element.calculatedWidth;
     if (this.autoWidth && !splitHorizontalAnchors || !this._wrapLines) {
       maxLineWidth = Number.POSITIVE_INFINITY;
     }
@@ -32085,7 +32243,7 @@ pc.extend(pc, function() {
       meshInfo.positions[quad * 4 * 3 + 11] = _z;
       this.width = Math.max(this.width, _x + glyphWidth + glyphMinX);
       this.height = Math.max(this.height, fontMaxY - (_y + fontMinY));
-      _x = _x + this._spacing * advance;
+      _x += this._spacing * advance;
       if (!isWhitespace && !isLineBreak) {
         _xMinusTrailingWhitespace = _x;
       }
@@ -32124,8 +32282,8 @@ pc.extend(pc, function() {
       var prevQuad = 0;
       for (var line in this._meshInfo[i].lines) {
         var index = this._meshInfo[i].lines[line];
-        var hoffset = -hp * this._element.width + ha * (this._element.width - this._lineWidths[parseInt(line, 10)]);
-        var voffset = (1 - vp) * this._element.height - fontMaxY - (1 - va) * (this._element.height - this.height);
+        var hoffset = -hp * this._element.calculatedWidth + ha * (this._element.calculatedWidth - this._lineWidths[parseInt(line, 10)]);
+        var voffset = (1 - vp) * this._element.calculatedHeight - fontMaxY - (1 - va) * (this._element.calculatedHeight - this.height);
         for (quad = prevQuad;quad <= index;quad++) {
           this._meshInfo[i].positions[quad * 4 * 3] += hoffset;
           this._meshInfo[i].positions[quad * 4 * 3 + 3] += hoffset;
@@ -32390,7 +32548,1638 @@ pc.extend(pc, function() {
   }});
   return {TextElement:TextElement};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
+  var _inputScreenPosition = new pc.Vec2;
+  var _inputWorldPosition = new pc.Vec3;
+  var _rayOrigin = new pc.Vec3;
+  var _rayDirection = new pc.Vec3;
+  var _planeOrigin = new pc.Vec3;
+  var _planeNormal = new pc.Vec3;
+  var _entityRotation = new pc.Quat;
+  var OPPOSITE_AXIS = {x:"y", y:"x"};
+  var ElementDragHelper = function ElementDragHelper(element, axis) {
+    if (!element || !(element instanceof pc.ElementComponent)) {
+      throw new Error("Element was null or not an ElementComponent");
+    }
+    if (axis && axis !== "x" && axis !== "y") {
+      throw new Error("Unrecognized axis: " + axis);
+    }
+    this._element = element;
+    this._app = element.system.app;
+    this._axis = axis || null;
+    this._enabled = true;
+    this._dragScale = new pc.Vec3;
+    this._dragStartMousePosition = new pc.Vec3;
+    this._dragStartHandlePosition = new pc.Vec3;
+    this._deltaMousePosition = new pc.Vec3;
+    this._deltaHandlePosition = new pc.Vec3;
+    this._isDragging = false;
+    pc.events.attach(this);
+    this._toggleLifecycleListeners("on");
+  };
+  Object.assign(ElementDragHelper.prototype, {_toggleLifecycleListeners:function(onOrOff) {
+    this._element[onOrOff]("mousedown", this._onMouseDownOrTouchStart, this);
+    this._element[onOrOff]("touchstart", this._onMouseDownOrTouchStart, this);
+  }, _toggleDragListeners:function(onOrOff) {
+    var isOn = onOrOff === "on";
+    var addOrRemoveEventListener = isOn ? "addEventListener" : "removeEventListener";
+    if (this._hasDragListeners && isOn) {
+      return;
+    }
+    if (!this._handleMouseUpOrTouchEnd) {
+      this._handleMouseUpOrTouchEnd = this._onMouseUpOrTouchEnd.bind(this);
+    }
+    this._app.mouse[onOrOff]("mousemove", this._onMove, this);
+    window[addOrRemoveEventListener]("mouseup", this._handleMouseUpOrTouchEnd, false);
+    if ("ontouchstart" in window) {
+      this._app.touch[onOrOff]("touchmove", this._onMove, this);
+      window[addOrRemoveEventListener]("touchend", this._handleMouseUpOrTouchEnd, false);
+      window[addOrRemoveEventListener]("touchcancel", this._handleMouseUpOrTouchEnd, false);
+    }
+    this._hasDragListeners = isOn;
+  }, _onMouseDownOrTouchStart:function(event) {
+    if (this._element && !this._isDragging && this.enabled) {
+      this._dragCamera = event.camera;
+      this._calculateDragScale();
+      var currentMousePosition = this._screenToLocal(event);
+      if (currentMousePosition) {
+        this._toggleDragListeners("on");
+        this._isDragging = true;
+        this._dragStartMousePosition.copy(currentMousePosition);
+        this._dragStartHandlePosition.copy(this._element.entity.getLocalPosition());
+        this.fire("drag:start");
+      }
+    }
+  }, _onMouseUpOrTouchEnd:function() {
+    if (this._isDragging) {
+      this._isDragging = false;
+      this._toggleDragListeners("off");
+      this.fire("drag:end");
+    }
+  }, _screenToLocal:function(event) {
+    this._determineInputPosition(event);
+    this._chooseRayOriginAndDirection();
+    _planeOrigin.copy(this._element.entity.getPosition());
+    _planeNormal.copy(this._element.entity.forward).scale(-1);
+    var denominator = _planeNormal.dot(_rayDirection);
+    if (Math.abs(denominator) > 0) {
+      var rayOriginToPlaneOrigin = _planeOrigin.sub(_rayOrigin);
+      var collisionDistance = rayOriginToPlaneOrigin.dot(_planeNormal) / denominator;
+      var position = _rayOrigin.add(_rayDirection.scale(collisionDistance));
+      _entityRotation.copy(this._element.entity.getRotation()).invert().transformVector(position, position);
+      position.mul(this._dragScale);
+      return position;
+    }
+    return null;
+  }, _determineInputPosition:function(event) {
+    if (typeof event.x !== "undefined" && typeof event.y !== "undefined") {
+      _inputScreenPosition.x = event.x;
+      _inputScreenPosition.y = event.y;
+    } else {
+      if (event.changedTouches) {
+        _inputScreenPosition.x = event.changedTouches[0].x;
+        _inputScreenPosition.y = event.changedTouches[0].y;
+      } else {
+        console.warn("Could not determine position from input event");
+      }
+    }
+  }, _chooseRayOriginAndDirection:function() {
+    if (this._element.screen && this._element.screen.screen.screenSpace) {
+      _rayOrigin.set(_inputScreenPosition.x, -_inputScreenPosition.y, 0);
+      _rayDirection.set(0, 0, -1);
+    } else {
+      _inputWorldPosition.copy(this._dragCamera.screenToWorld(_inputScreenPosition.x, _inputScreenPosition.y, 1));
+      _rayOrigin.copy(this._dragCamera.entity.getPosition());
+      _rayDirection.copy(_inputWorldPosition).sub(_rayOrigin).normalize();
+    }
+  }, _calculateDragScale:function() {
+    var current = this._element.entity.parent;
+    var screen = this._element.screen && this._element.screen.screen;
+    var isWithin2DScreen = screen && screen.screenSpace;
+    var screenScale = isWithin2DScreen ? screen.scale : 1;
+    var dragScale = this._dragScale;
+    dragScale.set(screenScale, screenScale, screenScale);
+    while (current) {
+      dragScale.mul(current.getLocalScale());
+      current = current.parent;
+      if (isWithin2DScreen && current.screen) {
+        break;
+      }
+    }
+    dragScale.data[0] = 1 / dragScale.data[0];
+    dragScale.data[1] = 1 / dragScale.data[1];
+    dragScale.data[2] = 1 / dragScale.data[2];
+  }, _onMove:function(event) {
+    if (this._element && this._isDragging && this.enabled && this._element.enabled && this._element.entity.enabled) {
+      var currentMousePosition = this._screenToLocal(event);
+      if (this._dragStartMousePosition && currentMousePosition) {
+        this._deltaMousePosition.copy(currentMousePosition).sub(this._dragStartMousePosition);
+        this._deltaHandlePosition.copy(this._dragStartHandlePosition).add(this._deltaMousePosition);
+        if (this._axis) {
+          var currentPosition = this._element.entity.getLocalPosition();
+          var constrainedAxis = OPPOSITE_AXIS[this._axis];
+          this._deltaHandlePosition[constrainedAxis] = currentPosition[constrainedAxis];
+        }
+        this._element.entity.setLocalPosition(this._deltaHandlePosition);
+        this.fire("drag:move", this._deltaHandlePosition);
+      }
+    }
+  }, destroy:function() {
+    this._toggleLifecycleListeners("off");
+    this._toggleDragListeners("off");
+  }});
+  Object.defineProperty(ElementDragHelper.prototype, "enabled", {get:function() {
+    return this._enabled;
+  }, set:function(value) {
+    this._enabled = value;
+  }});
+  Object.defineProperty(ElementDragHelper.prototype, "isDragging", {get:function() {
+    return this._isDragging;
+  }});
+  return {ElementDragHelper:ElementDragHelper};
+}());
+Object.assign(pc, {BUTTON_TRANSITION_MODE_TINT:0, BUTTON_TRANSITION_MODE_SPRITE_CHANGE:1});
+Object.assign(pc, function() {
+  var VisualState = {DEFAULT:"DEFAULT", HOVER:"HOVER", PRESSED:"PRESSED", INACTIVE:"INACTIVE"};
+  var STATES_TO_TINT_NAMES = {};
+  STATES_TO_TINT_NAMES[VisualState.DEFAULT] = "_defaultTint";
+  STATES_TO_TINT_NAMES[VisualState.HOVER] = "hoverTint";
+  STATES_TO_TINT_NAMES[VisualState.PRESSED] = "pressedTint";
+  STATES_TO_TINT_NAMES[VisualState.INACTIVE] = "inactiveTint";
+  var STATES_TO_SPRITE_ASSET_NAMES = {};
+  STATES_TO_SPRITE_ASSET_NAMES[VisualState.DEFAULT] = "_defaultSpriteAsset";
+  STATES_TO_SPRITE_ASSET_NAMES[VisualState.HOVER] = "hoverSpriteAsset";
+  STATES_TO_SPRITE_ASSET_NAMES[VisualState.PRESSED] = "pressedSpriteAsset";
+  STATES_TO_SPRITE_ASSET_NAMES[VisualState.INACTIVE] = "inactiveSpriteAsset";
+  var STATES_TO_SPRITE_FRAME_NAMES = {};
+  STATES_TO_SPRITE_FRAME_NAMES[VisualState.DEFAULT] = "_defaultSpriteFrame";
+  STATES_TO_SPRITE_FRAME_NAMES[VisualState.HOVER] = "hoverSpriteFrame";
+  STATES_TO_SPRITE_FRAME_NAMES[VisualState.PRESSED] = "pressedSpriteFrame";
+  STATES_TO_SPRITE_FRAME_NAMES[VisualState.INACTIVE] = "inactiveSpriteFrame";
+  var ButtonComponent = function ButtonComponent(system, entity) {
+    pc.Component.call(this, system, entity);
+    this._visualState = VisualState.DEFAULT;
+    this._isHovering = false;
+    this._isPressed = false;
+    this._defaultTint = new pc.Color(1, 1, 1, 1);
+    this._defaultSpriteAsset = null;
+    this._defaultSpriteFrame = 0;
+    this._imageReference = new pc.EntityReference(this, "imageEntity", {"element#gain":this._onImageElementGain, "element#lose":this._onImageElementLose, "element#set:color":this._onSetColor, "element#set:opacity":this._onSetOpacity, "element#set:spriteAsset":this._onSetSpriteAsset, "element#set:spriteFrame":this._onSetSpriteFrame});
+    this._toggleLifecycleListeners("on", system);
+  };
+  ButtonComponent.prototype = Object.create(pc.Component.prototype);
+  ButtonComponent.prototype.constructor = ButtonComponent;
+  Object.assign(ButtonComponent.prototype, {_toggleLifecycleListeners:function(onOrOff, system) {
+    this[onOrOff]("set_active", this._onSetActive, this);
+    this[onOrOff]("set_transitionMode", this._onSetTransitionMode, this);
+    this[onOrOff]("set_hoverTint", this._onSetTransitionValue, this);
+    this[onOrOff]("set_pressedTint", this._onSetTransitionValue, this);
+    this[onOrOff]("set_inactiveTint", this._onSetTransitionValue, this);
+    this[onOrOff]("set_hoverSpriteAsset", this._onSetTransitionValue, this);
+    this[onOrOff]("set_hoverSpriteFrame", this._onSetTransitionValue, this);
+    this[onOrOff]("set_pressedSpriteAsset", this._onSetTransitionValue, this);
+    this[onOrOff]("set_pressedSpriteFrame", this._onSetTransitionValue, this);
+    this[onOrOff]("set_inactiveSpriteAsset", this._onSetTransitionValue, this);
+    this[onOrOff]("set_inactiveSpriteFrame", this._onSetTransitionValue, this);
+    pc.ComponentSystem[onOrOff]("update", this._onUpdate, this);
+    system.app.systems.element[onOrOff]("add", this._onElementComponentAdd, this);
+    system.app.systems.element[onOrOff]("beforeremove", this._onElementComponentRemove, this);
+  }, _onSetActive:function(name, oldValue, newValue) {
+    if (oldValue !== newValue) {
+      this._updateVisualState();
+    }
+  }, _onSetTransitionMode:function(name, oldValue, newValue) {
+    if (oldValue !== newValue) {
+      this._cancelTween();
+      this._resetToDefaultVisualState(oldValue);
+      this._forceReapplyVisualState();
+    }
+  }, _onSetTransitionValue:function(name, oldValue, newValue) {
+    if (oldValue !== newValue) {
+      this._forceReapplyVisualState();
+    }
+  }, _onElementComponentRemove:function(entity) {
+    if (this.entity === entity) {
+      this._toggleHitElementListeners("off");
+    }
+  }, _onElementComponentAdd:function(entity) {
+    if (this.entity === entity) {
+      this._toggleHitElementListeners("on");
+    }
+  }, _onImageElementLose:function() {
+    this._cancelTween();
+    this._resetToDefaultVisualState(this.transitionMode);
+  }, _onImageElementGain:function() {
+    this._storeDefaultVisualState();
+    this._forceReapplyVisualState();
+  }, _toggleHitElementListeners:function(onOrOff) {
+    if (this.entity.element) {
+      var isAdding = onOrOff === "on";
+      if (isAdding && this._hasHitElementListeners) {
+        return;
+      }
+      this.entity.element[onOrOff]("mouseenter", this._onMouseEnter, this);
+      this.entity.element[onOrOff]("mouseleave", this._onMouseLeave, this);
+      this.entity.element[onOrOff]("mousedown", this._onMouseDown, this);
+      this.entity.element[onOrOff]("mouseup", this._onMouseUp, this);
+      this.entity.element[onOrOff]("touchstart", this._onTouchStart, this);
+      this.entity.element[onOrOff]("touchend", this._onTouchEnd, this);
+      this.entity.element[onOrOff]("touchleave", this._onTouchLeave, this);
+      this.entity.element[onOrOff]("touchcancel", this._onTouchCancel, this);
+      this.entity.element[onOrOff]("click", this._onClick, this);
+      this._hasHitElementListeners = isAdding;
+    }
+  }, _storeDefaultVisualState:function() {
+    if (this._imageReference.hasComponent("element")) {
+      this._storeDefaultColor(this._imageReference.entity.element.color);
+      this._storeDefaultOpacity(this._imageReference.entity.element.opacity);
+      this._storeDefaultSpriteAsset(this._imageReference.entity.element.spriteAsset);
+      this._storeDefaultSpriteFrame(this._imageReference.entity.element.spriteFrame);
+    }
+  }, _storeDefaultColor:function(color) {
+    this._defaultTint.r = color.r;
+    this._defaultTint.g = color.g;
+    this._defaultTint.b = color.b;
+  }, _storeDefaultOpacity:function(opacity) {
+    this._defaultTint.a = opacity;
+  }, _storeDefaultSpriteAsset:function(spriteAsset) {
+    this._defaultSpriteAsset = spriteAsset;
+  }, _storeDefaultSpriteFrame:function(spriteFrame) {
+    this._defaultSpriteFrame = spriteFrame;
+  }, _onSetColor:function(color) {
+    if (!this._isApplyingTint) {
+      this._storeDefaultColor(color);
+      this._forceReapplyVisualState();
+    }
+  }, _onSetOpacity:function(opacity) {
+    if (!this._isApplyingTint) {
+      this._storeDefaultOpacity(opacity);
+      this._forceReapplyVisualState();
+    }
+  }, _onSetSpriteAsset:function(spriteAsset) {
+    if (!this._isApplyingSprite) {
+      this._storeDefaultSpriteAsset(spriteAsset);
+      this._forceReapplyVisualState();
+    }
+  }, _onSetSpriteFrame:function(spriteFrame) {
+    if (!this._isApplyingSprite) {
+      this._storeDefaultSpriteFrame(spriteFrame);
+      this._forceReapplyVisualState();
+    }
+  }, _onMouseEnter:function(event) {
+    this._isHovering = true;
+    this._updateVisualState();
+    this.fire("mouseenter", event);
+  }, _onMouseLeave:function(event) {
+    this._isHovering = false;
+    this._isPressed = false;
+    this._updateVisualState();
+    this.fire("mouseleave", event);
+  }, _onMouseDown:function(event) {
+    this._isPressed = true;
+    this._updateVisualState();
+    this.fire("mousedown", event);
+  }, _onMouseUp:function(event) {
+    this._isPressed = false;
+    this._updateVisualState();
+    this.fire("mouseup", event);
+  }, _onTouchStart:function(event) {
+    this._isPressed = true;
+    this._updateVisualState();
+    this.fire("touchstart", event);
+  }, _onTouchEnd:function(event) {
+    event.event.preventDefault();
+    this._isPressed = false;
+    this._updateVisualState();
+    this.fire("touchend", event);
+  }, _onTouchLeave:function(event) {
+    this._isPressed = false;
+    this._updateVisualState();
+    this.fire("touchleave", event);
+  }, _onTouchCancel:function(event) {
+    this._isPressed = false;
+    this._updateVisualState();
+    this.fire("touchcancel", event);
+  }, _onClick:function(event) {
+    this.fire("click", event);
+  }, _updateVisualState:function(force) {
+    var oldVisualState = this._visualState;
+    var newVisualState = this._determineVisualState();
+    if ((oldVisualState !== newVisualState || force) && this.enabled) {
+      this._visualState = newVisualState;
+      if (oldVisualState === VisualState.HOVER) {
+        this.fire("hoverend");
+      }
+      if (oldVisualState === VisualState.PRESSED) {
+        this.fire("pressedend");
+      }
+      if (newVisualState === VisualState.HOVER) {
+        this.fire("hoverstart");
+      }
+      if (newVisualState === VisualState.PRESSED) {
+        this.fire("pressedstart");
+      }
+      switch(this.transitionMode) {
+        case pc.BUTTON_TRANSITION_MODE_TINT:
+          var tintName = STATES_TO_TINT_NAMES[this._visualState];
+          var tintColor = this[tintName];
+          this._applyTint(tintColor);
+          break;
+        case pc.BUTTON_TRANSITION_MODE_SPRITE_CHANGE:
+          var spriteAssetName = STATES_TO_SPRITE_ASSET_NAMES[this._visualState];
+          var spriteFrameName = STATES_TO_SPRITE_FRAME_NAMES[this._visualState];
+          var spriteAsset = this[spriteAssetName];
+          var spriteFrame = this[spriteFrameName];
+          this._applySprite(spriteAsset, spriteFrame);
+          break;
+      }
+    }
+  }, _forceReapplyVisualState:function() {
+    this._updateVisualState(true);
+  }, _resetToDefaultVisualState:function(transitionMode) {
+    if (this._imageReference.hasComponent("element")) {
+      switch(transitionMode) {
+        case pc.BUTTON_TRANSITION_MODE_TINT:
+          this._cancelTween();
+          this._applyTintImmediately(this._defaultTint);
+          break;
+        case pc.BUTTON_TRANSITION_MODE_SPRITE_CHANGE:
+          this._applySprite(this._defaultSpriteAsset, this._defaultSpriteFrame);
+          break;
+      }
+    }
+  }, _determineVisualState:function() {
+    if (!this.active) {
+      return VisualState.INACTIVE;
+    } else {
+      if (this._isPressed) {
+        return VisualState.PRESSED;
+      } else {
+        if (this._isHovering) {
+          return VisualState.HOVER;
+        }
+      }
+    }
+    return VisualState.DEFAULT;
+  }, _applySprite:function(spriteAsset, spriteFrame) {
+    spriteFrame = spriteFrame || 0;
+    if (this._imageReference.hasComponent("element")) {
+      this._isApplyingSprite = true;
+      this._imageReference.entity.element.spriteAsset = spriteAsset;
+      this._imageReference.entity.element.spriteFrame = spriteFrame;
+      this._isApplyingSprite = false;
+    }
+  }, _applyTint:function(tintColor) {
+    this._cancelTween();
+    if (this.fadeDuration === 0) {
+      this._applyTintImmediately(tintColor);
+    } else {
+      this._applyTintWithTween(tintColor);
+    }
+  }, _applyTintImmediately:function(tintColor) {
+    if (this._imageReference.hasComponent("element") && tintColor) {
+      this._isApplyingTint = true;
+      this._imageReference.entity.element.color = toColor3(tintColor);
+      this._imageReference.entity.element.opacity = tintColor.a;
+      this._isApplyingTint = false;
+    }
+  }, _applyTintWithTween:function(tintColor) {
+    if (this._imageReference.hasComponent("element") && tintColor) {
+      var color = this._imageReference.entity.element.color;
+      var opacity = this._imageReference.entity.element.opacity;
+      this._tweenInfo = {startTime:pc.now(), from:new pc.Color(color.r, color.g, color.b, opacity), to:tintColor.clone(), lerpVec:new pc.Vec4};
+    }
+  }, _updateTintTween:function() {
+    var elapsedTime = pc.now() - this._tweenInfo.startTime;
+    var elapsedProportion = this.fadeDuration === 0 ? 1 : elapsedTime / this.fadeDuration;
+    elapsedProportion = pc.math.clamp(elapsedProportion, 0, 1);
+    if (Math.abs(elapsedProportion - 1) > 1e-5) {
+      this._tweenInfo.lerpVec.lerp(this._tweenInfo.from, this._tweenInfo.to, elapsedProportion);
+      this._applyTintImmediately(new pc.Color(this._tweenInfo.lerpVec.data));
+    } else {
+      this._applyTintImmediately(this._tweenInfo.to);
+      this._cancelTween();
+    }
+  }, _cancelTween:function() {
+    delete this._tweenInfo;
+  }, _onUpdate:function() {
+    if (this._tweenInfo) {
+      this._updateTintTween();
+    }
+  }, onEnable:function() {
+    this._toggleHitElementListeners("on");
+    this._forceReapplyVisualState();
+  }, onDisable:function() {
+    this._toggleHitElementListeners("off");
+    this._resetToDefaultVisualState(this.transitionMode);
+  }, onRemove:function() {
+    this._toggleLifecycleListeners("off", this.system);
+    this.onDisable();
+  }});
+  function toColor3(color4) {
+    return new pc.Color(color4.r, color4.g, color4.b);
+  }
+  return {ButtonComponent:ButtonComponent};
+}());
+Object.assign(pc, function() {
+  var _schema = ["enabled", "active", {name:"imageEntity", type:"entity"}, {name:"hitPadding", type:"vec4"}, "transitionMode", {name:"hoverTint", type:"rgba"}, {name:"pressedTint", type:"rgba"}, {name:"inactiveTint", type:"rgba"}, "fadeDuration", "hoverSpriteAsset", "hoverSpriteFrame", "pressedSpriteAsset", "pressedSpriteFrame", "inactiveSpriteAsset", "inactiveSpriteFrame"];
+  var ButtonComponentSystem = function ButtonComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
+    this.id = "button";
+    this.app = app;
+    app.systems.add(this.id, this);
+    this.ComponentType = pc.ButtonComponent;
+    this.DataType = pc.ButtonComponentData;
+    this.schema = _schema;
+    this.on("beforeremove", this._onRemoveComponent, this);
+  };
+  ButtonComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  ButtonComponentSystem.prototype.constructor = ButtonComponentSystem;
+  pc.Component._buildAccessors(pc.ButtonComponent.prototype, _schema);
+  Object.assign(ButtonComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, _schema);
+  }, _onRemoveComponent:function(entity, component) {
+    component.onRemove();
+  }});
+  return {ButtonComponentSystem:ButtonComponentSystem};
+}());
+Object.assign(pc, function() {
+  var ButtonComponentData = function() {
+    this.enabled = true;
+    this.active = true;
+    this.imageEntity = null;
+    this.hitPadding = new pc.Vec4;
+    this.transitionMode = pc.BUTTON_TRANSITION_MODE_TINT;
+    this.hoverTint = new pc.Color(0.75, 0.75, 0.75);
+    this.pressedTint = new pc.Color(0.5, 0.5, 0.5);
+    this.inactiveTint = new pc.Color(0.25, 0.25, 0.25);
+    this.fadeDuration = 0;
+    this.hoverSpriteAsset = null;
+    this.hoverSpriteFrame = 0;
+    this.pressedSpriteAsset = null;
+    this.pressedSpriteFrame = 0;
+    this.inactiveSpriteAsset = null;
+    this.inactiveSpriteFrame = 0;
+  };
+  return {ButtonComponentData:ButtonComponentData};
+}());
+Object.assign(pc, {SCROLL_MODE_CLAMP:0, SCROLL_MODE_BOUNCE:1, SCROLL_MODE_INFINITE:2, SCROLLBAR_VISIBILITY_SHOW_ALWAYS:0, SCROLLBAR_VISIBILITY_SHOW_WHEN_REQUIRED:1});
+Object.assign(pc, function() {
+  var _tempScrollValue = new pc.Vec2;
+  var ScrollViewComponent = function ScrollViewComponent(system, entity) {
+    pc.Component.call(this, system, entity);
+    this._viewportReference = new pc.EntityReference(this, "viewportEntity", {"element#gain":this._onViewportElementGain, "element#resize":this._onSetContentOrViewportSize});
+    this._contentReference = new pc.EntityReference(this, "contentEntity", {"element#gain":this._onContentElementGain, "element#lose":this._onContentElementLose, "element#resize":this._onSetContentOrViewportSize});
+    this._scrollbarUpdateFlags = {};
+    this._scrollbarReferences = {};
+    this._scrollbarReferences[pc.ORIENTATION_HORIZONTAL] = new pc.EntityReference(this, "horizontalScrollbarEntity", {"scrollbar#set:value":this._onSetHorizontalScrollbarValue, "scrollbar#gain":this._onHorizontalScrollbarGain});
+    this._scrollbarReferences[pc.ORIENTATION_VERTICAL] = new pc.EntityReference(this, "verticalScrollbarEntity", {"scrollbar#set:value":this._onSetVerticalScrollbarValue, "scrollbar#gain":this._onVerticalScrollbarGain});
+    this._scroll = new pc.Vec2;
+    this._velocity = new pc.Vec3;
+    this._toggleLifecycleListeners("on", system);
+    this._toggleElementListeners("on");
+  };
+  ScrollViewComponent.prototype = Object.create(pc.Component.prototype);
+  ScrollViewComponent.prototype.constructor = ScrollViewComponent;
+  Object.assign(ScrollViewComponent.prototype, {_toggleLifecycleListeners:function(onOrOff, system) {
+    this[onOrOff]("set_horizontal", this._onSetHorizontalScrollingEnabled, this);
+    this[onOrOff]("set_vertical", this._onSetVerticalScrollingEnabled, this);
+    pc.ComponentSystem[onOrOff]("update", this._onUpdate, this);
+    system.app.systems.element[onOrOff]("add", this._onElementComponentAdd, this);
+    system.app.systems.element[onOrOff]("beforeremove", this._onElementComponentRemove, this);
+  }, _toggleElementListeners:function(onOrOff) {
+    if (this.entity.element) {
+      if (onOrOff === "on" && this._hasElementListeners) {
+        return;
+      }
+      this.entity.element[onOrOff]("resize", this._onSetContentOrViewportSize, this);
+      this._hasElementListeners = onOrOff === "on";
+    }
+  }, _onElementComponentAdd:function(entity) {
+    if (this.entity === entity) {
+      this._toggleElementListeners("on");
+    }
+  }, _onElementComponentRemove:function(entity) {
+    if (this.entity === entity) {
+      this._toggleElementListeners("off");
+    }
+  }, _onViewportElementGain:function() {
+    this._syncAll();
+  }, _onContentElementGain:function() {
+    this._destroyDragHelper();
+    this._contentDragHelper = new pc.ElementDragHelper(this._contentReference.entity.element);
+    this._contentDragHelper.on("drag:end", this._onContentDragEnd, this);
+    this._contentDragHelper.on("drag:move", this._onContentDragMove, this);
+    this._syncAll();
+  }, _onContentElementLose:function() {
+    this._destroyDragHelper();
+  }, _onContentDragEnd:function() {
+    this._prevContentDragPosition = null;
+  }, _onContentDragMove:function(position) {
+    if (this._contentReference.entity && this.enabled && this.entity.enabled) {
+      this._setScrollFromContentPosition(position);
+      this._setVelocityFromContentPositionDelta(position);
+    }
+  }, _onSetContentOrViewportSize:function() {
+    this._syncAll();
+  }, _onSetHorizontalScrollbarValue:function(scrollValueX) {
+    if (!this._scrollbarUpdateFlags[pc.ORIENTATION_HORIZONTAL] && this.enabled && this.entity.enabled) {
+      this._velocity.set(0, 0, 0);
+      this._onSetScroll(scrollValueX, null);
+    }
+  }, _onSetVerticalScrollbarValue:function(scrollValueY) {
+    if (!this._scrollbarUpdateFlags[pc.ORIENTATION_VERTICAL] && this.enabled && this.entity.enabled) {
+      this._velocity.set(0, 0, 0);
+      this._onSetScroll(null, scrollValueY);
+    }
+  }, _onSetHorizontalScrollingEnabled:function() {
+    this._syncScrollbarEnabledState(pc.ORIENTATION_HORIZONTAL);
+  }, _onSetVerticalScrollingEnabled:function() {
+    this._syncScrollbarEnabledState(pc.ORIENTATION_VERTICAL);
+  }, _onHorizontalScrollbarGain:function() {
+    this._syncScrollbarEnabledState(pc.ORIENTATION_HORIZONTAL);
+    this._syncScrollbarPosition(pc.ORIENTATION_HORIZONTAL);
+  }, _onVerticalScrollbarGain:function() {
+    this._syncScrollbarEnabledState(pc.ORIENTATION_VERTICAL);
+    this._syncScrollbarPosition(pc.ORIENTATION_VERTICAL);
+  }, _onSetScroll:function(x, y) {
+    var hasChanged = false;
+    hasChanged |= this._updateAxis(x, "x", pc.ORIENTATION_HORIZONTAL);
+    hasChanged |= this._updateAxis(y, "y", pc.ORIENTATION_VERTICAL);
+    if (hasChanged) {
+      this.fire("set:scroll", this._scroll);
+    }
+  }, _updateAxis:function(scrollValue, axis, orientation) {
+    var hasChanged = scrollValue !== null && Math.abs(scrollValue - this._scroll[axis]) > 1e-5;
+    if (hasChanged) {
+      this._scroll[axis] = this._determineNewScrollValue(scrollValue, axis, orientation);
+      this._syncContentPosition(orientation);
+      this._syncScrollbarPosition(orientation);
+    }
+    return hasChanged;
+  }, _determineNewScrollValue:function(scrollValue, axis, orientation) {
+    if (!this._getScrollingEnabled(orientation)) {
+      return this._scroll[axis];
+    }
+    switch(this.scrollMode) {
+      case pc.SCROLL_MODE_CLAMP:
+        return pc.math.clamp(scrollValue, 0, this._getMaxScrollValue(orientation));
+      case pc.SCROLL_MODE_BOUNCE:
+        this._setVelocityFromOvershoot(scrollValue, axis, orientation);
+        return scrollValue;
+      case pc.SCROLL_MODE_INFINITE:
+        return scrollValue;
+      default:
+        console.warn("Unhandled scroll mode:" + this.scrollMode);
+        return scrollValue;
+    }
+  }, _syncAll:function() {
+    this._syncContentPosition(pc.ORIENTATION_HORIZONTAL);
+    this._syncContentPosition(pc.ORIENTATION_VERTICAL);
+    this._syncScrollbarPosition(pc.ORIENTATION_HORIZONTAL);
+    this._syncScrollbarPosition(pc.ORIENTATION_VERTICAL);
+    this._syncScrollbarEnabledState(pc.ORIENTATION_HORIZONTAL);
+    this._syncScrollbarEnabledState(pc.ORIENTATION_VERTICAL);
+  }, _syncContentPosition:function(orientation) {
+    var axis = this._getAxis(orientation);
+    var sign = this._getSign(orientation);
+    var contentEntity = this._contentReference.entity;
+    if (contentEntity) {
+      var offset = this._scroll[axis] * this._getMaxOffset(orientation);
+      var contentPosition = contentEntity.getLocalPosition();
+      contentPosition[axis] = offset * sign;
+      contentEntity.setLocalPosition(contentPosition);
+    }
+  }, _syncScrollbarPosition:function(orientation) {
+    var axis = this._getAxis(orientation);
+    var scrollbarEntity = this._scrollbarReferences[orientation].entity;
+    if (scrollbarEntity && scrollbarEntity.scrollbar) {
+      this._scrollbarUpdateFlags[orientation] = true;
+      scrollbarEntity.scrollbar.value = this._scroll[axis];
+      scrollbarEntity.scrollbar.handleSize = this._getScrollbarHandleSize(axis, orientation);
+      this._scrollbarUpdateFlags[orientation] = false;
+    }
+  }, _syncScrollbarEnabledState:function(orientation) {
+    var entity = this._scrollbarReferences[orientation].entity;
+    if (entity) {
+      var isScrollingEnabled = this._getScrollingEnabled(orientation);
+      var requestedVisibility = this._getScrollbarVisibility(orientation);
+      switch(requestedVisibility) {
+        case pc.SCROLLBAR_VISIBILITY_SHOW_ALWAYS:
+          entity.enabled = isScrollingEnabled;
+          return;
+        case pc.SCROLLBAR_VISIBILITY_SHOW_WHEN_REQUIRED:
+          entity.enabled = isScrollingEnabled && this._contentIsLargerThanViewport(orientation);
+          return;
+        default:
+          console.warn("Unhandled scrollbar visibility:" + requestedVisibility);
+          entity.enabled = isScrollingEnabled;
+      }
+    }
+  }, _contentIsLargerThanViewport:function(orientation) {
+    return this._getContentSize(orientation) > this._getViewportSize(orientation);
+  }, _contentPositionToScrollValue:function(contentPosition) {
+    return _tempScrollValue.set(contentPosition.x / this._getMaxOffset(pc.ORIENTATION_HORIZONTAL), contentPosition.y / -this._getMaxOffset(pc.ORIENTATION_VERTICAL));
+  }, _getMaxOffset:function(orientation) {
+    var viewportSize = this._getViewportSize(orientation);
+    var contentSize = this._getContentSize(orientation);
+    if (contentSize < viewportSize) {
+      return -this._getViewportSize(orientation);
+    }
+    return viewportSize - contentSize;
+  }, _getMaxScrollValue:function(orientation) {
+    return this._contentIsLargerThanViewport(orientation) ? 1 : 0;
+  }, _getScrollbarHandleSize:function(axis, orientation) {
+    var viewportSize = this._getViewportSize(orientation);
+    var contentSize = this._getContentSize(orientation);
+    if (Math.abs(contentSize) < 0.001) {
+      return 1;
+    }
+    var handleSize = Math.min(viewportSize / contentSize, 1);
+    var overshoot = this._toOvershoot(this._scroll[axis], orientation);
+    if (overshoot === 0) {
+      return handleSize;
+    }
+    return handleSize / (1 + Math.abs(overshoot));
+  }, _getViewportSize:function(orientation) {
+    return this._getSize(orientation, this._viewportReference);
+  }, _getContentSize:function(orientation) {
+    return this._getSize(orientation, this._contentReference);
+  }, _getSize:function(orientation, entityReference) {
+    if (entityReference.entity && entityReference.entity.element) {
+      return entityReference.entity.element[this._getCalculatedDimension(orientation)];
+    }
+    return 0;
+  }, _getScrollingEnabled:function(orientation) {
+    if (orientation === pc.ORIENTATION_HORIZONTAL) {
+      return this.horizontal;
+    } else {
+      if (orientation === pc.ORIENTATION_VERTICAL) {
+        return this.vertical;
+      }
+    }
+    console.warn("Unrecognized orientation: " + orientation);
+  }, _getScrollbarVisibility:function(orientation) {
+    if (orientation === pc.ORIENTATION_HORIZONTAL) {
+      return this.horizontalScrollbarVisibility;
+    } else {
+      if (orientation === pc.ORIENTATION_VERTICAL) {
+        return this.verticalScrollbarVisibility;
+      }
+    }
+    console.warn("Unrecognized orientation: " + orientation);
+  }, _getSign:function(orientation) {
+    return orientation === pc.ORIENTATION_HORIZONTAL ? 1 : -1;
+  }, _getAxis:function(orientation) {
+    return orientation === pc.ORIENTATION_HORIZONTAL ? "x" : "y";
+  }, _getCalculatedDimension:function(orientation) {
+    return orientation === pc.ORIENTATION_HORIZONTAL ? "calculatedWidth" : "calculatedHeight";
+  }, _destroyDragHelper:function() {
+    if (this._contentDragHelper) {
+      this._contentDragHelper.destroy();
+    }
+  }, _onUpdate:function() {
+    if (this._contentReference.entity && this.enabled && this.entity.enabled) {
+      this._updateVelocity();
+      this._syncScrollbarEnabledState(pc.ORIENTATION_HORIZONTAL);
+      this._syncScrollbarEnabledState(pc.ORIENTATION_VERTICAL);
+    }
+  }, _updateVelocity:function() {
+    if (!this._isDragging()) {
+      if (this.scrollMode === pc.SCROLL_MODE_BOUNCE) {
+        if (this._hasOvershoot("x", pc.ORIENTATION_HORIZONTAL)) {
+          this._setVelocityFromOvershoot(this.scroll.x, "x", pc.ORIENTATION_HORIZONTAL);
+        }
+        if (this._hasOvershoot("y", pc.ORIENTATION_VERTICAL)) {
+          this._setVelocityFromOvershoot(this.scroll.y, "y", pc.ORIENTATION_VERTICAL);
+        }
+      }
+      this._velocity.data[0] *= 1 - this.friction;
+      this._velocity.data[1] *= 1 - this.friction;
+      if (Math.abs(this._velocity.x) > 1e-4 || Math.abs(this._velocity.y) > 1e-4) {
+        var position = this._contentReference.entity.getLocalPosition();
+        position.x += this._velocity.data[0];
+        position.y += this._velocity.data[1];
+        this._contentReference.entity.setLocalPosition(position);
+        this._setScrollFromContentPosition(position);
+      }
+    }
+  }, _hasOvershoot:function(axis, orientation) {
+    return Math.abs(this._toOvershoot(this.scroll[axis], orientation)) > 0.001;
+  }, _toOvershoot:function(scrollValue, orientation) {
+    var maxScrollValue = this._getMaxScrollValue(orientation);
+    if (scrollValue < 0) {
+      return scrollValue;
+    } else {
+      if (scrollValue > maxScrollValue) {
+        return scrollValue - maxScrollValue;
+      }
+    }
+    return 0;
+  }, _setVelocityFromOvershoot:function(scrollValue, axis, orientation) {
+    var overshootValue = this._toOvershoot(scrollValue, orientation);
+    var overshootPixels = overshootValue * this._getMaxOffset(orientation) * this._getSign(orientation);
+    if (Math.abs(overshootPixels) > 0) {
+      this._velocity[axis] = -overshootPixels / (this.bounceAmount * 50 + 1);
+    }
+  }, _setVelocityFromContentPositionDelta:function(position) {
+    if (this._prevContentDragPosition) {
+      this._velocity.sub2(position, this._prevContentDragPosition);
+      this._prevContentDragPosition.copy(position);
+    } else {
+      this._velocity.set(0, 0, 0);
+      this._prevContentDragPosition = position.clone();
+    }
+  }, _setScrollFromContentPosition:function(position) {
+    var scrollValue = this._contentPositionToScrollValue(position);
+    this._onSetScroll(scrollValue.x, scrollValue.y);
+  }, _isDragging:function() {
+    return this._contentDragHelper && this._contentDragHelper.isDragging;
+  }, _setScrollbarComponentsEnabled:function(enabled) {
+    if (this._scrollbarReferences[pc.ORIENTATION_HORIZONTAL].hasComponent("scrollbar")) {
+      this._scrollbarReferences[pc.ORIENTATION_HORIZONTAL].entity.scrollbar.enabled = enabled;
+    }
+    if (this._scrollbarReferences[pc.ORIENTATION_VERTICAL].hasComponent("scrollbar")) {
+      this._scrollbarReferences[pc.ORIENTATION_VERTICAL].entity.scrollbar.enabled = enabled;
+    }
+  }, _setContentDraggingEnabled:function(enabled) {
+    if (this._contentDragHelper) {
+      this._contentDragHelper.enabled = enabled;
+    }
+  }, onEnable:function() {
+    this._setScrollbarComponentsEnabled(true);
+    this._setContentDraggingEnabled(true);
+    this._syncAll();
+  }, onDisable:function() {
+    this._setScrollbarComponentsEnabled(false);
+    this._setContentDraggingEnabled(false);
+  }, onRemove:function() {
+    this._toggleLifecycleListeners("off", this.system);
+    this._toggleElementListeners("off");
+    this._destroyDragHelper();
+  }});
+  Object.defineProperty(ScrollViewComponent.prototype, "scroll", {get:function() {
+    return this._scroll;
+  }, set:function(value) {
+    this._onSetScroll(value.x, value.y);
+  }});
+  return {ScrollViewComponent:ScrollViewComponent};
+}());
+Object.assign(pc, function() {
+  var _schema = [{name:"enabled", type:"boolean"}, {name:"horizontal", type:"boolean"}, {name:"vertical", type:"boolean"}, {name:"scrollMode", type:"number"}, {name:"bounceAmount", type:"number"}, {name:"friction", type:"number"}, {name:"horizontalScrollbarVisibility", type:"number"}, {name:"verticalScrollbarVisibility", type:"number"}, {name:"viewportEntity", type:"entity"}, {name:"contentEntity", type:"entity"}, {name:"horizontalScrollbarEntity", type:"entity"}, {name:"verticalScrollbarEntity", 
+  type:"entity"}];
+  var ScrollViewComponentSystem = function ScrollViewComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
+    this.id = "scrollview";
+    this.app = app;
+    app.systems.add(this.id, this);
+    this.ComponentType = pc.ScrollViewComponent;
+    this.DataType = pc.ScrollViewComponentData;
+    this.schema = _schema;
+    this.on("beforeremove", this._onRemoveComponent, this);
+  };
+  ScrollViewComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  ScrollViewComponentSystem.prototype.constructor = ScrollViewComponentSystem;
+  pc.Component._buildAccessors(pc.ScrollViewComponent.prototype, _schema);
+  Object.assign(ScrollViewComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, _schema);
+  }, _onRemoveComponent:function(entity, component) {
+    component.onRemove();
+  }});
+  return {ScrollViewComponentSystem:ScrollViewComponentSystem};
+}());
+Object.assign(pc, function() {
+  var ScrollViewComponentData = function() {
+    this.enabled = true;
+  };
+  return {ScrollViewComponentData:ScrollViewComponentData};
+}());
+Object.assign(pc, function() {
+  var ScrollbarComponent = function ScrollbarComponent(system, entity) {
+    pc.Component.call(this, system, entity);
+    this._app = system.app;
+    this._handleReference = new pc.EntityReference(this, "handleEntity", {"element#gain":this._onHandleElementGain, "element#lose":this._onHandleElementLose, "element#set:anchor":this._onSetHandleAlignment, "element#set:margin":this._onSetHandleAlignment, "element#set:pivot":this._onSetHandleAlignment});
+    this._toggleLifecycleListeners("on");
+  };
+  ScrollbarComponent.prototype = Object.create(pc.Component.prototype);
+  ScrollbarComponent.prototype.constructor = ScrollbarComponent;
+  Object.assign(ScrollbarComponent.prototype, {_toggleLifecycleListeners:function(onOrOff) {
+    this[onOrOff]("set_value", this._onSetValue, this);
+    this[onOrOff]("set_handleSize", this._onSetHandleSize, this);
+    this[onOrOff]("set_orientation", this._onSetOrientation, this);
+  }, _onHandleElementGain:function() {
+    this._destroyDragHelper();
+    this._handleDragHelper = new pc.ElementDragHelper(this._handleReference.entity.element, this._getAxis());
+    this._handleDragHelper.on("drag:move", this._onHandleDrag, this);
+    this._updateHandlePositionAndSize();
+  }, _onHandleElementLose:function() {
+    this._destroyDragHelper();
+  }, _onHandleDrag:function(position) {
+    if (this._handleReference.entity && this.enabled && this.entity.enabled) {
+      this.value = this._handlePositionToScrollValue(position[this._getAxis()]);
+    }
+  }, _onSetValue:function(name, oldValue, newValue) {
+    if (Math.abs(newValue - oldValue) > 1e-5) {
+      this.data.value = pc.math.clamp(newValue, 0, 1);
+      this._updateHandlePositionAndSize();
+      this.fire("set:value", this.data.value);
+    }
+  }, _onSetHandleSize:function(name, oldValue, newValue) {
+    if (Math.abs(newValue - oldValue) > 1e-5) {
+      this.data.handleSize = pc.math.clamp(newValue, 0, 1);
+      this._updateHandlePositionAndSize();
+    }
+  }, _onSetHandleAlignment:function() {
+    this._updateHandlePositionAndSize();
+  }, _onSetOrientation:function(name, oldValue, newValue) {
+    if (newValue !== oldValue && this._handleReference.hasComponent("element")) {
+      this._handleReference.entity.element[this._getOppositeDimension()] = 0;
+    }
+  }, _updateHandlePositionAndSize:function() {
+    var handleEntity = this._handleReference.entity;
+    var handleElement = handleEntity && handleEntity.element;
+    if (handleEntity) {
+      var position = handleEntity.getLocalPosition();
+      position[this._getAxis()] = this._getHandlePosition();
+      this._handleReference.entity.setLocalPosition(position);
+    }
+    if (handleElement) {
+      handleElement[this._getDimension()] = this._getHandleLength();
+    }
+  }, _handlePositionToScrollValue:function(handlePosition) {
+    return handlePosition * this._getSign() / this._getUsableTrackLength();
+  }, _scrollValueToHandlePosition:function(value) {
+    return value * this._getSign() * this._getUsableTrackLength();
+  }, _getUsableTrackLength:function() {
+    return Math.max(this._getTrackLength() - this._getHandleLength(), 0.001);
+  }, _getTrackLength:function() {
+    if (this.entity.element) {
+      return this.orientation === pc.ORIENTATION_HORIZONTAL ? this.entity.element.calculatedWidth : this.entity.element.calculatedHeight;
+    }
+    return 0;
+  }, _getHandleLength:function() {
+    return this._getTrackLength() * this.handleSize;
+  }, _getHandlePosition:function() {
+    return this._scrollValueToHandlePosition(this.value);
+  }, _getSign:function() {
+    return this.orientation === pc.ORIENTATION_HORIZONTAL ? 1 : -1;
+  }, _getAxis:function() {
+    return this.orientation === pc.ORIENTATION_HORIZONTAL ? "x" : "y";
+  }, _getDimension:function() {
+    return this.orientation === pc.ORIENTATION_HORIZONTAL ? "width" : "height";
+  }, _getOppositeDimension:function() {
+    return this.orientation === pc.ORIENTATION_HORIZONTAL ? "height" : "width";
+  }, _destroyDragHelper:function() {
+    if (this._handleDragHelper) {
+      this._handleDragHelper.destroy();
+    }
+  }, _setHandleDraggingEnabled:function(enabled) {
+    if (this._handleDragHelper) {
+      this._handleDragHelper.enabled = enabled;
+    }
+  }, onEnable:function() {
+    this._setHandleDraggingEnabled(true);
+  }, onDisable:function() {
+    this._setHandleDraggingEnabled(false);
+  }, onRemove:function() {
+    this._destroyDragHelper();
+    this._toggleLifecycleListeners("off");
+  }});
+  return {ScrollbarComponent:ScrollbarComponent};
+}());
+Object.assign(pc, function() {
+  var _schema = [{name:"enabled", type:"boolean"}, {name:"orientation", type:"number"}, {name:"value", type:"number"}, {name:"handleSize", type:"number"}, {name:"handleEntity", type:"entity"}];
+  var ScrollbarComponentSystem = function ScrollbarComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
+    this.id = "scrollbar";
+    this.app = app;
+    app.systems.add(this.id, this);
+    this.ComponentType = pc.ScrollbarComponent;
+    this.DataType = pc.ScrollbarComponentData;
+    this.schema = _schema;
+    this.on("beforeremove", this._onRemoveComponent, this);
+  };
+  ScrollbarComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  ScrollbarComponentSystem.prototype.constructor = ScrollbarComponentSystem;
+  pc.Component._buildAccessors(pc.ScrollbarComponent.prototype, _schema);
+  Object.assign(ScrollbarComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, _schema);
+  }, _onRemoveComponent:function(entity, component) {
+    component.onRemove();
+  }});
+  return {ScrollbarComponentSystem:ScrollbarComponentSystem};
+}());
+Object.assign(pc, function() {
+  var ScrollbarComponentData = function() {
+    this.enabled = true;
+  };
+  return {ScrollbarComponentData:ScrollbarComponentData};
+}());
+Object.assign(pc, {FITTING_NONE:0, FITTING_STRETCH:1, FITTING_SHRINK:2, FITTING_BOTH:3});
+Object.assign(pc, function() {
+  var LayoutGroupComponent = function LayoutGroupComponent(system, entity) {
+    pc.Component.call(this, system, entity);
+    this._orientation = pc.ORIENTATION_HORIZONTAL;
+    this._reverseX = false;
+    this._reverseY = true;
+    this._alignment = new pc.Vec2(0, 1);
+    this._padding = new pc.Vec4;
+    this._spacing = new pc.Vec2;
+    this._widthFitting = pc.FITTING_NONE;
+    this._heightFitting = pc.FITTING_NONE;
+    this._wrap = false;
+    this._layoutCalculator = new pc.LayoutCalculator;
+    this._listenForReflowEvents(this.entity, "on");
+    this.entity.children.forEach(function(child) {
+      this._listenForReflowEvents(child, "on");
+    }.bind(this));
+    this.entity.on("childinsert", this._onChildInsert, this);
+    this.entity.on("childremove", this._onChildRemove, this);
+    system.app.systems.element.on("add", this._onElementOrLayoutComponentAdd, this);
+    system.app.systems.element.on("beforeremove", this._onElementOrLayoutComponentRemove, this);
+    system.app.systems.layoutchild.on("add", this._onElementOrLayoutComponentAdd, this);
+    system.app.systems.layoutchild.on("beforeremove", this._onElementOrLayoutComponentRemove, this);
+  };
+  LayoutGroupComponent.prototype = Object.create(pc.Component.prototype);
+  LayoutGroupComponent.prototype.constructor = LayoutGroupComponent;
+  Object.assign(LayoutGroupComponent.prototype, {_isSelfOrChild:function(entity) {
+    return entity === this.entity || this.entity.children.indexOf(entity) !== -1;
+  }, _listenForReflowEvents:function(target, onOff) {
+    if (target.element) {
+      target.element[onOff]("enableelement", this._scheduleReflow, this);
+      target.element[onOff]("disableelement", this._scheduleReflow, this);
+      target.element[onOff]("resize", this._scheduleReflow, this);
+      target.element[onOff]("set:pivot", this._scheduleReflow, this);
+    }
+    if (target.layoutchild) {
+      target.layoutchild[onOff]("set_enabled", this._scheduleReflow, this);
+      target.layoutchild[onOff]("resize", this._scheduleReflow, this);
+    }
+  }, _onElementOrLayoutComponentAdd:function(entity) {
+    if (this._isSelfOrChild(entity)) {
+      this._listenForReflowEvents(entity, "on");
+      this._scheduleReflow();
+    }
+  }, _onElementOrLayoutComponentRemove:function(entity) {
+    if (this._isSelfOrChild(entity)) {
+      this._listenForReflowEvents(entity, "off");
+      this._scheduleReflow();
+    }
+  }, _onChildInsert:function(child) {
+    this._listenForReflowEvents(child, "on");
+    this._scheduleReflow();
+  }, _onChildRemove:function(child) {
+    this._listenForReflowEvents(child, "off");
+    this._scheduleReflow();
+  }, _scheduleReflow:function() {
+    if (this.enabled && this.entity && this.entity.enabled && !this._isPerformingReflow) {
+      this.system.scheduleReflow(this);
+    }
+  }, reflow:function() {
+    var container = getElement(this.entity);
+    var elements = this.entity.children.filter(isEnabledAndHasEnabledElement).map(getElement);
+    if (!container || elements.length === 0) {
+      return;
+    }
+    var containerWidth = Math.max(container.calculatedWidth, 0);
+    var containerHeight = Math.max(container.calculatedHeight, 0);
+    var options = {orientation:this._orientation, reverseX:this._reverseX, reverseY:this._reverseY, alignment:this._alignment, padding:this._padding, spacing:this._spacing, widthFitting:this._widthFitting, heightFitting:this._heightFitting, wrap:this._wrap, containerSize:new pc.Vec2(containerWidth, containerHeight)};
+    this._isPerformingReflow = true;
+    var layoutInfo = this._layoutCalculator.calculateLayout(elements, options);
+    this._isPerformingReflow = false;
+    this.fire("reflow", layoutInfo);
+  }, onEnable:function() {
+    this._scheduleReflow();
+  }, onRemove:function() {
+    this.entity.off("childinsert", this._onChildInsert, this);
+    this.entity.off("childremove", this._onChildRemove, this);
+    this._listenForReflowEvents(this.entity, "off");
+    this.entity.children.forEach(function(child) {
+      this._listenForReflowEvents(child, "off");
+    }.bind(this));
+    this.system.app.systems.element.off("add", this._onElementOrLayoutComponentAdd, this);
+    this.system.app.systems.element.off("beforeremove", this._onElementOrLayoutComponentRemove, this);
+    this.system.app.systems.layoutchild.off("add", this._onElementOrLayoutComponentAdd, this);
+    this.system.app.systems.layoutchild.off("beforeremove", this._onElementOrLayoutComponentRemove, this);
+  }});
+  function getElement(entity) {
+    return entity.element;
+  }
+  function isEnabledAndHasEnabledElement(entity) {
+    return entity.enabled && entity.element && entity.element.enabled;
+  }
+  function defineReflowSchedulingProperty(name) {
+    var _name = "_" + name;
+    Object.defineProperty(LayoutGroupComponent.prototype, name, {get:function() {
+      return this[_name];
+    }, set:function(value) {
+      if (this[_name] !== value) {
+        this[_name] = value;
+        this._scheduleReflow();
+      }
+    }});
+  }
+  defineReflowSchedulingProperty("orientation");
+  defineReflowSchedulingProperty("reverseX");
+  defineReflowSchedulingProperty("reverseY");
+  defineReflowSchedulingProperty("alignment");
+  defineReflowSchedulingProperty("padding");
+  defineReflowSchedulingProperty("spacing");
+  defineReflowSchedulingProperty("widthFitting");
+  defineReflowSchedulingProperty("heightFitting");
+  defineReflowSchedulingProperty("wrap");
+  return {LayoutGroupComponent:LayoutGroupComponent};
+}());
+Object.assign(pc, function() {
+  var _schema = ["enabled"];
+  var LayoutGroupComponentSystem = function LayoutGroupComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
+    this.id = "layoutgroup";
+    this.app = app;
+    app.systems.add(this.id, this);
+    this.ComponentType = pc.LayoutGroupComponent;
+    this.DataType = pc.LayoutGroupComponentData;
+    this.schema = _schema;
+    this._reflowQueue = [];
+    this.on("beforeremove", this._onRemoveComponent, this);
+    pc.ComponentSystem.on("postUpdate", this._onPostUpdate, this);
+  };
+  LayoutGroupComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  LayoutGroupComponentSystem.prototype.constructor = LayoutGroupComponentSystem;
+  pc.Component._buildAccessors(pc.LayoutGroupComponent.prototype, _schema);
+  Object.assign(LayoutGroupComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
+    if (data.enabled !== undefined) {
+      component.enabled = data.enabled;
+    }
+    if (data.orientation !== undefined) {
+      component.orientation = data.orientation;
+    }
+    if (data.reverseX !== undefined) {
+      component.reverseX = data.reverseX;
+    }
+    if (data.reverseY !== undefined) {
+      component.reverseY = data.reverseY;
+    }
+    if (data.alignment !== undefined) {
+      if (data.alignment instanceof pc.Vec2) {
+        component.alignment.copy(data.alignment);
+      } else {
+        component.alignment.set(data.alignment[0], data.alignment[1]);
+      }
+      component.alignment = component.alignment;
+    }
+    if (data.padding !== undefined) {
+      if (data.padding instanceof pc.Vec4) {
+        component.padding.copy(data.padding);
+      } else {
+        component.padding.set(data.padding[0], data.padding[1], data.padding[2], data.padding[3]);
+      }
+      component.padding = component.padding;
+    }
+    if (data.spacing !== undefined) {
+      if (data.spacing instanceof pc.Vec2) {
+        component.spacing.copy(data.spacing);
+      } else {
+        component.spacing.set(data.spacing[0], data.spacing[1]);
+      }
+      component.spacing = component.spacing;
+    }
+    if (data.widthFitting !== undefined) {
+      component.widthFitting = data.widthFitting;
+    }
+    if (data.heightFitting !== undefined) {
+      component.heightFitting = data.heightFitting;
+    }
+    if (data.wrap !== undefined) {
+      component.wrap = data.wrap;
+    }
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, properties);
+  }, cloneComponent:function(entity, clone) {
+    var layoutGroup = entity.layoutgroup;
+    return this.addComponent(clone, {enabled:layoutGroup.enabled, orientation:layoutGroup.orientation, reverseX:layoutGroup.reverseX, reverseY:layoutGroup.reverseY, alignment:layoutGroup.alignment, padding:layoutGroup.padding, spacing:layoutGroup.spacing, widthFitting:layoutGroup.widthFitting, heightFitting:layoutGroup.heightFitting, wrap:layoutGroup.wrap});
+  }, scheduleReflow:function(component) {
+    if (this._reflowQueue.indexOf(component) === -1) {
+      this._reflowQueue.push(component);
+    }
+  }, _onPostUpdate:function() {
+    this._processReflowQueue();
+  }, _processReflowQueue:function() {
+    if (this._reflowQueue.length === 0) {
+      return;
+    }
+    this._reflowQueue.sort(function(componentA, componentB) {
+      return componentA.entity.graphDepth < componentB.entity.graphDepth;
+    });
+    while (this._reflowQueue.length > 0) {
+      this._reflowQueue[0].reflow();
+      this._reflowQueue.shift();
+    }
+    this._reflowQueue = [];
+  }, _onRemoveComponent:function(entity, component) {
+    component.onRemove();
+  }});
+  return {LayoutGroupComponentSystem:LayoutGroupComponentSystem};
+}());
+Object.assign(pc, function() {
+  var LayoutGroupComponentData = function() {
+    this.enabled = true;
+  };
+  return {LayoutGroupComponentData:LayoutGroupComponentData};
+}());
+Object.assign(pc, function() {
+  function LayoutCalculator() {
+  }
+  var AXIS_MAPPINGS = {};
+  AXIS_MAPPINGS[pc.ORIENTATION_HORIZONTAL] = {axis:"x", size:"width", calculatedSize:"calculatedWidth", minSize:"minWidth", maxSize:"maxWidth", fitting:"widthFitting", fittingProportion:"fitWidthProportion"};
+  AXIS_MAPPINGS[pc.ORIENTATION_VERTICAL] = {axis:"y", size:"height", calculatedSize:"calculatedHeight", minSize:"minHeight", maxSize:"maxHeight", fitting:"heightFitting", fittingProportion:"fitHeightProportion"};
+  var OPPOSITE_ORIENTATION = {};
+  OPPOSITE_ORIENTATION[pc.ORIENTATION_HORIZONTAL] = pc.ORIENTATION_VERTICAL;
+  OPPOSITE_ORIENTATION[pc.ORIENTATION_VERTICAL] = pc.ORIENTATION_HORIZONTAL;
+  var PROPERTY_DEFAULTS = {minWidth:0, minHeight:0, maxWidth:Number.POSITIVE_INFINITY, maxHeight:Number.POSITIVE_INFINITY, width:null, height:null, fitWidthProportion:0, fitHeightProportion:0};
+  var FITTING_ACTION = {NONE:"NONE", APPLY_STRETCHING:"APPLY_STRETCHING", APPLY_SHRINKING:"APPLY_SHRINKING"};
+  var availableSpace = new pc.Vec2;
+  function createCalculator(orientation) {
+    var options;
+    var a = AXIS_MAPPINGS[orientation];
+    var b = AXIS_MAPPINGS[OPPOSITE_ORIENTATION[orientation]];
+    function minExtentA(element, size) {
+      return -size[a.size] * element.pivot[a.axis];
+    }
+    function minExtentB(element, size) {
+      return -size[b.size] * element.pivot[b.axis];
+    }
+    function maxExtentA(element, size) {
+      return size[a.size] * (1 - element.pivot[a.axis]);
+    }
+    function maxExtentB(element, size) {
+      return size[b.size] * (1 - element.pivot[b.axis]);
+    }
+    function calculateAll(allElements, layoutOptions) {
+      allElements = allElements.filter(shouldIncludeInLayout);
+      options = layoutOptions;
+      availableSpace.x = options.containerSize.x - options.padding.data[0] - options.padding.data[2];
+      availableSpace.y = options.containerSize.y - options.padding.data[1] - options.padding.data[3];
+      resetAnchors(allElements);
+      var lines = reverseLinesIfRequired(splitLines(allElements));
+      var sizes = calculateSizesOnAxisB(lines, calculateSizesOnAxisA(lines));
+      var positions = calculateBasePositions(lines, sizes);
+      applyAlignmentAndPadding(lines, sizes, positions);
+      applySizesAndPositions(lines, sizes, positions);
+      return createLayoutInfo(lines, sizes, positions);
+    }
+    function shouldIncludeInLayout(element) {
+      var layoutChildComponent = element.entity.layoutchild;
+      return !layoutChildComponent || !layoutChildComponent.enabled || !layoutChildComponent.excludeFromLayout;
+    }
+    function resetAnchors(allElements) {
+      for (var i = 0;i < allElements.length;++i) {
+        var element = allElements[i];
+        var anchor = element.anchor.data;
+        if (anchor[0] !== 0 || anchor[1] !== 0 || anchor[2] !== 0 || anchor[3] !== 0) {
+          element.anchor = [0, 0, 0, 0];
+        }
+      }
+    }
+    function splitLines(allElements) {
+      if (!options.wrap) {
+        return [allElements];
+      }
+      var lines = [[]];
+      var sizes = getElementSizeProperties(allElements);
+      var runningSize = 0;
+      var allowOverrun = options[a.fitting] === pc.FITTING_SHRINK;
+      for (var i = 0;i < allElements.length;++i) {
+        if (lines[lines.length - 1].length > 0) {
+          runningSize += options.spacing[a.axis];
+        }
+        var idealElementSize = sizes[i][a.size];
+        runningSize += idealElementSize;
+        if (!allowOverrun && runningSize > availableSpace[a.axis] && lines[lines.length - 1].length !== 0) {
+          runningSize = idealElementSize;
+          lines.push([]);
+        }
+        lines[lines.length - 1].push(allElements[i]);
+        if (allowOverrun && runningSize > availableSpace[a.axis] && i !== allElements.length - 1) {
+          runningSize = 0;
+          lines.push([]);
+        }
+      }
+      return lines;
+    }
+    function reverseLinesIfRequired(lines) {
+      var reverseAxisA = options.orientation === pc.ORIENTATION_HORIZONTAL && options.reverseX || options.orientation === pc.ORIENTATION_VERTICAL && options.reverseY;
+      var reverseAxisB = options.orientation === pc.ORIENTATION_HORIZONTAL && options.reverseY || options.orientation === pc.ORIENTATION_VERTICAL && options.reverseX;
+      if (reverseAxisA) {
+        for (var lineIndex = 0;lineIndex < lines.length;++lineIndex) {
+          if (reverseAxisA) {
+            lines[lineIndex].reverse();
+          }
+        }
+      }
+      if (reverseAxisB) {
+        lines.reverse();
+      }
+      return lines;
+    }
+    function calculateSizesOnAxisA(lines) {
+      var sizesAllLines = [];
+      for (var lineIndex = 0;lineIndex < lines.length;++lineIndex) {
+        var line = lines[lineIndex];
+        var sizesThisLine = getElementSizeProperties(line);
+        var idealRequiredSpace = calculateTotalSpace(sizesThisLine, a);
+        var fittingAction = determineFittingAction(options[a.fitting], idealRequiredSpace, availableSpace[a.axis]);
+        if (fittingAction === FITTING_ACTION.APPLY_STRETCHING) {
+          stretchSizesToFitContainer(sizesThisLine, idealRequiredSpace, a);
+        } else {
+          if (fittingAction === FITTING_ACTION.APPLY_SHRINKING) {
+            shrinkSizesToFitContainer(sizesThisLine, idealRequiredSpace, a);
+          }
+        }
+        sizesAllLines.push(sizesThisLine);
+      }
+      return sizesAllLines;
+    }
+    function calculateSizesOnAxisB(lines, sizesAllLines) {
+      var largestElementsForEachLine = [];
+      var largestSizesForEachLine = [];
+      var elementIndex;
+      var lineIndex;
+      var line;
+      for (lineIndex = 0;lineIndex < lines.length;++lineIndex) {
+        line = lines[lineIndex];
+        line.largestElement = null;
+        line.largestSize = {width:Number.NEGATIVE_INFINITY, height:Number.NEGATIVE_INFINITY};
+        for (elementIndex = 0;elementIndex < line.length;++elementIndex) {
+          var sizesThisElement = sizesAllLines[lineIndex][elementIndex];
+          if (sizesThisElement[b.size] > line.largestSize[b.size]) {
+            line.largestElement = line[elementIndex];
+            line.largestSize = sizesThisElement;
+          }
+        }
+        largestElementsForEachLine.push(line.largestElement);
+        largestSizesForEachLine.push(line.largestSize);
+      }
+      var idealRequiredSpace = calculateTotalSpace(largestSizesForEachLine, b);
+      var fittingAction = determineFittingAction(options[b.fitting], idealRequiredSpace, availableSpace[b.axis]);
+      if (fittingAction === FITTING_ACTION.APPLY_STRETCHING) {
+        stretchSizesToFitContainer(largestSizesForEachLine, idealRequiredSpace, b);
+      } else {
+        if (fittingAction === FITTING_ACTION.APPLY_SHRINKING) {
+          shrinkSizesToFitContainer(largestSizesForEachLine, idealRequiredSpace, b);
+        }
+      }
+      for (lineIndex = 0;lineIndex < lines.length;++lineIndex) {
+        line = lines[lineIndex];
+        for (elementIndex = 0;elementIndex < line.length;++elementIndex) {
+          var sizesForThisElement = sizesAllLines[lineIndex][elementIndex];
+          var currentSize = sizesForThisElement[b.size];
+          var availableSize = lines.length === 1 ? availableSpace[b.axis] : line.largestSize[b.size];
+          var elementFittingAction = determineFittingAction(options[b.fitting], currentSize, availableSize);
+          if (elementFittingAction === FITTING_ACTION.APPLY_STRETCHING) {
+            sizesForThisElement[b.size] = Math.min(availableSize, sizesForThisElement[b.maxSize]);
+          } else {
+            if (elementFittingAction === FITTING_ACTION.APPLY_SHRINKING) {
+              sizesForThisElement[b.size] = Math.max(availableSize, sizesForThisElement[b.minSize]);
+            }
+          }
+        }
+      }
+      return sizesAllLines;
+    }
+    function determineFittingAction(fittingMode, currentSize, availableSize) {
+      switch(fittingMode) {
+        case pc.FITTING_NONE:
+          return FITTING_ACTION.NONE;
+        case pc.FITTING_STRETCH:
+          if (currentSize < availableSize) {
+            return FITTING_ACTION.APPLY_STRETCHING;
+          }
+          return FITTING_ACTION.NONE;
+        case pc.FITTING_SHRINK:
+          if (currentSize >= availableSize) {
+            return FITTING_ACTION.APPLY_SHRINKING;
+          }
+          return FITTING_ACTION.NONE;
+        case pc.FITTING_BOTH:
+          if (currentSize < availableSize) {
+            return FITTING_ACTION.APPLY_STRETCHING;
+          } else {
+            if (currentSize >= availableSize) {
+              return FITTING_ACTION.APPLY_SHRINKING;
+            }
+          }
+          return FITTING_ACTION.NONE;
+        default:
+          throw new Error("Unrecognized fitting mode: " + fittingMode);
+      }
+    }
+    function calculateTotalSpace(sizes, axis) {
+      var totalSizes = sumValues(sizes, axis.size);
+      var totalSpacing = (sizes.length - 1) * options.spacing[axis.axis];
+      return totalSizes + totalSpacing;
+    }
+    function stretchSizesToFitContainer(sizesThisLine, idealRequiredSpace, axis) {
+      var ascendingMaxSizeOrder = getTraversalOrder(sizesThisLine, axis.maxSize);
+      var fittingProportions = getNormalizedValues(sizesThisLine, axis.fittingProportion);
+      var fittingProportionSums = createSumArray(fittingProportions, ascendingMaxSizeOrder);
+      var remainingUndershoot = availableSpace[axis.axis] - idealRequiredSpace;
+      for (var i = 0;i < sizesThisLine.length;++i) {
+        var index = ascendingMaxSizeOrder[i];
+        var targetIncrease = calculateAdjustment(index, remainingUndershoot, fittingProportions, fittingProportionSums);
+        var targetSize = sizesThisLine[index][axis.size] + targetIncrease;
+        var maxSize = sizesThisLine[index][axis.maxSize];
+        var actualSize = Math.min(targetSize, maxSize);
+        sizesThisLine[index][axis.size] = actualSize;
+        var actualIncrease = Math.max(targetSize - actualSize, 0);
+        var appliedIncrease = targetIncrease - actualIncrease;
+        remainingUndershoot -= appliedIncrease;
+      }
+    }
+    function shrinkSizesToFitContainer(sizesThisLine, idealRequiredSpace, axis) {
+      var descendingMinSizeOrder = getTraversalOrder(sizesThisLine, axis.minSize, true);
+      var fittingProportions = getNormalizedValues(sizesThisLine, axis.fittingProportion);
+      var inverseFittingProportions = invertNormalizedValues(fittingProportions);
+      var inverseFittingProportionSums = createSumArray(inverseFittingProportions, descendingMinSizeOrder);
+      var remainingOvershoot = idealRequiredSpace - availableSpace[axis.axis];
+      for (var i = 0;i < sizesThisLine.length;++i) {
+        var index = descendingMinSizeOrder[i];
+        var targetReduction = calculateAdjustment(index, remainingOvershoot, inverseFittingProportions, inverseFittingProportionSums);
+        var targetSize = sizesThisLine[index][axis.size] - targetReduction;
+        var minSize = sizesThisLine[index][axis.minSize];
+        var actualSize = Math.max(targetSize, minSize);
+        sizesThisLine[index][axis.size] = actualSize;
+        var actualReduction = Math.max(actualSize - targetSize, 0);
+        var appliedReduction = targetReduction - actualReduction;
+        remainingOvershoot -= appliedReduction;
+      }
+    }
+    function calculateAdjustment(index, remainingAdjustment, fittingProportions, fittingProportionSums) {
+      var proportion = fittingProportions[index];
+      var sumOfRemainingProportions = fittingProportionSums[index];
+      if (Math.abs(proportion) < 1e-5 && Math.abs(sumOfRemainingProportions) < 1e-5) {
+        return remainingAdjustment;
+      }
+      return remainingAdjustment * proportion / sumOfRemainingProportions;
+    }
+    function calculateBasePositions(lines, sizes) {
+      var cursor = {};
+      cursor[a.axis] = 0;
+      cursor[b.axis] = 0;
+      lines[a.size] = Number.NEGATIVE_INFINITY;
+      var positionsAllLines = [];
+      for (var lineIndex = 0;lineIndex < lines.length;++lineIndex) {
+        var line = lines[lineIndex];
+        if (line.length === 0) {
+          return;
+        }
+        var positionsThisLine = [];
+        var sizesThisLine = sizes[lineIndex];
+        for (var elementIndex = 0;elementIndex < line.length;++elementIndex) {
+          var element = line[elementIndex];
+          var sizesThisElement = sizesThisLine[elementIndex];
+          cursor[b.axis] -= minExtentB(element, sizesThisElement);
+          cursor[a.axis] -= minExtentA(element, sizesThisElement);
+          positionsThisLine[elementIndex] = {};
+          positionsThisLine[elementIndex][a.axis] = cursor[a.axis];
+          positionsThisLine[elementIndex][b.axis] = cursor[b.axis];
+          cursor[b.axis] += minExtentB(element, sizesThisElement);
+          cursor[a.axis] += maxExtentA(element, sizesThisElement) + options.spacing[a.axis];
+        }
+        line[a.size] = cursor[a.axis] - options.spacing[a.axis];
+        line[b.size] = line.largestSize[b.size];
+        lines[a.size] = Math.max(lines[a.size], line[a.size]);
+        cursor[a.axis] = 0;
+        cursor[b.axis] += line[b.size] + options.spacing[b.axis];
+        positionsAllLines.push(positionsThisLine);
+      }
+      lines[b.size] = cursor[b.axis] - options.spacing[b.axis];
+      return positionsAllLines;
+    }
+    function applyAlignmentAndPadding(lines, sizes, positions) {
+      var alignmentA = options.alignment[a.axis];
+      var alignmentB = options.alignment[b.axis];
+      var paddingA = options.padding[a.axis];
+      var paddingB = options.padding[b.axis];
+      for (var lineIndex = 0;lineIndex < lines.length;++lineIndex) {
+        var line = lines[lineIndex];
+        var sizesThisLine = sizes[lineIndex];
+        var positionsThisLine = positions[lineIndex];
+        var axisAOffset = (availableSpace[a.axis] - line[a.size]) * alignmentA + paddingA;
+        var axisBOffset = (availableSpace[b.axis] - lines[b.size]) * alignmentB + paddingB;
+        for (var elementIndex = 0;elementIndex < line.length;++elementIndex) {
+          var withinLineAxisBOffset = (line[b.size] - sizesThisLine[elementIndex][b.size]) * options.alignment[b.axis];
+          positionsThisLine[elementIndex][a.axis] += axisAOffset;
+          positionsThisLine[elementIndex][b.axis] += axisBOffset + withinLineAxisBOffset;
+        }
+      }
+    }
+    function applySizesAndPositions(lines, sizes, positions) {
+      for (var lineIndex = 0;lineIndex < lines.length;++lineIndex) {
+        var line = lines[lineIndex];
+        var sizesThisLine = sizes[lineIndex];
+        var positionsThisLine = positions[lineIndex];
+        for (var elementIndex = 0;elementIndex < line.length;++elementIndex) {
+          var element = line[elementIndex];
+          element[a.calculatedSize] = sizesThisLine[elementIndex][a.size];
+          element[b.calculatedSize] = sizesThisLine[elementIndex][b.size];
+          if (options.orientation === pc.ORIENTATION_HORIZONTAL) {
+            element.entity.setLocalPosition(positionsThisLine[elementIndex][a.axis], positionsThisLine[elementIndex][b.axis], element.entity.getLocalPosition().z);
+          } else {
+            element.entity.setLocalPosition(positionsThisLine[elementIndex][b.axis], positionsThisLine[elementIndex][a.axis], element.entity.getLocalPosition().z);
+          }
+        }
+      }
+    }
+    function createLayoutInfo(lines) {
+      var layoutWidth = lines.width;
+      var layoutHeight = lines.height;
+      var xOffset = (availableSpace.x - layoutWidth) * options.alignment.x + options.padding.x;
+      var yOffset = (availableSpace.y - layoutHeight) * options.alignment.y + options.padding.y;
+      return {bounds:new pc.Vec4(xOffset, yOffset, layoutWidth, layoutHeight)};
+    }
+    function getElementSizeProperties(elements) {
+      var sizeProperties = [];
+      for (var i = 0;i < elements.length;++i) {
+        var element = elements[i];
+        var minWidth = Math.max(getProperty(element, "minWidth"), 0);
+        var minHeight = Math.max(getProperty(element, "minHeight"), 0);
+        var maxWidth = Math.max(getProperty(element, "maxWidth"), minWidth);
+        var maxHeight = Math.max(getProperty(element, "maxHeight"), minHeight);
+        var width = clamp(getProperty(element, "width"), minWidth, maxWidth);
+        var height = clamp(getProperty(element, "height"), minHeight, maxHeight);
+        var fitWidthProportion = getProperty(element, "fitWidthProportion");
+        var fitHeightProportion = getProperty(element, "fitHeightProportion");
+        sizeProperties.push({minWidth:minWidth, minHeight:minHeight, maxWidth:maxWidth, maxHeight:maxHeight, width:width, height:height, fitWidthProportion:fitWidthProportion, fitHeightProportion:fitHeightProportion});
+      }
+      return sizeProperties;
+    }
+    function getProperty(element, propertyName) {
+      var layoutChildComponent = element.entity.layoutchild;
+      if (layoutChildComponent && layoutChildComponent.enabled && layoutChildComponent[propertyName] !== undefined && layoutChildComponent[propertyName] !== null) {
+        return layoutChildComponent[propertyName];
+      } else {
+        if (element[propertyName] !== undefined) {
+          return element[propertyName];
+        }
+      }
+      return PROPERTY_DEFAULTS[propertyName];
+    }
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+    function sumValues(items, propertyName) {
+      return items.reduce(function(accumulator, current) {
+        return accumulator + current[propertyName];
+      }, 0);
+    }
+    function getNormalizedValues(items, propertyName) {
+      var sum = sumValues(items, propertyName);
+      var normalizedValues = [];
+      var numItems = items.length;
+      var i;
+      if (sum === 0) {
+        for (i = 0;i < numItems;++i) {
+          normalizedValues.push(1 / numItems);
+        }
+      } else {
+        for (i = 0;i < numItems;++i) {
+          normalizedValues.push(items[i][propertyName] / sum);
+        }
+      }
+      return normalizedValues;
+    }
+    function invertNormalizedValues(values) {
+      if (values.length === 1) {
+        return [1];
+      }
+      var invertedValues = [];
+      var numValues = values.length;
+      for (var i = 0;i < numValues;++i) {
+        invertedValues.push((1 - values[i]) / (numValues - 1));
+      }
+      return invertedValues;
+    }
+    function getTraversalOrder(items, orderBy, descending) {
+      items.forEach(assignIndex);
+      return items.slice().sort(function(itemA, itemB) {
+        return descending ? itemB[orderBy] - itemA[orderBy] : itemA[orderBy] - itemB[orderBy];
+      }).map(getIndex);
+    }
+    function assignIndex(item, index) {
+      item.index = index;
+    }
+    function getIndex(item) {
+      return item.index;
+    }
+    function createSumArray(values, order) {
+      var sumArray = [];
+      sumArray[order[values.length - 1]] = values[order[values.length - 1]];
+      for (var i = values.length - 2;i >= 0;--i) {
+        sumArray[order[i]] = sumArray[order[i + 1]] + values[order[i]];
+      }
+      return sumArray;
+    }
+    return calculateAll;
+  }
+  var CALCULATE_FNS = {};
+  CALCULATE_FNS[pc.ORIENTATION_HORIZONTAL] = createCalculator(pc.ORIENTATION_HORIZONTAL);
+  CALCULATE_FNS[pc.ORIENTATION_VERTICAL] = createCalculator(pc.ORIENTATION_VERTICAL);
+  Object.assign(LayoutCalculator.prototype, {calculateLayout:function(elements, options) {
+    var calculateFn = CALCULATE_FNS[options.orientation];
+    if (!calculateFn) {
+      throw new Error("Unrecognized orientation value: " + options.orientation);
+    } else {
+      return calculateFn(elements, options);
+    }
+  }});
+  return {LayoutCalculator:LayoutCalculator};
+}());
+Object.assign(pc, function() {
+  var LayoutChildComponent = function LayoutChildComponent(system, entity) {
+    pc.Component.call(this, system, entity);
+    this._minWidth = 0;
+    this._minHeight = 0;
+    this._maxWidth = null;
+    this._maxHeight = null;
+    this._fitWidthProportion = 0;
+    this._fitHeightProportion = 0;
+    this._excludeFromLayout = false;
+  };
+  LayoutChildComponent.prototype = Object.create(pc.Component.prototype);
+  LayoutChildComponent.prototype.constructor = LayoutChildComponent;
+  function defineResizeProperty(name) {
+    var _name = "_" + name;
+    Object.defineProperty(LayoutChildComponent.prototype, name, {get:function() {
+      return this[_name];
+    }, set:function(value) {
+      if (this[_name] !== value) {
+        this[_name] = value;
+        this.fire("resize");
+      }
+    }});
+  }
+  defineResizeProperty("minWidth");
+  defineResizeProperty("minHeight");
+  defineResizeProperty("maxWidth");
+  defineResizeProperty("maxHeight");
+  defineResizeProperty("fitWidthProportion");
+  defineResizeProperty("fitHeightProportion");
+  defineResizeProperty("excludeFromLayout");
+  return {LayoutChildComponent:LayoutChildComponent};
+}());
+Object.assign(pc, function() {
+  var _schema = ["enabled"];
+  var LayoutChildComponentSystem = function LayoutChildComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
+    this.id = "layoutchild";
+    this.app = app;
+    app.systems.add(this.id, this);
+    this.ComponentType = pc.LayoutChildComponent;
+    this.DataType = pc.LayoutChildComponentData;
+    this.schema = _schema;
+  };
+  LayoutChildComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  LayoutChildComponentSystem.prototype.constructor = LayoutChildComponentSystem;
+  pc.Component._buildAccessors(pc.LayoutChildComponent.prototype, _schema);
+  Object.assign(LayoutChildComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
+    if (data.enabled !== undefined) {
+      component.enabled = data.enabled;
+    }
+    if (data.minWidth !== undefined) {
+      component.minWidth = data.minWidth;
+    }
+    if (data.minHeight !== undefined) {
+      component.minHeight = data.minHeight;
+    }
+    if (data.maxWidth !== undefined) {
+      component.maxWidth = data.maxWidth;
+    }
+    if (data.maxHeight !== undefined) {
+      component.maxHeight = data.maxHeight;
+    }
+    if (data.fitWidthProportion !== undefined) {
+      component.fitWidthProportion = data.fitWidthProportion;
+    }
+    if (data.fitHeightProportion !== undefined) {
+      component.fitHeightProportion = data.fitHeightProportion;
+    }
+    if (data.excludeFromLayout !== undefined) {
+      component.excludeFromLayout = data.excludeFromLayout;
+    }
+    pc.ComponentSystem.prototype.initializeComponentData.call(this, component, data, properties);
+  }, cloneComponent:function(entity, clone) {
+    var layoutChild = entity.layoutchild;
+    return this.addComponent(clone, {enabled:layoutChild.enabled, minWidth:layoutChild.minWidth, minHeight:layoutChild.minHeight, maxWidth:layoutChild.maxWidth, maxHeight:layoutChild.maxHeight, fitWidthProportion:layoutChild.fitWidthProportion, fitHeightProportion:layoutChild.fitHeightProportion, excludeFromLayout:layoutChild.excludeFromLayout});
+  }});
+  return {LayoutChildComponentSystem:LayoutChildComponentSystem};
+}());
+Object.assign(pc, function() {
+  var LayoutChildComponentData = function() {
+    this.enabled = true;
+  };
+  return {LayoutChildComponentData:LayoutChildComponentData};
+}());
+Object.assign(pc, function() {
   pc.FONT_MSDF = "msdf";
   var Font = function(textures, data) {
     this.type = pc.FONT_MSDF;
@@ -32400,7 +34189,6 @@ pc.extend(pc, function() {
     this._data = null;
     this.data = data;
   };
-  Font.prototype = {};
   Object.defineProperty(Font.prototype, "data", {get:function() {
     return this._data;
   }, set:function(value) {
@@ -32425,18 +34213,20 @@ pc.extend(pc, function() {
   }});
   return {FONT_MSDF:pc.FONT_MSDF, Font:Font};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ZoneComponent = function ZoneComponent(system, entity) {
+    pc.Component.call(this, system, entity);
     this._oldState = true;
     this._size = new pc.Vec3;
     this.on("set_enabled", this._onSetEnabled, this);
   };
-  ZoneComponent = pc.inherits(ZoneComponent, pc.Component);
-  pc.extend(ZoneComponent.prototype, {onEnable:function() {
-    ZoneComponent._super.onEnable.call(this);
+  ZoneComponent.prototype = Object.create(pc.Component.prototype);
+  ZoneComponent.prototype.constructor = ZoneComponent;
+  Object.assign(ZoneComponent.prototype, {onEnable:function() {
+    pc.Component.prototype.onEnable.call(this);
     this._checkState();
   }, onDisable:function() {
-    ZoneComponent._super.onDisable.call(this);
+    pc.Component.prototype.onDisable.call(this);
     this._checkState();
   }, _onSetEnabled:function(prop, old, value) {
     this._checkState();
@@ -32464,9 +34254,10 @@ pc.extend(pc, function() {
   }});
   return {ZoneComponent:ZoneComponent};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var _schema = ["enabled"];
   var ZoneComponentSystem = function ZoneComponentSystem(app) {
+    pc.ComponentSystem.call(this, app);
     this.id = "zone";
     this.app = app;
     app.systems.add(this.id, this);
@@ -32475,9 +34266,10 @@ pc.extend(pc, function() {
     this.schema = _schema;
     this.on("beforeremove", this._onBeforeRemove, this);
   };
-  ZoneComponentSystem = pc.inherits(ZoneComponentSystem, pc.ComponentSystem);
+  ZoneComponentSystem.prototype = Object.create(pc.ComponentSystem.prototype);
+  ZoneComponentSystem.prototype.constructor = ZoneComponentSystem;
   pc.Component._buildAccessors(pc.ZoneComponent.prototype, _schema);
-  pc.extend(ZoneComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
+  Object.assign(ZoneComponentSystem.prototype, {initializeComponentData:function(component, data, properties) {
     component.enabled = data.hasOwnProperty("enabled") ? !!data.enabled : true;
     if (data.size) {
       if (data.size instanceof pc.Vec3) {
@@ -32496,15 +34288,15 @@ pc.extend(pc, function() {
   }});
   return {ZoneComponentSystem:ZoneComponentSystem};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ZoneComponentData = function() {
     this.enabled = true;
   };
-  ZoneComponentData = pc.inherits(ZoneComponentData, pc.ComponentData);
   return {ZoneComponentData:ZoneComponentData};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Entity = function(name, app) {
+    pc.GraphNode.call(this, name);
     if (name instanceof pc.Application) {
       app = name;
     }
@@ -32520,31 +34312,27 @@ pc.extend(pc, function() {
     }
     pc.events.attach(this);
   };
-  Entity = pc.inherits(Entity, pc.GraphNode);
+  Entity.prototype = Object.create(pc.GraphNode.prototype);
+  Entity.prototype.constructor = Entity;
   Entity.prototype.addComponent = function(type, data) {
     var system = this._app.systems[type];
-    if (system) {
-      if (!this.c[type]) {
-        return system.addComponent(this, data);
-      } else {
-        logERROR(pc.string.format("Entity already has {0} Component", type));
-      }
-    } else {
-      logERROR(pc.string.format("System: '{0}' doesn't exist", type));
+    if (!system) {
       return null;
     }
+    if (this.c[type]) {
+      return null;
+    }
+    return system.addComponent(this, data);
   };
   Entity.prototype.removeComponent = function(type) {
     var system = this._app.systems[type];
-    if (system) {
-      if (this.c[type]) {
-        system.removeComponent(this);
-      } else {
-        logERROR(pc.string.format("Entity doesn't have {0} Component", type));
-      }
-    } else {
-      logERROR(pc.string.format("System: '{0}' doesn't exist", type));
+    if (!system) {
+      return;
     }
+    if (!this.c[type]) {
+      return;
+    }
+    system.removeComponent(this);
   };
   Entity.prototype.getGuid = function() {
     return this._guid;
@@ -32578,7 +34366,7 @@ pc.extend(pc, function() {
     }
   };
   Entity.prototype._onHierarchyStateChanged = function(enabled) {
-    pc.Entity._super._onHierarchyStateChanged.call(this, enabled);
+    pc.GraphNode.prototype._onHierarchyStateChanged.call(this, enabled);
     var component;
     var components = this.c;
     for (var type in components) {
@@ -32651,31 +34439,253 @@ pc.extend(pc, function() {
     }
   };
   Entity.prototype.clone = function() {
+    var duplicatedIdsMap = {};
+    var c = this._cloneRecursively(duplicatedIdsMap);
+    duplicatedIdsMap[this.getGuid()] = c.getGuid();
+    resolveDuplicatedEntityReferenceProperties(this, this, c, duplicatedIdsMap);
+    return c;
+  };
+  Entity.prototype._cloneRecursively = function(duplicatedIdsMap) {
     var type;
     var c = new pc.Entity(this._app);
-    pc.Entity._super._cloneInternal.call(this, c);
+    pc.GraphNode.prototype._cloneInternal.call(this, c);
     for (type in this.c) {
       var component = this.c[type];
       component.system.cloneComponent(this, c);
     }
     var i;
     for (i = 0;i < this._children.length;i++) {
-      var child = this._children[i];
-      if (child instanceof pc.Entity) {
-        c.addChild(child.clone());
+      var oldChild = this._children[i];
+      if (oldChild instanceof pc.Entity) {
+        var newChild = oldChild._cloneRecursively(duplicatedIdsMap);
+        c.addChild(newChild);
+        duplicatedIdsMap[oldChild.getGuid()] = newChild.getGuid();
       }
     }
     return c;
   };
+  function resolveDuplicatedEntityReferenceProperties(oldSubtreeRoot, oldEntity, newEntity, duplicatedIdsMap) {
+    if (oldEntity instanceof pc.Entity) {
+      var components = oldEntity.c;
+      Object.keys(components).forEach(function(componentName) {
+        var component = components[componentName];
+        var entityProperties = component.system.getPropertiesOfType("entity");
+        entityProperties.forEach(function(propertyDescriptor) {
+          var propertyName = propertyDescriptor.name;
+          var oldEntityReferenceId = component[propertyName];
+          var entityIsWithinOldSubtree = !!oldSubtreeRoot.findByGuid(oldEntityReferenceId);
+          if (entityIsWithinOldSubtree) {
+            var newEntityReferenceId = duplicatedIdsMap[oldEntityReferenceId];
+            if (newEntityReferenceId) {
+              newEntity.c[componentName][propertyName] = newEntityReferenceId;
+            } else {
+              console.warn("Could not find corresponding entity id when resolving duplicated entity references");
+            }
+          }
+        });
+      });
+      var _old = oldEntity.children.filter(function(e) {
+        return e instanceof pc.Entity;
+      });
+      var _new = newEntity.children.filter(function(e) {
+        return e instanceof pc.Entity;
+      });
+      _old.forEach(function(oldChild, index) {
+        resolveDuplicatedEntityReferenceProperties(oldSubtreeRoot, oldChild, _new[index], duplicatedIdsMap);
+      });
+    }
+  }
   return {Entity:Entity};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
+  function EntityReference(parentComponent, entityPropertyName, eventConfig) {
+    if (!parentComponent || !(parentComponent instanceof pc.Component)) {
+      throw new Error("The parentComponent argument is required and must be a Component");
+    } else {
+      if (!entityPropertyName || typeof entityPropertyName !== "string") {
+        throw new Error("The propertyName argument is required and must be a string");
+      } else {
+        if (eventConfig && typeof eventConfig !== "object") {
+          throw new Error("If provided, the eventConfig argument must be an object");
+        }
+      }
+    }
+    this._parentComponent = parentComponent;
+    this._entityPropertyName = entityPropertyName;
+    this._entity = null;
+    this._app = parentComponent.system.app;
+    this._configureEventListeners(eventConfig || {}, {"entity#destroy":this._onEntityDestroy});
+    this._toggleLifecycleListeners("on");
+  }
+  Object.assign(EntityReference.prototype, {_configureEventListeners:function(externalEventConfig, internalEventConfig) {
+    var externalEventListenerConfigs = this._parseEventListenerConfig(externalEventConfig, "external", this._parentComponent);
+    var internalEventListenerConfigs = this._parseEventListenerConfig(internalEventConfig, "internal", this);
+    this._eventListenerConfigs = externalEventListenerConfigs.concat(internalEventListenerConfigs);
+    this._listenerStatusFlags = {};
+    this._gainListeners = {};
+    this._loseListeners = {};
+  }, _parseEventListenerConfig:function(eventConfig, prefix, scope) {
+    return Object.keys(eventConfig).map(function(listenerDescription, index) {
+      var listenerDescriptionParts = listenerDescription.split("#");
+      var sourceName = listenerDescriptionParts[0];
+      var eventName = listenerDescriptionParts[1];
+      var callback = eventConfig[listenerDescription];
+      if (listenerDescriptionParts.length !== 2 || typeof sourceName !== "string" || sourceName.length === 0 || typeof eventName !== "string" || eventName.length === 0) {
+        throw new Error("Invalid event listener description: `" + listenerDescription + "`");
+      }
+      if (typeof callback !== "function") {
+        throw new Error("Invalid or missing callback for event listener `" + listenerDescription + "`");
+      }
+      return {id:prefix + "_" + index + "_" + listenerDescription, sourceName:sourceName, eventName:eventName, callback:callback, scope:scope};
+    }, this);
+  }, _toggleLifecycleListeners:function(onOrOff) {
+    this._parentComponent[onOrOff]("set_" + this._entityPropertyName, this._onSetEntity, this);
+    this._parentComponent.system[onOrOff]("beforeremove", this._onParentComponentRemove, this);
+    pc.ComponentSystem[onOrOff]("postInitialize", this._onPostInitialize, this);
+    this._app.on("tools:sceneloaded", this._onSceneLoaded, this);
+    var allComponentSystems = [];
+    for (var i = 0;i < this._eventListenerConfigs.length;++i) {
+      var config = this._eventListenerConfigs[i];
+      var componentSystem = this._app.systems[config.sourceName];
+      if (componentSystem) {
+        if (allComponentSystems.indexOf(componentSystem) === -1) {
+          allComponentSystems.push(componentSystem);
+        }
+        if (componentSystem && config.eventName === "gain") {
+          this._gainListeners[config.sourceName] = config;
+        }
+        if (componentSystem && config.eventName === "lose") {
+          this._loseListeners[config.sourceName] = config;
+        }
+      }
+    }
+    for (var j = 0;j < allComponentSystems.length;++j) {
+      allComponentSystems[j][onOrOff]("add", this._onComponentAdd, this);
+      allComponentSystems[j][onOrOff]("beforeremove", this._onComponentRemove, this);
+    }
+  }, _onSetEntity:function(name, oldValue, newValue) {
+    if (newValue instanceof pc.Entity) {
+      this._updateEntityReference();
+    } else {
+      if (newValue !== null && newValue !== undefined && typeof newValue !== "string") {
+        console.warn("Entity field `" + this._entityPropertyName + "` was set to unexpected type '" + typeof newValue + "'");
+        return;
+      }
+      if (oldValue !== newValue) {
+        this._updateEntityReference();
+      }
+    }
+  }, _onPostInitialize:function() {
+    this._updateEntityReference();
+  }, _onSceneLoaded:function() {
+    this._updateEntityReference();
+  }, _updateEntityReference:function() {
+    var nextEntityGuid = this._parentComponent.data[this._entityPropertyName];
+    var nextEntity;
+    if (nextEntityGuid instanceof pc.Entity) {
+      nextEntity = nextEntityGuid;
+      nextEntityGuid = nextEntity.getGuid();
+      this._parentComponent.data[this._entityPropertyName] = nextEntityGuid;
+    } else {
+      nextEntity = nextEntityGuid ? this._parentComponent.system.app.root.findByGuid(nextEntityGuid) : null;
+    }
+    var hasChanged = this._entity !== nextEntity;
+    if (hasChanged) {
+      if (this._entity) {
+        this._onBeforeEntityChange();
+      }
+      this._entity = nextEntity;
+      if (this._entity) {
+        this._onAfterEntityChange();
+      }
+    }
+  }, _onBeforeEntityChange:function() {
+    this._toggleEntityListeners("off");
+    this._callAllGainOrLoseListeners(this._loseListeners);
+  }, _onAfterEntityChange:function() {
+    this._toggleEntityListeners("on");
+    this._callAllGainOrLoseListeners(this._gainListeners);
+  }, _onComponentAdd:function(entity, component) {
+    var componentName = component.system.name;
+    if (entity === this._entity) {
+      this._callGainOrLoseListener(componentName, this._gainListeners);
+      this._toggleComponentListeners("on", componentName);
+    }
+  }, _onComponentRemove:function(entity, component) {
+    var componentName = component.system.name;
+    if (entity === this._entity) {
+      this._callGainOrLoseListener(componentName, this._loseListeners);
+      this._toggleComponentListeners("off", componentName, true);
+    }
+  }, _callAllGainOrLoseListeners:function(listenerMap) {
+    for (var componentName in this._entity.c) {
+      this._callGainOrLoseListener(componentName, listenerMap);
+    }
+  }, _callGainOrLoseListener:function(componentName, listenerMap) {
+    if (this._entity.c.hasOwnProperty(componentName) && listenerMap[componentName]) {
+      var config = listenerMap[componentName];
+      config.callback.call(config.scope);
+    }
+  }, _toggleEntityListeners:function(onOrOff, isDestroying) {
+    if (this._entity) {
+      for (var i = 0;i < this._eventListenerConfigs.length;++i) {
+        this._safeToggleListener(onOrOff, this._eventListenerConfigs[i], isDestroying);
+      }
+    }
+  }, _toggleComponentListeners:function(onOrOff, componentName, isDestroying) {
+    for (var i = 0;i < this._eventListenerConfigs.length;++i) {
+      var config = this._eventListenerConfigs[i];
+      if (config.sourceName === componentName) {
+        this._safeToggleListener(onOrOff, config, isDestroying);
+      }
+    }
+  }, _safeToggleListener:function(onOrOff, config, isDestroying) {
+    var isAdding = onOrOff === "on";
+    if (isAdding && this._listenerStatusFlags[config.id]) {
+      return;
+    }
+    var source = this._getEventSource(config.sourceName, isDestroying);
+    if (source) {
+      source[onOrOff](config.eventName, config.callback, config.scope);
+      this._listenerStatusFlags[config.id] = isAdding;
+    }
+  }, _getEventSource:function(sourceName, isDestroying) {
+    if (sourceName === "entity") {
+      return this._entity;
+    }
+    var component = this._entity[sourceName];
+    if (component) {
+      return component;
+    }
+    if (!isDestroying) {
+      console.warn("Entity has no component with name " + sourceName);
+    }
+    return null;
+  }, _onEntityDestroy:function(entity) {
+    if (this._entity === entity) {
+      this._toggleEntityListeners("off", true);
+      this._entity = null;
+    }
+  }, _onParentComponentRemove:function(entity, component) {
+    if (component === this._parentComponent) {
+      this._toggleLifecycleListeners("off");
+      this._toggleEntityListeners("off", true);
+    }
+  }, hasComponent:function(componentName) {
+    return this._entity && this._entity.c ? !!this._entity.c[componentName] : false;
+  }});
+  Object.defineProperty(EntityReference.prototype, "entity", {get:function() {
+    return this._entity;
+  }});
+  return {EntityReference:EntityReference};
+}());
+Object.assign(pc, function() {
   var ResourceLoader = function() {
     this._handlers = {};
     this._requests = {};
     this._cache = {};
   };
-  ResourceLoader.prototype = {addHandler:function(type, handler) {
+  Object.assign(ResourceLoader.prototype, {addHandler:function(type, handler) {
     this._handlers[type] = handler;
     handler._loader = this;
   }, removeHandler:function(type) {
@@ -32743,20 +34753,20 @@ pc.extend(pc, function() {
     this._handlers = {};
     this._requests = {};
     this._cache = {};
-  }};
+  }});
   return {ResourceLoader:ResourceLoader};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var AnimationHandler = function() {
   };
-  AnimationHandler.prototype = {load:function(url, callback) {
+  Object.assign(AnimationHandler.prototype, {load:function(url, callback) {
     pc.http.get(url, function(err, response) {
       if (err) {
         callback(pc.string.format("Error loading animation resource: {0} [{1}]", url, err));
       } else {
         callback(null, response);
       }
-    }.bind(this));
+    });
   }, open:function(url, data) {
     return this["_parseAnimationV" + data.animation.version](data);
   }, _parseAnimationV3:function(data) {
@@ -32810,10 +34820,10 @@ pc.extend(pc, function() {
       anim.addNode(node);
     }
     return anim;
-  }};
+  }});
   return {AnimationHandler:AnimationHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ie = function() {
     var ua = window.navigator.userAgent;
     var msie = ua.indexOf("MSIE ");
@@ -32830,14 +34840,13 @@ pc.extend(pc, function() {
   var AudioHandler = function(manager) {
     this.manager = manager;
   };
-  AudioHandler.prototype = {_isSupported:function(url) {
+  Object.assign(AudioHandler.prototype, {_isSupported:function(url) {
     var toMIME = {".ogg":"audio/ogg", ".mp3":"audio/mpeg", ".wav":"audio/x-wav", ".mp4a":"audio/mp4", ".m4a":"audio/mp4", ".mp4":"audio/mp4", ".aac":"audio/aac"};
     var ext = pc.path.getExtension(url);
     if (toMIME[ext]) {
       return true;
-    } else {
-      return false;
     }
+    return false;
   }, load:function(url, callback) {
     var success = function(resource) {
       callback(null, new pc.Sound(resource));
@@ -32858,7 +34867,7 @@ pc.extend(pc, function() {
     }
   }, open:function(url, data) {
     return data;
-  }};
+  }});
   if (pc.SoundManager.hasAudioContext()) {
     AudioHandler.prototype._createSound = function(url, success, error) {
       var manager = this.manager;
@@ -32908,13 +34917,13 @@ pc.extend(pc, function() {
   }
   return {AudioHandler:AudioHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var CubemapHandler = function(device, assets, loader) {
     this._device = device;
     this._assets = assets;
     this._loader = loader;
   };
-  CubemapHandler.prototype = {load:function(url, callback) {
+  Object.assign(CubemapHandler.prototype, {load:function(url, callback) {
   }, open:function(url, data) {
   }, patch:function(assetCubeMap, assets) {
     var self = this;
@@ -33009,10 +35018,6 @@ pc.extend(pc, function() {
       assetCubeMap._levelsEvents = [null, null, null, null, null, null];
     }
     assetCubeMap.data.textures.forEach(function(id, index) {
-      var assetAdded = function(asset) {
-        asset.ready(assetReady);
-        assets.load(asset);
-      };
       var assetReady = function(asset) {
         count++;
         sources[index] = asset && asset.resource.getSource() || null;
@@ -33036,6 +35041,10 @@ pc.extend(pc, function() {
           assetCubeMap.fire("load", assetCubeMap);
         }
       };
+      var assetAdded = function(asset) {
+        asset.ready(assetReady);
+        assets.load(asset);
+      };
       var asset = assets.get(id);
       if (asset) {
         asset.ready(assetReady);
@@ -33049,13 +35058,13 @@ pc.extend(pc, function() {
         }
       }
     });
-  }};
+  }});
   return {CubemapHandler:CubemapHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var JsonHandler = function() {
   };
-  JsonHandler.prototype = {load:function(url, callback) {
+  Object.assign(JsonHandler.prototype, {load:function(url, callback) {
     pc.http.get(url, function(err, response) {
       if (!err) {
         callback(null, response);
@@ -33066,10 +35075,10 @@ pc.extend(pc, function() {
   }, open:function(url, data) {
     return data;
   }, patch:function(asset, assets) {
-  }};
+  }});
   return {JsonHandler:JsonHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var PARAMETER_TYPES = {ambient:"vec3", ambientTnumber:"boolean", aoMap:"texture", aoVertexColor:"boolean", aoVertexColorChannel:"string", aoMapChannel:"string", aoMapUv:"number", aoMapTiling:"vec2", aoMapOffset:"vec2", occludeSpecular:"boolean", diffuse:"vec3", diffuseMap:"texture", diffuseTint:"boolean", diffuseVertexColor:"boolean", diffuseVertexColorChannel:"string", diffuseMapChannel:"string", diffuseMapUv:"number", diffuseMapTiling:"vec2", diffuseMapOffset:"vec2", diffuseMapTnumber:"boolean", 
   specular:"vec3", specularVertexColor:"boolean", specularVertexColorChannel:"string", specularMapChannel:"string", specularMapUv:"number", specularMap:"texture", specularTint:"boolean", specularMapTiling:"vec2", specularMapOffset:"vec2", specularMapTnumber:"boolean", specularAntialias:"boolean", useMetalness:"boolean", metalnessMap:"texture", metalnessVertexColor:"boolean", metalnessVertexColorChannel:"string", metalnessMapChannel:"string", metalnessMapUv:"number", metalnessMapTiling:"vec2", metalnessMapOffset:"vec2", 
   metalnessMapTnumber:"boolean", metalness:"number", conserveEnergy:"boolean", shininess:"number", glossMap:"texture", glossVertexColor:"boolean", glossVertexColorChannel:"string", glossMapChannel:"string", glossMapUv:"number", glossMapTiling:"vec2", glossMapOffset:"vec2", fresnelModel:"number", fresnelFactor:"float", emissive:"vec3", emissiveMap:"texture", emissiveVertexColor:"boolean", emissiveVertexColorChannel:"string", emissiveMapChannel:"string", emissiveMapUv:"number", emissiveMapTiling:"vec2", 
@@ -33092,7 +35101,7 @@ pc.extend(pc, function() {
     this._device = app.graphicsDevice;
     this._createPlaceholders();
   };
-  MaterialHandler.prototype = {load:function(url, callback) {
+  Object.assign(MaterialHandler.prototype, {load:function(url, callback) {
     pc.http.get(url, function(err, response) {
       if (!err) {
         if (callback) {
@@ -33259,13 +35268,6 @@ pc.extend(pc, function() {
             id = param.data;
             asset = assets.get(param.data);
           }
-          var onAdd = function(asset) {
-            if (data.shadingModel === pc.SPECULAR_PHONG) {
-              asset.loadFaces = true;
-            }
-            asset.ready(onReady);
-            assets.load(asset);
-          };
           var onReady = function(asset) {
             param.data = asset.resource;
             if (asset.resources.length > 1) {
@@ -33279,6 +35281,13 @@ pc.extend(pc, function() {
             material.init(data);
             asset.off("load", onCubemapAssetLoad, material);
             asset.on("load", onCubemapAssetLoad, material);
+          };
+          var onAdd = function(asset) {
+            if (data.shadingModel === pc.SPECULAR_PHONG) {
+              asset.loadFaces = true;
+            }
+            asset.ready(onReady);
+            assets.load(asset);
           };
           if (asset) {
             onAdd(asset);
@@ -33303,12 +35312,12 @@ pc.extend(pc, function() {
       }
     });
     material.init(data);
-  }};
+  }});
   return {MaterialHandler:MaterialHandler, getMaterialParamType:function(name) {
     return PARAMETER_TYPES[name];
   }};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ModelHandler = function(device) {
     this._device = device;
     this._parsers = [];
@@ -33317,7 +35326,7 @@ pc.extend(pc, function() {
     });
   };
   ModelHandler.DEFAULT_MATERIAL = pc.Scene.defaultMaterial;
-  ModelHandler.prototype = {load:function(url, callback) {
+  Object.assign(ModelHandler.prototype, {load:function(url, callback) {
     pc.http.get(url, function(err, response) {
       if (!callback) {
         return;
@@ -33392,10 +35401,10 @@ pc.extend(pc, function() {
     });
   }, addParser:function(parser, decider) {
     this._parsers.push({parser:parser, decider:decider});
-  }};
+  }});
   return {ModelHandler:ModelHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ScriptHandler = function(app) {
     this._app = app;
     this._scripts = {};
@@ -33409,7 +35418,7 @@ pc.extend(pc, function() {
       ScriptHandler._types.push(Type);
     }
   };
-  ScriptHandler.prototype = {load:function(url, callback) {
+  Object.assign(ScriptHandler.prototype, {load:function(url, callback) {
     var self = this;
     pc.script.app = this._app;
     this._loadScript(url, function(err, url, extra) {
@@ -33458,13 +35467,13 @@ pc.extend(pc, function() {
     };
     element.src = url;
     head.appendChild(element);
-  }};
+  }});
   return {ScriptHandler:ScriptHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var TextHandler = function() {
   };
-  TextHandler.prototype = {load:function(url, callback) {
+  Object.assign(TextHandler.prototype, {load:function(url, callback) {
     pc.http.get(url, function(err, response) {
       if (!err) {
         callback(null, response);
@@ -33475,13 +35484,13 @@ pc.extend(pc, function() {
   }, open:function(url, data) {
     return data;
   }, patch:function(asset, assets) {
-  }};
+  }});
   return {TextHandler:TextHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var BinaryHandler = function() {
   };
-  BinaryHandler.prototype = {load:function(url, callback) {
+  Object.assign(BinaryHandler.prototype, {load:function(url, callback) {
     pc.http.get(url, {responseType:pc.Http.ResponseType.ARRAY_BUFFER}, function(err, response) {
       if (!err) {
         callback(null, response);
@@ -33492,10 +35501,10 @@ pc.extend(pc, function() {
   }, open:function(url, data) {
     return data;
   }, patch:function(asset, assets) {
-  }};
+  }});
   return {BinaryHandler:BinaryHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var JSON_ADDRESS_MODE = {"repeat":pc.ADDRESS_REPEAT, "clamp":pc.ADDRESS_CLAMP_TO_EDGE, "mirror":pc.ADDRESS_MIRRORED_REPEAT};
   var JSON_FILTER_MODE = {"nearest":pc.FILTER_NEAREST, "linear":pc.FILTER_LINEAR, "nearest_mip_nearest":pc.FILTER_NEAREST_MIPMAP_NEAREST, "linear_mip_nearest":pc.FILTER_LINEAR_MIPMAP_NEAREST, "nearest_mip_linear":pc.FILTER_NEAREST_MIPMAP_LINEAR, "linear_mip_linear":pc.FILTER_LINEAR_MIPMAP_LINEAR};
   function arrayBufferCopy(src, dst, dstByteOffset, numBytes) {
@@ -33520,7 +35529,7 @@ pc.extend(pc, function() {
       this.crossOrigin = "anonymous";
     }
   };
-  TextureHandler.prototype = {load:function(url, callback) {
+  Object.assign(TextureHandler.prototype, {load:function(url, callback) {
     var self = this;
     var image;
     var urlWithoutParams = url.indexOf("?") >= 0 ? url.split("?")[0] : url;
@@ -33738,13 +35747,13 @@ pc.extend(pc, function() {
     if (asset.data.hasOwnProperty("rgbm") && texture.rgbm !== rgbm) {
       texture.rgbm = rgbm;
     }
-  }};
+  }});
   return {TextureHandler:TextureHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var HtmlHandler = function() {
   };
-  HtmlHandler.prototype = {load:function(url, callback) {
+  Object.assign(HtmlHandler.prototype, {load:function(url, callback) {
     pc.http.get(url, function(err, response) {
       if (!err) {
         callback(null, response);
@@ -33755,13 +35764,13 @@ pc.extend(pc, function() {
   }, open:function(url, data) {
     return data;
   }, patch:function(asset, assets) {
-  }};
+  }});
   return {HtmlHandler:HtmlHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var CssHandler = function() {
   };
-  CssHandler.prototype = {load:function(url, callback) {
+  Object.assign(CssHandler.prototype, {load:function(url, callback) {
     pc.http.get(url, function(err, response) {
       if (!err) {
         callback(null, response);
@@ -33772,7 +35781,7 @@ pc.extend(pc, function() {
   }, open:function(url, data) {
     return data;
   }, patch:function(asset, assets) {
-  }};
+  }});
   var createStyle = function(cssString) {
     var result = document.createElement("style");
     result.type = "text/css";
@@ -33785,10 +35794,10 @@ pc.extend(pc, function() {
   };
   return {CssHandler:CssHandler, createStyle:createStyle};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var ShaderHandler = function() {
   };
-  ShaderHandler.prototype = {load:function(url, callback) {
+  Object.assign(ShaderHandler.prototype, {load:function(url, callback) {
     pc.http.get(url, function(err, response) {
       if (!err) {
         callback(null, response);
@@ -33799,14 +35808,14 @@ pc.extend(pc, function() {
   }, open:function(url, data) {
     return data;
   }, patch:function(asset, assets) {
-  }};
+  }});
   return {ShaderHandler:ShaderHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var SceneHandler = function(app) {
     this._app = app;
   };
-  SceneHandler.prototype = {load:function(url, callback) {
+  Object.assign(SceneHandler.prototype, {load:function(url, callback) {
     pc.http.get(url, function(err, response) {
       if (!err) {
         callback(null, response);
@@ -33824,14 +35833,14 @@ pc.extend(pc, function() {
     this._app.systems.script.preloading = false;
     return scene;
   }, patch:function(asset, assets) {
-  }};
+  }});
   return {SceneHandler:SceneHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var HierarchyHandler = function(app) {
     this._app = app;
   };
-  HierarchyHandler.prototype = {load:function(url, callback) {
+  Object.assign(HierarchyHandler.prototype, {load:function(url, callback) {
     pc.http.get(url, function(err, response) {
       if (!err) {
         callback(null, response);
@@ -33845,14 +35854,14 @@ pc.extend(pc, function() {
     var parent = parser.parse(data);
     this._app.systems.script.preloading = false;
     return parent;
-  }};
+  }});
   return {HierarchyHandler:HierarchyHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var SceneSettingsHandler = function(app) {
     this._app = app;
   };
-  SceneSettingsHandler.prototype = {load:function(url, callback) {
+  Object.assign(SceneSettingsHandler.prototype, {load:function(url, callback) {
     pc.http.get(url, function(err, response) {
       if (!err) {
         callback(null, response);
@@ -33862,24 +35871,24 @@ pc.extend(pc, function() {
     });
   }, open:function(url, data) {
     return data.settings;
-  }};
+  }});
   return {SceneSettingsHandler:SceneSettingsHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var FolderHandler = function() {
   };
-  FolderHandler.prototype = {load:function(url, callback) {
+  Object.assign(FolderHandler.prototype, {load:function(url, callback) {
     callback(null, null);
   }, open:function(url, data) {
     return data;
-  }};
+  }});
   return {FolderHandler:FolderHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var FontHandler = function(loader) {
     this._loader = loader;
   };
-  FontHandler.prototype = {load:function(url, callback, asset) {
+  Object.assign(FontHandler.prototype, {load:function(url, callback, asset) {
     var self = this;
     if (pc.path.getExtension(url) === ".json") {
       pc.http.get(url, function(err, response) {
@@ -33948,17 +35957,17 @@ pc.extend(pc, function() {
         asset.data = font.data;
       }
     }
-  }};
+  }});
   return {FontHandler:FontHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var JSON_ADDRESS_MODE = {"repeat":pc.ADDRESS_REPEAT, "clamp":pc.ADDRESS_CLAMP_TO_EDGE, "mirror":pc.ADDRESS_MIRRORED_REPEAT};
   var JSON_FILTER_MODE = {"nearest":pc.FILTER_NEAREST, "linear":pc.FILTER_LINEAR, "nearest_mip_nearest":pc.FILTER_NEAREST_MIPMAP_NEAREST, "linear_mip_nearest":pc.FILTER_LINEAR_MIPMAP_NEAREST, "nearest_mip_linear":pc.FILTER_NEAREST_MIPMAP_LINEAR, "linear_mip_linear":pc.FILTER_LINEAR_MIPMAP_LINEAR};
   var regexFrame = /^data\.frames\.(\d+)$/;
   var TextureAtlasHandler = function(loader) {
     this._loader = loader;
   };
-  TextureAtlasHandler.prototype = {load:function(url, callback) {
+  Object.assign(TextureAtlasHandler.prototype, {load:function(url, callback) {
     var self = this;
     var handler = this._loader.getHandler("texture");
     if (pc.path.getExtension(url) === ".json") {
@@ -34055,10 +36064,11 @@ pc.extend(pc, function() {
     asset.off("change", this._onAssetChange, this);
     asset.on("change", this._onAssetChange, this);
   }, _onAssetChange:function(asset, attribute, value) {
+    var frame;
     if (attribute === "data" || attribute === "data.frames") {
       var frames = {};
       for (var key in value.frames) {
-        var frame = value.frames[key];
+        frame = value.frames[key];
         frames[key] = {rect:new pc.Vec4(frame.rect), pivot:new pc.Vec2(frame.pivot), border:new pc.Vec4(frame.border)};
       }
       asset.resource.frames = frames;
@@ -34070,7 +36080,7 @@ pc.extend(pc, function() {
           if (!asset.resource.frames[frameKey]) {
             asset.resource.frames[frameKey] = {rect:new pc.Vec4(value.rect), pivot:new pc.Vec2(value.pivot), border:new pc.Vec4(value.border)};
           } else {
-            var frame = asset.resource.frames[frameKey];
+            frame = asset.resource.frames[frameKey];
             frame.rect.set(value.rect[0], value.rect[1], value.rect[2], value.rect[3]);
             frame.pivot.set(value.pivot[0], value.pivot[1]);
             frame.border.set(value.border[0], value.border[1], value.border[2], value.border[3]);
@@ -34084,10 +36094,10 @@ pc.extend(pc, function() {
         }
       }
     }
-  }};
+  }});
   return {TextureAtlasHandler:TextureAtlasHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var SpriteHandler = function(assets, device) {
     this._assets = assets;
     this._device = device;
@@ -34102,7 +36112,7 @@ pc.extend(pc, function() {
     var spriteAsset = this;
     spriteAsset.registry.load(atlasAsset);
   };
-  SpriteHandler.prototype = {load:function(url, callback) {
+  Object.assign(SpriteHandler.prototype, {load:function(url, callback) {
     if (pc.path.getExtension(url) === ".json") {
       pc.http.get(url, function(err, response) {
         if (!err) {
@@ -34164,22 +36174,21 @@ pc.extend(pc, function() {
         this._assets.off("add:" + oldValue.textureAtlasAsset, onTextureAtlasAdded, asset);
       }
     }
-  }};
+  }});
   return {SpriteHandler:SpriteHandler};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var JSON_PRIMITIVE_TYPE = {"points":pc.PRIMITIVE_POINTS, "lines":pc.PRIMITIVE_LINES, "lineloop":pc.PRIMITIVE_LINELOOP, "linestrip":pc.PRIMITIVE_LINESTRIP, "triangles":pc.PRIMITIVE_TRIANGLES, "trianglestrip":pc.PRIMITIVE_TRISTRIP, "trianglefan":pc.PRIMITIVE_TRIFAN};
   var JSON_VERTEX_ELEMENT_TYPE = {"int8":pc.TYPE_INT8, "uint8":pc.TYPE_UINT8, "int16":pc.TYPE_INT16, "uint16":pc.TYPE_UINT16, "int32":pc.TYPE_INT32, "uint32":pc.TYPE_UINT32, "float32":pc.TYPE_FLOAT32};
   var JsonModelParser = function(device) {
     this._device = device;
   };
-  JsonModelParser.prototype = {parse:function(data) {
+  Object.assign(JsonModelParser.prototype, {parse:function(data) {
     var modelData = data.model;
     if (!modelData) {
       return null;
     }
     if (modelData.version <= 1) {
-      logERROR(pc.string.format("Trying to parse unsupported model format."));
       return null;
     }
     var nodes = this._parseNodes(data);
@@ -34446,7 +36455,7 @@ pc.extend(pc, function() {
             if (!flagged || flagged.length < numVerts) {
               flagged = new Uint8Array(numVerts);
             } else {
-              for (l = 0;l > numVerts;l++) {
+              for (l = 0;l < numVerts;l++) {
                 flagged[l] = 0;
               }
             }
@@ -34664,14 +36673,14 @@ pc.extend(pc, function() {
       meshInstances.push(meshInstance);
     }
     return meshInstances;
-  }};
+  }});
   return {JsonModelParser:JsonModelParser};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var SceneParser = function(app) {
     this._app = app;
   };
-  SceneParser.prototype = {parse:function(data) {
+  Object.assign(SceneParser.prototype, {parse:function(data) {
     var entities = {};
     var id, i;
     var parent = null;
@@ -34732,10 +36741,10 @@ pc.extend(pc, function() {
       children[i] = this._openComponentData(children[i], entities);
     }
     return entity;
-  }};
+  }});
   return {SceneParser:SceneParser};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var assetIdCounter = 0;
   var ABSOLUTE_URL = new RegExp("^" + "\\s*" + "(?:" + "[a-z]+[a-z0-9\\-\\+\\.]*" + ":" + ")?" + "//", "i");
   var Asset = function(name, type, file, data) {
@@ -34756,7 +36765,7 @@ pc.extend(pc, function() {
       this.file = file;
     }
   };
-  Asset.prototype = {getFileUrl:function() {
+  Object.assign(Asset.prototype, {getFileUrl:function() {
     var file = this.getPreferredFile();
     if (!file || !file.url) {
       return null;
@@ -34822,7 +36831,7 @@ pc.extend(pc, function() {
     if (this.file) {
       this.registry._loader.clearCache(this.getFileUrl(), this.type);
     }
-  }};
+  }});
   Object.defineProperty(Asset.prototype, "id", {get:function() {
     return this._id;
   }, set:function(value) {
@@ -34918,7 +36927,7 @@ pc.extend(pc, function() {
   }});
   return {Asset:Asset, ASSET_ANIMATION:"animation", ASSET_AUDIO:"audio", ASSET_IMAGE:"image", ASSET_JSON:"json", ASSET_MODEL:"model", ASSET_MATERIAL:"material", ASSET_TEXT:"text", ASSET_TEXTURE:"texture", ASSET_CUBEMAP:"cubemap", ASSET_SHADER:"shader", ASSET_CSS:"css", ASSET_HTML:"html", ASSET_SCRIPT:"script", ABSOLUTE_URL:ABSOLUTE_URL};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var properties = [];
   var AssetVariants = function(asset) {
     this.asset = asset;
@@ -34954,7 +36963,7 @@ pc.extend(pc, function() {
   };
   return {AssetVariants:AssetVariants};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var AssetRegistry = function(loader) {
     this._loader = loader;
     this._assets = [];
@@ -34963,9 +36972,9 @@ pc.extend(pc, function() {
     this._tags = new pc.TagsCache("_id");
     this._urls = {};
     this.prefix = null;
-    pc.extend(this, pc.events);
+    Object.assign(this, pc.events);
   };
-  AssetRegistry.prototype = {list:function(filters) {
+  Object.assign(AssetRegistry.prototype, {list:function(filters) {
     filters = filters || {};
     return this._assets.filter(function(asset) {
       var include = true;
@@ -35232,21 +37241,18 @@ pc.extend(pc, function() {
   }, findAll:function(name, type) {
     var self = this;
     var idxs = this._names[name];
-    var assets;
     if (idxs) {
-      assets = idxs.map(function(idx) {
+      var assets = idxs.map(function(idx) {
         return self._assets[idx];
       });
       if (type) {
         return assets.filter(function(asset) {
           return asset.type === type;
         });
-      } else {
-        return assets;
       }
-    } else {
-      return [];
+      return assets;
     }
+    return [];
   }, _onTagAdd:function(tag, asset) {
     this._tags.add(tag, asset);
   }, _onTagRemove:function(tag, asset) {
@@ -35267,19 +37273,65 @@ pc.extend(pc, function() {
   }, getAssetById:function(id) {
     console.warn("DEPRECATED: getAssetById() use get() instead");
     return this.get(id);
-  }};
+  }});
   return {AssetRegistry:AssetRegistry};
+}());
+Function.prototype.extendsFrom = function(Super) {
+  var Self, Func;
+  var Temp = function() {
+  };
+  Self = this;
+  Func = function() {
+    Super.apply(this, arguments);
+    Self.apply(this, arguments);
+    this.constructor = Self;
+  };
+  Func._super = Super.prototype;
+  Temp.prototype = Super.prototype;
+  Func.prototype = new Temp;
+  return Func;
+};
+Object.assign(pc, function() {
+  return {inherits:function(Self, Super) {
+    var Temp = function() {
+    };
+    var Func = function(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) {
+      Super.call(this, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+      Self.call(this, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+    };
+    Func._super = Super.prototype;
+    Temp.prototype = Super.prototype;
+    Func.prototype = new Temp;
+    return Func;
+  }};
 }());
 pc.anim = {Animation:pc.Animation, Key:pc.Key, Node:pc.Node, Skeleton:pc.Skeleton};
 pc.asset = {ASSET_ANIMATION:"animation", ASSET_AUDIO:"audio", ASSET_IMAGE:"image", ASSET_JSON:"json", ASSET_MODEL:"model", ASSET_MATERIAL:"material", ASSET_TEXT:"text", ASSET_TEXTURE:"texture", ASSET_CUBEMAP:"cubemap", ASSET_SCRIPT:"script"};
 pc.audio = {AudioManager:pc.SoundManager, Channel:pc.Channel, Channel3d:pc.Channel3d, Listener:pc.Listener, Sound:pc.Sound};
 pc.fw = {Application:pc.Application, Component:pc.Component, ComponentData:pc.ComponentData, ComponentSystem:pc.ComponentSystem, Entity:pc.Entity, FillMode:{NONE:pc.FILLMODE_NONE, FILL_WINDOW:pc.FILLMODE_FILL_WINDOW, KEEP_ASPECT:pc.FILLMODE_KEEP_ASPECT}, ResolutionMode:{AUTO:pc.RESOLUTION_AUTO, FIXED:pc.RESOLUTION_FIXED}};
-pc.extend(pc.gfx, {drawQuadWithShader:pc.drawQuadWithShader, precalculatedTangents:pc.precalculatedTangents, programlib:pc.programlib, shaderChunks:pc.shaderChunks, ContextCreationError:pc.ContextCreationError, Device:pc.GraphicsDevice, IndexBuffer:pc.IndexBuffer, ProgramLibrary:pc.ProgramLibrary, RenderTarget:pc.RenderTarget, ScopeId:pc.ScopeId, Shader:pc.Shader, ShaderInput:pc.ShaderInput, Texture:pc.Texture, UnsupportedBrowserError:pc.UnsupportedBrowserError, VertexBuffer:pc.VertexBuffer, VertexFormat:pc.VertexFormat, 
-VertexIterator:pc.VertexIterator});
-pc.extend(pc.input, {getTouchTargetCoords:pc.getTouchTargetCoords, Controller:pc.Controller, GamePads:pc.GamePads, Keyboard:pc.Keyboard, KeyboardEvent:pc.KeyboardEvent, Mouse:pc.Mouse, MouseEvent:pc.MouseEvent, Touch:pc.Touch, TouchDevice:pc.TouchDevice, TouchEvent:pc.TouchEvent});
+Object.assign(pc.gfx, {drawQuadWithShader:pc.drawQuadWithShader, precalculatedTangents:pc.precalculatedTangents, programlib:pc.programlib, shaderChunks:pc.shaderChunks, ContextCreationError:pc.ContextCreationError, Device:pc.GraphicsDevice, IndexBuffer:pc.IndexBuffer, ProgramLibrary:pc.ProgramLibrary, RenderTarget:pc.RenderTarget, ScopeId:pc.ScopeId, Shader:pc.Shader, ShaderInput:pc.ShaderInput, Texture:pc.Texture, UnsupportedBrowserError:pc.UnsupportedBrowserError, VertexBuffer:pc.VertexBuffer, 
+VertexFormat:pc.VertexFormat, VertexIterator:pc.VertexIterator});
+(function() {
+  function UnsupportedBrowserError(message) {
+    this.name = "UnsupportedBrowserError";
+    this.message = message || "";
+  }
+  UnsupportedBrowserError.prototype = Error.prototype;
+  function ContextCreationError(message) {
+    this.name = "ContextCreationError";
+    this.message = message || "";
+  }
+  ContextCreationError.prototype = Error.prototype;
+  pc.ContextCreationError = ContextCreationError;
+  pc.UnsupportedBrowserError = UnsupportedBrowserError;
+})();
+Object.assign(pc.input, {getTouchTargetCoords:pc.getTouchTargetCoords, Controller:pc.Controller, GamePads:pc.GamePads, Keyboard:pc.Keyboard, KeyboardEvent:pc.KeyboardEvent, Mouse:pc.Mouse, MouseEvent:pc.MouseEvent, Touch:pc.Touch, TouchDevice:pc.TouchDevice, TouchEvent:pc.TouchEvent});
+pc.math.INV_LOG2 = Math.LOG2E;
+pc.math.intToBytes = pc.math.intToBytes32;
+pc.math.bytesToInt = pc.math.bytesToInt32;
 pc.posteffect = {createFullscreenQuad:pc.createFullscreenQuad, drawFullscreenQuad:pc.drawFullscreenQuad, PostEffect:pc.PostEffect, PostEffectQueue:pc.PostEffectQueue};
-pc.extend(pc.scene, {partitionSkin:pc.partitionSkin, procedural:{calculateTangents:pc.calculateTangents, createMesh:pc.createMesh, createTorus:pc.createTorus, createCylinder:pc.createCylinder, createCapsule:pc.createCapsule, createCone:pc.createCone, createSphere:pc.createSphere, createPlane:pc.createPlane, createBox:pc.createBox}, BasicMaterial:pc.BasicMaterial, DepthMaterial:pc.DepthMaterial, ForwardRenderer:pc.ForwardRenderer, GraphNode:pc.GraphNode, Material:pc.Material, Command:pc.Command, Mesh:pc.Mesh, 
-MeshInstance:pc.MeshInstance, Model:pc.Model, ParticleEmitter:pc.ParticleEmitter, PhongMaterial:pc.StandardMaterial, Picker:pc.Picker, PickMaterial:pc.PickMaterial, Projection:{ORTHOGRAPHIC:pc.PROJECTION_ORTHOGRAPHIC, PERSPECTIVE:pc.PROJECTION_PERSPECTIVE}, Scene:pc.Scene, Skin:pc.Skin, SkinInstance:pc.SkinInstance});
+Object.assign(pc.scene, {partitionSkin:pc.partitionSkin, procedural:{calculateTangents:pc.calculateTangents, createMesh:pc.createMesh, createTorus:pc.createTorus, createCylinder:pc.createCylinder, createCapsule:pc.createCapsule, createCone:pc.createCone, createSphere:pc.createSphere, createPlane:pc.createPlane, createBox:pc.createBox}, BasicMaterial:pc.BasicMaterial, DepthMaterial:pc.DepthMaterial, ForwardRenderer:pc.ForwardRenderer, GraphNode:pc.GraphNode, Material:pc.Material, Command:pc.Command, 
+Mesh:pc.Mesh, MeshInstance:pc.MeshInstance, Model:pc.Model, ParticleEmitter:pc.ParticleEmitter, PhongMaterial:pc.StandardMaterial, Picker:pc.Picker, PickMaterial:pc.PickMaterial, Projection:{ORTHOGRAPHIC:pc.PROJECTION_ORTHOGRAPHIC, PERSPECTIVE:pc.PROJECTION_PERSPECTIVE}, Scene:pc.Scene, Skin:pc.Skin, SkinInstance:pc.SkinInstance});
 pc.shape = {Aabb:pc.BoundingBox, Sphere:pc.BoundingSphere, Plane:pc.Plane};
 pc.time = {now:pc.now, Timer:pc.Timer};
 pc.PhongMaterial = pc.StandardMaterial;
@@ -35294,7 +37346,7 @@ pc.ELEMENTTYPE_FLOAT32 = pc.TYPE_FLOAT32;
 Object.defineProperty(pc.shaderChunks, "transformSkinnedVS", {get:function() {
   return "#define SKIN\n" + pc.shaderChunks.transformVS;
 }});
-pc.extend(pc.Application.prototype, function() {
+Object.assign(pc.Application.prototype, function() {
   var tempGraphNode = new pc.GraphNode;
   var identityGraphNode = new pc.GraphNode;
   var meshInstanceArray = [];
@@ -35310,7 +37362,6 @@ pc.extend(pc.Application.prototype, function() {
     this.identityGraphNode = new pc.GraphNode;
   };
   ImmediateData.prototype.addLayer = function(layer) {
-    var id = layer.id;
     if (this.layers.indexOf(layer) < 0) {
       this.layers.push(layer);
     }
@@ -35331,7 +37382,7 @@ pc.extend(pc.Application.prototype, function() {
     this.meshInstance = null;
     this.layer = null;
   };
-  LineBatch.prototype = {init:function(device, vertexFormat, layer, linesToAdd) {
+  Object.assign(LineBatch.prototype, {init:function(device, vertexFormat, layer, linesToAdd) {
     if (!this.mesh) {
       this.mesh = new pc.Mesh;
       this.mesh.primitive[0].type = pc.PRIMITIVE_LINES;
@@ -35345,7 +37396,10 @@ pc.extend(pc.Application.prototype, function() {
     }
     this.layer = layer;
     while (this.linesUsed + linesToAdd > this.numLinesAllocated) {
-      this.vb = null;
+      if (this.vb) {
+        this.vb.destroy();
+        this.vb = null;
+      }
       this.numLinesAllocated *= 2;
     }
     this.vertexFormat = vertexFormat;
@@ -35390,7 +37444,7 @@ pc.extend(pc.Application.prototype, function() {
       this.layer.addMeshInstances(meshInstanceArray, true);
       this.linesUsed = 0;
     }
-  }};
+  }});
   function _initImmediate() {
     if (!this._immediateData) {
       this._immediateData = new ImmediateData(this.graphicsDevice);
@@ -35427,9 +37481,11 @@ pc.extend(pc.Application.prototype, function() {
     }
     this._immediateData.lineBatches[idx].addLines(position, color);
   }
-  function renderLine(start, end, color, arg3, arg4) {
+  function renderLine(start, end, color) {
     var endColor = color;
     var options;
+    var arg3 = arguments[3];
+    var arg4 = arguments[4];
     if (arg3 instanceof pc.Color) {
       endColor = arg3;
       if (typeof arg4 === "number") {
@@ -35583,9 +37639,8 @@ pc.extend(pc.Application.prototype, function() {
   }
   return {renderMeshInstance:renderMeshInstance, renderMesh:renderMesh, renderLine:renderLine, renderLines:renderLines, renderQuad:renderQuad, renderWireCube:renderWireCube, _addLines:_addLines, _initImmediate:_initImmediate, _preRenderImmediate:_preRenderImmediate, _postRenderImmediate:_postRenderImmediate};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var maxSize = 2048;
-  var maskDynamic = 1;
   var maskBaked = 2;
   var maskLightmap = 4;
   var sceneLightmaps = [];
@@ -35657,7 +37712,7 @@ pc.extend(pc, function() {
     this.renderer = renderer;
     this.assets = assets;
   };
-  Lightmapper.prototype = {calculateLightmapSize:function(node) {
+  Object.assign(Lightmapper.prototype, {calculateLightmapSize:function(node) {
     var data, parent;
     var sizeMult = this.scene.lightmapSizeMultiplier || 16;
     var scale = tempVec;
@@ -35829,7 +37884,7 @@ pc.extend(pc, function() {
       lmCamera.frustumCulling = false;
     }
     var node;
-    var lm, rcv, mat, m;
+    var lm, rcv, m;
     var origShaderDefs = [];
     origShaderDefs.length = sceneLightmapsNode.length;
     var shaderDefs;
@@ -35926,7 +37981,6 @@ pc.extend(pc, function() {
     for (j = 0;j < lights.length;j++) {
       lights[j].enabled = false;
     }
-    var drawCallArray = [];
     var lightArray = [[], [], []];
     var shadersUpdatedOn1stPass = false;
     var shadowMapRendered;
@@ -36138,10 +38192,10 @@ pc.extend(pc, function() {
     if (revertStatic) {
       scene._needsStaticPrepare = true;
     }
-  }};
+  }});
   return {Lightmapper:Lightmapper};
 }());
-pc.extend(pc, function() {
+Object.assign(pc, function() {
   var Batch = function(meshInstances, dynamic, batchGroupId) {
     this.origMeshInstances = meshInstances;
     this._aabb = new pc.BoundingBox;
@@ -36149,6 +38203,7 @@ pc.extend(pc, function() {
     this.model = null;
     this.dynamic = dynamic;
     this.batchGroupId = batchGroupId;
+    this.refCounter = 0;
   };
   var BatchGroup = function(id, name, dynamic, maxAabbSize, layers) {
     this.dynamic = dynamic;
@@ -36184,7 +38239,7 @@ pc.extend(pc, function() {
       this.matrixPalette = new Float32Array(numBones * 16);
     }
   };
-  SkinBatchInstance.prototype = {updateMatrices:function() {
+  Object.assign(SkinBatchInstance.prototype, {updateMatrices:function() {
   }, updateMatrixPalette:function() {
     var pe;
     var mp = this.matrixPalette;
@@ -36213,7 +38268,7 @@ pc.extend(pc, function() {
       this.boneTexture.lock();
       this.boneTexture.unlock();
     }
-  }};
+  }});
   var BatchManager = function(device, root, scene) {
     this.device = device;
     this.rootNode = root;
@@ -36246,7 +38301,6 @@ pc.extend(pc, function() {
         newBatchList.push(this._batchList[i]);
         continue;
       }
-      this._batchList[i].refCounter = 1;
       this.destroy(this._batchList[i]);
     }
     this._batchList = newBatchList;
@@ -36274,10 +38328,10 @@ pc.extend(pc, function() {
     if (!node.enabled) {
       return;
     }
-    var i;
+    var i, arr;
     if (node.model && node.model.batchGroupId >= 0 && node.model.model && node.model.enabled) {
       if (!groupIds || groupIds && groupIds.indexOf(node.model.batchGroupId) >= 0) {
-        var arr = groupMeshInstances[node.model.batchGroupId];
+        arr = groupMeshInstances[node.model.batchGroupId];
         if (!arr) {
           arr = groupMeshInstances[node.model.batchGroupId] = [];
         }
@@ -36306,7 +38360,7 @@ pc.extend(pc, function() {
     }
     if (node.element && node.element.batchGroupId >= 0 && node.element.enabled) {
       if (!groupIds || groupIds && groupIds.indexOf(node.element.batchGroupId) >= 0) {
-        var arr = groupMeshInstances[node.element.batchGroupId];
+        arr = groupMeshInstances[node.element.batchGroupId];
         if (!arr) {
           arr = groupMeshInstances[node.element.batchGroupId] = [];
         }
@@ -36326,7 +38380,7 @@ pc.extend(pc, function() {
     }
     if (node.sprite && node.sprite.batchGroupId >= 0 && node.sprite.enabled) {
       if (!groupIds || groupIds && groupIds.indexOf(node.sprite.batchGroupId) >= 0) {
-        var arr = groupMeshInstances[node.sprite.batchGroupId];
+        arr = groupMeshInstances[node.sprite.batchGroupId];
         if (!arr) {
           arr = groupMeshInstances[node.sprite.batchGroupId] = [];
         }
@@ -36341,7 +38395,7 @@ pc.extend(pc, function() {
       this._collectAndRemoveModels(node._children[i], groupMeshInstances, groupIds);
     }
   };
-  BatchManager.prototype._markGroupDirty = function(id) {
+  BatchManager.prototype.markGroupDirty = function(id) {
     if (this._dirtyGroups.indexOf(id) < 0) {
       this._dirtyGroups.push(id);
     }
@@ -36366,7 +38420,6 @@ pc.extend(pc, function() {
     var groupMeshInstances = {};
     if (!groupIds) {
       for (i = 0;i < this._batchList.length;i++) {
-        this._batchList[i].refCounter = 1;
         this.destroy(this._batchList[i]);
       }
       this._batchList.length = 0;
@@ -36379,7 +38432,6 @@ pc.extend(pc, function() {
           newBatchList.push(this._batchList[i]);
           continue;
         }
-        this._batchList[i].refCounter = 1;
         this.destroy(this._batchList[i]);
       }
       this._batchList = newBatchList;
@@ -36408,7 +38460,7 @@ pc.extend(pc, function() {
       }
       lists = this.prepare(group, groupData.dynamic, groupData.maxAabbSize);
       for (i = 0;i < lists.length;i++) {
-        batch = this.create(lists[i], groupData.dynamic, parseInt(groupId));
+        batch = this.create(lists[i], groupData.dynamic, parseInt(groupId, 10));
         for (j = 0;j < groupData.layers.length;j++) {
           this.scene.layers.getLayerById(groupData.layers[j]).addMeshInstances(batch.model.meshInstances);
         }
@@ -36753,7 +38805,10 @@ pc.extend(pc, function() {
             batchData[j * batchVertSizeF + vbOffset + batchOffsetTF + 3] = data[j * vertSizeF + offsetTF + 3];
           }
           if (hasColor) {
-            batchData[j * batchVertSizeF + vbOffset + batchOffsetCF] = data[j * vertSizeF + offsetCF];
+            batchData8[j * batchVertSizeF * 4 + vbOffset * 4 + batchOffsetCF * 4] = data8[j * vertSizeF * 4 + offsetCF * 4];
+            batchData8[j * batchVertSizeF * 4 + vbOffset * 4 + batchOffsetCF * 4 + 1] = data8[j * vertSizeF * 4 + offsetCF * 4 + 1];
+            batchData8[j * batchVertSizeF * 4 + vbOffset * 4 + batchOffsetCF * 4 + 2] = data8[j * vertSizeF * 4 + offsetCF * 4 + 2];
+            batchData8[j * batchVertSizeF * 4 + vbOffset * 4 + batchOffsetCF * 4 + 3] = data8[j * vertSizeF * 4 + offsetCF * 4 + 3];
           }
         }
       }
@@ -36899,20 +38954,24 @@ pc.extend(pc, function() {
     return batch2;
   };
   BatchManager.prototype.destroy = function(batch) {
+    batch.refCounter = 0;
+    var layers = this._batchGroups[batch.batchGroupId].layers;
+    for (var i = 0;i < layers.length;i++) {
+      this.scene.layers.getLayerById(layers[i]).removeMeshInstances(batch.model.meshInstances);
+    }
+    batch.model.destroy();
+  };
+  BatchManager.prototype.decrement = function(batch) {
     batch.refCounter--;
     if (batch.refCounter === 0) {
-      var layers = this._batchGroups[batch.batchGroupId].layers;
-      for (var i = 0;i < layers.length;i++) {
-        this.scene.layers.getLayerById(layers[i]).removeMeshInstances(batch.model.meshInstances);
-      }
-      batch.model.destroy();
+      this.destroy(batch);
     }
   };
   BatchManager.prototype.register = function(batch, entities) {
     batch.refCounter = entities.length;
     var self = this;
     var callback = function() {
-      self.destroy(batch);
+      self.decrement(batch);
     };
     for (var i = 0;i < entities.length;i++) {
       entities[i].once("destroy", callback);

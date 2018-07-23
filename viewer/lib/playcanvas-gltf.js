@@ -675,7 +675,7 @@
                 // pc.calculateNormals needs indices so generate some if none are present
                 normals = pc.calculateNormals(positions, (indices === null) ? calculateIndices() : indices);
             }
-            if (positions !== null && normals !== null && texCoord0 !== null && tangents === null) {
+            if (positions !== null && normals !== null && texCoord0 !== null && tangents === null && resources.calculateTangents) {
                 // pc.calculateTangents needs indices so generate some if none are present
                 tangents = pc.calculateTangents(positions, normals, texCoord0, (indices === null) ? calculateIndices() : indices);
             }
@@ -1234,21 +1234,32 @@
         return rootNodes;
     }
 
+    function requiresTangents(gltf) {
+        for (var i = 0, len = gltf.materials.length; i < len; i++) {
+            if (gltf.materials[i].hasOwnProperty('normalTexture')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function loadGltf(gltf, device, success, options) {
         initAnim();
 
-        var buffers = options ? options.buffers : undefined;
-        var basePath = options ? options.basePath : undefined;
-        var processUri = options ? options.processUri : undefined;
+        var buffers = (options && options.hasOwnProperty('buffers')) ? options.buffers : undefined;
+        var basePath = (options && options.hasOwnProperty('basePath')) ? options.basePath : undefined;
+        var processUri = (options && options.hasOwnProperty('processUri')) ? options.processUri : undefined;
+        var calculateTangents = (options && options.hasOwnProperty('calculateTangents')) ? options.calculateTangents : requiresTangents(gltf);
 
         var resources = {
-            buffers: buffers,
-            imagesLoaded: 0,
             basePath: basePath,
-            processUri: processUri,
-            gltf: gltf,
+            buffers: buffers,
+            calculateTangents: calculateTangents,
             device: device,
-            defaultMaterial: translateMaterial({})
+            defaultMaterial: translateMaterial({}),
+            gltf: gltf,
+            imagesLoaded: 0,
+            processUri: processUri
         };
 
         if (gltf.hasOwnProperty('extensionsUsed')) {
@@ -1282,7 +1293,7 @@
         });
     }
 
-    function loadGlb(glb, device, success) {
+    function loadGlb(glb, device, success, options) {
         var dataView = new DataView(glb);
 
         // Read header
@@ -1323,11 +1334,12 @@
         var json = decoder.decode(jsonData);
         json = JSON.parse(json);
 
+        options = options ? options : {};
+        options.buffers = buffers;
+
         loadGltf(json, device, function (rootNodes) {
             success(rootNodes);
-        }, {
-            buffers: buffers
-        });
+        }, options);
     }
 
     window.loadGltf = loadGltf;
