@@ -622,10 +622,6 @@
                 // pc.calculateNormals needs indices so generate some if none are present
                 normals = pc.calculateNormals(positions, (indices === null) ? calculateIndices() : indices);
             }
-            if (positions !== null && normals !== null && texCoord0 !== null && tangents === null && resources.calculateTangents) {
-                // pc.calculateTangents needs indices so generate some if none are present
-                tangents = pc.calculateTangents(positions, normals, texCoord0, (indices === null) ? calculateIndices() : indices);
-            }
 
             var vertexDesc = [];
             if (positions) {
@@ -1196,12 +1192,10 @@
         var buffers = (options && options.hasOwnProperty('buffers')) ? options.buffers : undefined;
         var basePath = (options && options.hasOwnProperty('basePath')) ? options.basePath : undefined;
         var processUri = (options && options.hasOwnProperty('processUri')) ? options.processUri : undefined;
-        var calculateTangents = (options && options.hasOwnProperty('calculateTangents')) ? options.calculateTangents : requiresTangents(gltf);
 
         var resources = {
             basePath: basePath,
             buffers: buffers,
-            calculateTangents: calculateTangents,
             device: device,
             defaultMaterial: translateMaterial({}),
             gltf: gltf,
