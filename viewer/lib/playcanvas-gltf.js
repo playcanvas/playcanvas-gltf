@@ -1177,8 +1177,7 @@
         };
 
         if (gltf.hasOwnProperty('extensionsUsed')) {
-            var extensionsUsed = gltf.extensionsUsed;
-            if (extensionsUsed.indexOf('KHR_draco_mesh_compression') !== -1) {
+            if (gltf.extensionsUsed.indexOf('KHR_draco_mesh_compression') !== -1) {
                 resources.decoderModule = DracoDecoderModule();
             }
         }
@@ -1197,8 +1196,7 @@
                 success(createModel(resources), resources.textures, resources.animations);
 
                 if (gltf.hasOwnProperty('extensionsUsed')) {
-                    var extensionsUsed = gltf.extensionsUsed;
-                    if (extensionsUsed.indexOf('KHR_draco_mesh_compression') !== -1) {
+                    if (gltf.extensionsUsed.indexOf('KHR_draco_mesh_compression') !== -1) {
                         resources.decoderModule = null;
                     }
                 }
@@ -1216,6 +1214,10 @@
             return null;
         }
         var version = dataView.getUint32(4, true);
+        if (version !== 2) {
+            console.error("Invalid version number found in glb header. Expected 2, found " + version);
+            return null;
+        }
         var length = dataView.getUint32(8, true);
 
         // Read JSON chunk
