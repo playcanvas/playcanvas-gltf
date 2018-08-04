@@ -58,11 +58,10 @@
             app.assets.loadFromUrl('assets/monkey/monkey.gltf', 'json', function (err, asset) {
                 var json = asset.resource;
                 var gltf = JSON.parse(json);
-                loadGltf(gltf, app.graphicsDevice, function (roots) {
+                loadGltf(gltf, app.graphicsDevice, function (model, textures, animationClips) {
                     // add the loaded scene to the hierarchy
-                    roots.forEach(function (root) {
-                        gltfRoot.addChild(root);
-                    });
+                    gltfRoot.addComponent('model');
+                    gltfRoot.model.model = model;
                 }, {
                     basePath: 'assets/monkey/'
                 });

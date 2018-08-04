@@ -1,24 +1,5 @@
 (function () {
 
-    var Anim;
-    function initAnim() {
-        if (Anim) return;
-        Anim = pc.createScript('anim');
-
-        Anim.prototype.initialize = function () {
-            if(!this.animComponent || this.animComponent.clipCount() === 0 ||
-                !this.animComponent.getCurrentClip()) 
-                return; 
-            this.animComponent.getCurrentClip().play();
-        };
-
-        Anim.prototype.update = function (dt) {
-            if(!this.animComponent || this.animComponent.clipCount() === 0 ||
-                !this.animComponent.getCurrentClip())
-                return;
-        };
-    }
-
     // Math utility functions
     function nearestPow2(n) {
         return Math.pow(2, Math.round(Math.log(n) / Math.log(2)));
@@ -124,7 +105,6 @@
             clip.name = data.name;
 
         var gltf = resources.gltf;
-        var animComponent = null;
 
         data.channels.forEach(function (channel) {
             var sampler = data.samplers[channel.sampler];
@@ -139,17 +119,6 @@
 
             // Animation for the same root, organized in one AnimationComponent
             var entity = resources.nodes[target.node];
-            var itsRoot = resources.nodes[0]; // entity.root;
-            if (!itsRoot.script)
-                itsRoot.addComponent('script');
-
-            if (!itsRoot.script.anim) {
-                itsRoot.script.create('anim');
-                itsRoot.script.anim.animComponent = new AnimationComponent();
-                AnimationSession.app = itsRoot.script.anim.app;
-                itsRoot.script.anim.animComponent.curClip = clip.name;
-            }
-            animComponent = itsRoot.script.anim.animComponent;
 
             if (path === 'weights') {
                 var numCurves = values.length / times.length;
@@ -208,8 +177,6 @@
             }
         });
 
-        if(animComponent)
-            animComponent.addClip(clip);
         return clip;
     }
 
@@ -235,7 +202,9 @@
     function translateImage(data, resources, success) {
         var image = new Image();
 
-        image.addEventListener('load', function () {
+        var onLoad = function () {
+            image.removeEventListener('load', onLoad, false);
+
             var gltf = resources.gltf;
 
             var imageIndex = resources.images.indexOf(image);
@@ -264,7 +233,9 @@
             if (resources.imagesLoaded === gltf.images.length) {
                 success();
             }
-        }, false);
+        };
+
+        image.addEventListener('load', onLoad, false);
 
         if (data.hasOwnProperty('uri')) {
             if (isDataURI(data.uri)) {
@@ -857,9 +828,13 @@
     var tempVec = new pc.Vec3();
 
     function translateNode(data, resources) {
-        var entity = new pc.Entity();
+        var entity = new pc.GraphNode();
 
-        entity.name = data.hasOwnProperty('name') ? data.name : "";
+        if (data.hasOwnProperty('name')) {
+            entity.name = data.name;
+        } else {
+            entity.name = "Node " + resources.nodeCounter;
+        }
 
         // Parse transformation properties
         if (data.hasOwnProperty('matrix')) {
@@ -887,6 +862,9 @@
             entity.setLocalScale(s[0], s[1], s[2]);
         }
 
+        // TODO: The loader has been temporarily switch from using Entities to GraphNodes
+        // in the hierarchy. Therefore, camera loading is disabled for now.
+        /*
         if (data.hasOwnProperty('camera')) {
             var gltf = resources.gltf;
             var camera = gltf.cameras[data.camera];
@@ -925,6 +903,9 @@
             // Diable loaded cameras by default and leave it to the application to enable them
             entity.camera.enabled = false;
         }
+        */
+
+        resources.nodeCounter++;
 
         return entity;
     }
@@ -1101,63 +1082,6 @@
         });
     }
 
-    function createModels(resources) {
-        resources.gltf.nodes.forEach(function (node, idx) {
-            if (node.hasOwnProperty('mesh')) {
-                var meshGroup = resources.meshes[node.mesh];
-                if (meshGroup.length > 0) {
-                    var entity = new pc.Entity();
-                    var meshInstances = [];
-                    var skinInstances = [];
-                    var morphInstances = [];
-
-                    for (var i = 0; i < meshGroup.length; i++) {
-                        var material;
-                        if (meshGroup[i].materialIndex === undefined) {
-                            material = resources.defaultMaterial;
-                        } else {
-                            material = resources.materials[meshGroup[i].materialIndex];
-                        }
-
-                        var meshInstance = new pc.MeshInstance(entity, meshGroup[i], material);
-                        meshInstances.push(meshInstance);
-
-                        if (meshGroup[i].morph) {
-                            var morphInstance = new pc.MorphInstance(meshGroup[i].morph);
-                            meshInstance.morphInstance = morphInstance;
-                            // HACK: need to force calculation of the morph's AABB due to a bug
-                            // in the engine. This is a private function and will be removed!
-                            morphInstance.updateBounds(meshInstance.mesh);
-
-                            morphInstances.push(morphInstance);
-                        }
-
-                        if (node.hasOwnProperty('skin')) {
-                            var skin = resources.skins[node.skin];
-                            meshGroup[i].skin = skin;
-
-                            var skinInstance = new pc.SkinInstance(skin);
-                            skinInstance.bones = skin.bones;
-                            meshInstance.skinInstance = skinInstance;
-
-                            skinInstances.push(skinInstance);
-                        }
-                    }
-
-                    var model = new pc.Model();
-                    model.graph = entity;
-                    model.meshInstances = meshInstances;
-                    model.morphInstances = morphInstances;
-                    model.skinInstances = skinInstances;
-
-                    entity = resources.nodes[idx];
-                    entity.addComponent('model');
-                    entity.model.model = model;
-                }
-            }
-        });
-    }
-
     function getRoots(resources) {
         var gltf = resources.gltf;
         var rootNodes = [];
@@ -1177,18 +1101,66 @@
         return rootNodes;
     }
 
-    function requiresTangents(gltf) {
-        for (var i = 0, len = gltf.materials.length; i < len; i++) {
-            if (gltf.materials[i].hasOwnProperty('normalTexture')) {
-                return true;
+    function createModel(resources) {
+        var meshInstances = [];
+        var skinInstances = [];
+        var morphInstances = [];
+
+        resources.gltf.nodes.forEach(function (node, idx) {
+            if (node.hasOwnProperty('mesh')) {
+                var meshGroup = resources.meshes[node.mesh];
+                for (var i = 0; i < meshGroup.length; i++) {
+                    var material;
+                    if (meshGroup[i].materialIndex === undefined) {
+                        material = resources.defaultMaterial;
+                    } else {
+                        material = resources.materials[meshGroup[i].materialIndex];
+                    }
+
+                    var meshInstance = new pc.MeshInstance(resources.nodes[idx], meshGroup[i], material);
+                    meshInstances.push(meshInstance);
+
+                    if (meshGroup[i].morph) {
+                        var morphInstance = new pc.MorphInstance(meshGroup[i].morph);
+                        meshInstance.morphInstance = morphInstance;
+                        // HACK: need to force calculation of the morph's AABB due to a bug
+                        // in the engine. This is a private function and will be removed!
+                        morphInstance.updateBounds(meshInstance.mesh);
+
+                        morphInstances.push(morphInstance);
+                    }
+
+                    if (node.hasOwnProperty('skin')) {
+                        var skin = resources.skins[node.skin];
+                        meshGroup[i].skin = skin;
+
+                        var skinInstance = new pc.SkinInstance(skin);
+                        skinInstance.bones = skin.bones;
+                        meshInstance.skinInstance = skinInstance;
+
+                        skinInstances.push(skinInstance);
+                    }
+                }
             }
+        });
+
+        var model = new pc.Model();
+        var roots = getRoots(resources);
+        if (roots.length === 1) {
+            model.graph = roots[0];
+        } else {
+            model.graph = new pc.Entity();
+            roots.forEach(function (root) {
+                model.graph.addChild(root);
+            });
         }
-        return false;
+        model.meshInstances = meshInstances;
+        model.morphInstances = morphInstances;
+        model.skinInstances = skinInstances;
+        return model;
     }
 
     function loadGltf(gltf, device, success, options) {
-        initAnim();
-
         var buffers = (options && options.hasOwnProperty('buffers')) ? options.buffers : undefined;
         var basePath = (options && options.hasOwnProperty('basePath')) ? options.basePath : undefined;
         var processUri = (options && options.hasOwnProperty('processUri')) ? options.processUri : undefined;
@@ -1200,6 +1172,7 @@
             defaultMaterial: translateMaterial({}),
             gltf: gltf,
             imagesLoaded: 0,
+            nodeCounter: 0,
             processUri: processUri
         };
 
@@ -1220,9 +1193,8 @@
                 parse('animations', translateAnimation, resources);
 
                 buildHierarchy(resources);
-                createModels(resources);
 
-                success(getRoots(resources));
+                success(createModel(resources), resources.textures, resources.animations);
 
                 if (gltf.hasOwnProperty('extensionsUsed')) {
                     var extensionsUsed = gltf.extensionsUsed;
@@ -1278,8 +1250,8 @@
         options = options ? options : {};
         options.buffers = buffers;
 
-        loadGltf(json, device, function (rootNodes) {
-            success(rootNodes);
+        loadGltf(json, device, function (model, textures, animations) {
+            success(model, textures, animations);
         }, options);
     }
 

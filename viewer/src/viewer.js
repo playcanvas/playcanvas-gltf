@@ -54,10 +54,6 @@ function Viewer() {
     light.setEulerAngles(45, 0, 0);
     app.root.addChild(light);
 
-    // Root entity for loaded gltf scenes which can have more than one root entity
-    var gltfRoot = new pc.Entity('gltf');
-    app.root.addChild(gltfRoot);
-
     // Set a prefiltered cubemap as the skybox
     var cubemapAsset = new pc.Asset('helipad', 'cubemap', {
         url: "./assets/cubemap/6079289/Helipad.dds"
@@ -86,54 +82,100 @@ function Viewer() {
 
     this.app = app;
     this.camera = camera;
-    this.gltfRoot = gltfRoot;
+
+    // Press 'D' to delete the currently loaded model
+    app.on('update', function () {
+        if (this.app.keyboard.wasPressed(pc.KEY_D)) {
+            this.destroyScene();
+        }
+    }, this);
 }
 
-Viewer.prototype.unloadScene = function () {
-    // Empty the current scene
-    var gltfRoot = this.gltfRoot;
-    while (gltfRoot.children.length > 0) {
-        var child = gltfRoot.children[0];
-        gltfRoot.removeChild(child);
-        child.destroy();
+Viewer.prototype.destroyScene = function () {
+    if (this.textures) {
+        this.textures.forEach(function (texture) {
+            texture.destroy();
+        });
     }
+
+    // First destroy the glTF entity...
+    if (this.gltf) {
+        if (this.gltf.animComponent) {
+            this.gltf.animComponent.stopClip();
+        }
+        this.camera.script.orbitCamera.focusEntity = null;
+        this.gltf.destroy();
+    }
+
+    // ...then destroy the asset. If not done in this order,
+    // the entity will be retained by the JS engine.
+    if (this.asset) {
+        this.app.assets.remove(this.asset);
+        this.asset.unload();
+    }
+
+    // Blow away all properties holding the loaded scene
+    delete this.asset;
+    delete this.textures;
+    delete this.animationClips;
+    delete this.gltf;
 };
 
-Viewer.prototype.initializeScene = function (roots) {
-    // Add the loaded scene to the hierarchy
-    var gltfRoot = this.gltfRoot;
-    roots.forEach(function (root) {
-        gltfRoot.addChild(root);
+Viewer.prototype.initializeScene = function (model, textures, animationClips) {
+    // Blow away whatever is currently loaded
+    this.destroyScene();
+
+    // Wrap the model as an asset and add to the asset registry
+    var asset = new pc.Asset('gltf', 'model', {
+        url: ''
     });
+    asset.resource = model;
+    asset.loaded = true;
+    this.app.assets.add(asset);
+
+    // Store the loaded resources
+    this.asset = asset;
+    this.textures = textures;
+    this.animationClips = animationClips;
+
+    // Add the loaded scene to the hierarchy
+    this.gltf = new pc.Entity('gltf');
+    this.gltf.addComponent('model', {
+        asset: asset
+    });
+    this.app.root.addChild(this.gltf);
+
+    // If there are any animations, play the first one
+    if (animationClips && animationClips.length > 0) {
+        var animComponent = new AnimationComponent();
+        animationClips[0].transferToRoot(this.gltf);
+        animComponent.addClip(animationClips[0]);
+        animComponent.playClip(animationClips[0].name);
+
+        // This isn't a 'real' component. Let's just hang it off the 
+        // glTF root entity.
+        this.gltf.animComponent = animComponent;
+    }
 
     // Focus the camera on the newly loaded scene
-    this.camera.script.orbitCamera.focusEntity = gltfRoot;
+    this.camera.script.orbitCamera.focusEntity = this.gltf;
 };
 
 Viewer.prototype.loadGlb = function (arrayBuffer) {
-    this.unloadScene();
-
-    loadGlb(arrayBuffer, this.app.graphicsDevice, function (roots) {
-        this.initializeScene(roots);
-    }.bind(this));
+    loadGlb(arrayBuffer, this.app.graphicsDevice, this.initializeScene.bind(this));
 };
 
 Viewer.prototype.loadGltf = function (arrayBuffer, processUri) {
-    this.unloadScene();
-
     var decoder = new TextDecoder('utf-8');
     var json = decoder.decode(arrayBuffer);
     var gltf = JSON.parse(json);
-    loadGltf(gltf, this.app.graphicsDevice, function (roots) {
-        this.initializeScene(roots);
-    }.bind(this), {
+    loadGltf(gltf, this.app.graphicsDevice, this.initializeScene.bind(this), {
         processUri: processUri
     });
 };
 
 // Incrementally add animations to loaded characters
-Viewer.prototype.addAnimation = function(roots)
-{
+Viewer.prototype.addAnimation = function(roots) {
     if(this.gltfRoot.children.length === 0)
         return;
 
@@ -155,7 +197,7 @@ Viewer.prototype.addAnimation = function(roots)
     {
         characterRoot.script.create('anim');
         characterRoot.script.anim.animComponent = new AnimationComponent();  
-    }   
+    }
     var characterAnimComponent = characterRoot.script.anim.animComponent; 
     characterAnimComponent.stopClip();
 
@@ -176,8 +218,7 @@ Viewer.prototype.addAnimation = function(roots)
     }
 };
 
-Viewer.prototype.addGltf = function(arrayBuffer, processUri) 
-{
+Viewer.prototype.addGltf = function(arrayBuffer, processUri) {
     var decoder = new TextDecoder('utf-8');
     var json = decoder.decode(arrayBuffer);
     var gltf = JSON.parse(json);
@@ -185,8 +226,7 @@ Viewer.prototype.addGltf = function(arrayBuffer, processUri)
     loadGltf(gltf, this.app.graphicsDevice, onSuccess, {processUri: processUri});  
 };
 
-Viewer.prototype.addGlb = function (arrayBuffer) 
-{  
+Viewer.prototype.addGlb = function (arrayBuffer) {  
     var onSuccess = function (roots) { this.addAnimation(roots); }.bind(this);
     loadGlb(arrayBuffer, this.app.graphicsDevice,  onSuccess);
 };
@@ -216,14 +256,15 @@ function main() {
             var processUri = function (uri, success) {
                 for (filename in availableFiles) {
                     if (filename.endsWith(uri)) {
-                        var fr = new FileReader();
-                        fr.onload = function() {
-                            success(fr.result);
-                        };
                         if (uri.endsWith('.bin')) {
+                            var fr = new FileReader();
+                            fr.onload = function() {
+                                success(fr.result);
+                            };
                             fr.readAsArrayBuffer(availableFiles[filename]);
                         } else { // ...it's an image
-                            fr.readAsDataURL(availableFiles[filename]);
+                            var url = URL.createObjectURL(availableFiles[filename]);
+                            success(url);
                         }
                     }
                 }

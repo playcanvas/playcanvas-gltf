@@ -1477,14 +1477,14 @@ AnimationSession.prototype.play = function (playable, animTargets) {
     for (var i = 0; i < this.animEvents.length; i ++)
         this.animEvents[i].triggered = false;
 
-    if(AnimationSession.app)
-        AnimationSession.app.on('update', this.onTimer);
+    var app = pc.Application.getApplication();
+    app.on('update', this.onTimer);
     return this;
 };
 
 AnimationSession.prototype.stop = function () {
-    if(AnimationSession.app)
-        AnimationSession.app.off('update', this.onTimer);
+    var app = pc.Application.getApplication();
+    app.off('update', this.onTimer);
     this.curTime = 0;
     this.isPlaying = false;
     this.fadeBegTime = -1;
@@ -1504,7 +1504,8 @@ AnimationSession.prototype.pause = function () {
 AnimationSession.prototype.resume = function () {
     if (!this.isPlaying) {
         this.isPlaying = true;
-        if(AnimationSession.app) AnimationSession.app.on('update', this.onTimer);
+        var app = pc.Application.getApplication();
+        app.on('update', this.onTimer);
     }
 };
  
