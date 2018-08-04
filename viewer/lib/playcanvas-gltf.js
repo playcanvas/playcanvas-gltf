@@ -1149,7 +1149,7 @@
         if (roots.length === 1) {
             model.graph = roots[0];
         } else {
-            model.graph = new pc.Entity();
+            model.graph = new pc.GraphNode();
             roots.forEach(function (root) {
                 model.graph.addChild(root);
             });
@@ -1250,9 +1250,7 @@
         options = options ? options : {};
         options.buffers = buffers;
 
-        loadGltf(json, device, function (model, textures, animations) {
-            success(model, textures, animations);
-        }, options);
+        loadGltf(json, device, success, options);
     }
 
     window.loadGltf = loadGltf;

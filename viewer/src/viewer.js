@@ -91,144 +91,97 @@ function Viewer() {
     }, this);
 }
 
-Viewer.prototype.destroyScene = function () {
-    if (this.textures) {
-        this.textures.forEach(function (texture) {
-            texture.destroy();
+Viewer.prototype = {
+    destroyScene: function () {
+        if (this.textures) {
+            this.textures.forEach(function (texture) {
+                texture.destroy();
+            });
+        }
+
+        // First destroy the glTF entity...
+        if (this.gltf) {
+            if (this.gltf.animComponent) {
+                this.gltf.animComponent.stopClip();
+            }
+            this.camera.script.orbitCamera.focusEntity = null;
+            this.gltf.destroy();
+        }
+
+        // ...then destroy the asset. If not done in this order,
+        // the entity will be retained by the JS engine.
+        if (this.asset) {
+            this.app.assets.remove(this.asset);
+            this.asset.unload();
+        }
+
+        // Blow away all properties holding the loaded scene
+        delete this.asset;
+        delete this.textures;
+        delete this.animationClips;
+        delete this.gltf;
+    },
+
+    initializeScene: function (model, textures, animationClips) {
+        if (!this.onlyLoadAnimations) {
+            // Blow away whatever is currently loaded
+            this.destroyScene();
+
+            // Wrap the model as an asset and add to the asset registry
+            var asset = new pc.Asset('gltf', 'model', {
+                url: ''
+            });
+            asset.resource = model;
+            asset.loaded = true;
+            this.app.assets.add(asset);
+
+            // Store the loaded resources
+            this.asset = asset;
+            this.textures = textures;
+
+            // Add the loaded scene to the hierarchy
+            this.gltf = new pc.Entity('gltf');
+            this.gltf.addComponent('model', {
+                asset: asset
+            });
+            this.app.root.addChild(this.gltf);
+        }
+
+        // Load any animations
+        if (animationClips && animationClips.length > 0) {
+            this.animationClips = animationClips;
+
+            // If we don't already have an animation component, create one.
+            // Note that this isn't really a 'true' component like those 
+            // found in the engine...
+            if (!this.gltf.animComponent) {
+                this.gltf.animComponent = new AnimationComponent();
+            }
+
+            // Add all animations to the model's animation component
+            for (var i = 0; i < animationClips.length; i++) {
+                animationClips[i].transferToRoot(this.gltf);
+                this.gltf.animComponent.addClip(animationClips[i]);
+            }
+            this.gltf.animComponent.playClip(animationClips[0].name);
+        }
+
+        // Focus the camera on the newly loaded scene
+        this.camera.script.orbitCamera.focusEntity = this.gltf;
+    },
+
+    loadGlb: function (arrayBuffer) {
+        loadGlb(arrayBuffer, this.app.graphicsDevice, this.initializeScene.bind(this));
+    },
+
+    loadGltf: function (arrayBuffer, processUri) {
+        var decoder = new TextDecoder('utf-8');
+        var json = decoder.decode(arrayBuffer);
+        var gltf = JSON.parse(json);
+        loadGltf(gltf, this.app.graphicsDevice, this.initializeScene.bind(this), {
+            processUri: processUri
         });
     }
-
-    // First destroy the glTF entity...
-    if (this.gltf) {
-        if (this.gltf.animComponent) {
-            this.gltf.animComponent.stopClip();
-        }
-        this.camera.script.orbitCamera.focusEntity = null;
-        this.gltf.destroy();
-    }
-
-    // ...then destroy the asset. If not done in this order,
-    // the entity will be retained by the JS engine.
-    if (this.asset) {
-        this.app.assets.remove(this.asset);
-        this.asset.unload();
-    }
-
-    // Blow away all properties holding the loaded scene
-    delete this.asset;
-    delete this.textures;
-    delete this.animationClips;
-    delete this.gltf;
-};
-
-Viewer.prototype.initializeScene = function (model, textures, animationClips) {
-    // Blow away whatever is currently loaded
-    this.destroyScene();
-
-    // Wrap the model as an asset and add to the asset registry
-    var asset = new pc.Asset('gltf', 'model', {
-        url: ''
-    });
-    asset.resource = model;
-    asset.loaded = true;
-    this.app.assets.add(asset);
-
-    // Store the loaded resources
-    this.asset = asset;
-    this.textures = textures;
-    this.animationClips = animationClips;
-
-    // Add the loaded scene to the hierarchy
-    this.gltf = new pc.Entity('gltf');
-    this.gltf.addComponent('model', {
-        asset: asset
-    });
-    this.app.root.addChild(this.gltf);
-
-    // If there are any animations, play the first one
-    if (animationClips && animationClips.length > 0) {
-        var animComponent = new AnimationComponent();
-        animationClips[0].transferToRoot(this.gltf);
-        animComponent.addClip(animationClips[0]);
-        animComponent.playClip(animationClips[0].name);
-
-        // This isn't a 'real' component. Let's just hang it off the 
-        // glTF root entity.
-        this.gltf.animComponent = animComponent;
-    }
-
-    // Focus the camera on the newly loaded scene
-    this.camera.script.orbitCamera.focusEntity = this.gltf;
-};
-
-Viewer.prototype.loadGlb = function (arrayBuffer) {
-    loadGlb(arrayBuffer, this.app.graphicsDevice, this.initializeScene.bind(this));
-};
-
-Viewer.prototype.loadGltf = function (arrayBuffer, processUri) {
-    var decoder = new TextDecoder('utf-8');
-    var json = decoder.decode(arrayBuffer);
-    var gltf = JSON.parse(json);
-    loadGltf(gltf, this.app.graphicsDevice, this.initializeScene.bind(this), {
-        processUri: processUri
-    });
-};
-
-// Incrementally add animations to loaded characters
-Viewer.prototype.addAnimation = function(roots) {
-    if(this.gltfRoot.children.length === 0)
-        return;
-
-    // Check newly loaded animation
-    var animRoot = null;
-    if(roots && roots.length > 0)
-        animRoot = roots[0];
-    var animComponent = null;
-    if(animRoot && animRoot.script && animRoot.script.anim && animRoot.script.anim.animComponent.clipCount() > 0) 
-        animComponent = animRoot.script.anim.animComponent;
-    else 
-        return; 
-
-    // Add to character's animation component
-    var characterRoot = this.gltfRoot.children[0];
-    if(!characterRoot.script)
-        characterRoot.addComponent('script'); 
-    if (!characterRoot.script.anim) 
-    {
-        characterRoot.script.create('anim');
-        characterRoot.script.anim.animComponent = new AnimationComponent();  
-    }
-    var characterAnimComponent = characterRoot.script.anim.animComponent; 
-    characterAnimComponent.stopClip();
-
-    var clipNames = Object.keys(animComponent.animClips);
-    for(var i = 0; i < clipNames.length; i ++)
-    {
-        var cname = clipNames[i];
-        var clip = animComponent.animClips[cname];
-        // Transfer the animation clip to character's root
-        clip.transferToRoot(characterRoot);
-        characterAnimComponent.addClip(clip); 
-        characterAnimComponent.curClip = clip.name;
-    } 
-    if(characterAnimComponent.getCurrentClip()){
-        //characterAnimComponent.getCurrentClip().resetSession();
-        characterAnimComponent.getCurrentClip().loop = true;  
-        characterAnimComponent.getCurrentClip().play();
-    }
-};
-
-Viewer.prototype.addGltf = function(arrayBuffer, processUri) {
-    var decoder = new TextDecoder('utf-8');
-    var json = decoder.decode(arrayBuffer);
-    var gltf = JSON.parse(json);
-    var onSuccess = function (roots) { this.addAnimation(roots); }.bind(this);
-    loadGltf(gltf, this.app.graphicsDevice, onSuccess, {processUri: processUri});  
-};
-
-Viewer.prototype.addGlb = function (arrayBuffer) {  
-    var onSuccess = function (roots) { this.addAnimation(roots); }.bind(this);
-    loadGlb(arrayBuffer, this.app.graphicsDevice,  onSuccess);
 };
 
 function main() {
@@ -239,19 +192,17 @@ function main() {
         event.preventDefault();
     }, false); 
 
-    var bAddAnimation = false;
-    document.addEventListener('dblclick', function(event) { bAddAnimation = !bAddAnimation; }, false);
-
     document.addEventListener('drop', function (event) {
-        event.preventDefault(); 
- 
+        event.preventDefault();
+
         var dropzone = document.getElementById('dropzone');
         dropzone.style.display = 'none';
 
         if (!viewer)
             viewer = new Viewer();
-        
-        var bAddMode = bAddAnimation; // event.ctrlKey;
+
+        viewer.onlyLoadAnimations = event.ctrlKey;
+
         var loadFile = function (file, availableFiles) {
             var processUri = function (uri, success) {
                 for (filename in availableFiles) {
@@ -276,11 +227,9 @@ function main() {
                 var extension = file.name.split('.').pop();
 
                 if (extension === 'glb') {
-                    if(bAddAnimation) viewer.addGlb(arrayBuffer);
-                    else viewer.loadGlb(arrayBuffer);
+                    viewer.loadGlb(arrayBuffer, event.ctrlKey);
                 } else if (extension === 'gltf') {
-                    if(bAddAnimation) viewer.addGltf(arrayBuffer, processUri);
-                    else viewer.loadGltf(arrayBuffer, processUri);
+                    viewer.loadGltf(arrayBuffer, processUri, event.ctrlKey);
                 }
             };
             fr.readAsArrayBuffer(file);
