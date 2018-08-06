@@ -6,7 +6,7 @@ This repo extends PlayCanvas to support glTF. It contains:
 * A loader script that can convert a glTF or glB file into a PlayCanvas hierarchy.
 * A viewer application that supports drag and drop of glTF and glB files.
 
-The loader script returns a hierarchy of pc.Entity structures. It can be used with the standalone Engine or in conjunction with the PlayCanvas Editor.
+The loader script returns a pc.Model structure. It can be used with the standalone Engine or in conjunction with the PlayCanvas Editor.
 
 To see an example of using the loader with the Engine, check out the viewer app in this repo.
 
@@ -21,17 +21,27 @@ loadGlb(glb, device, success);
 ```
 * glb - An [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) holding the binary glb file data.
 * device - A [pc.GraphicsDevice](https://developer.playcanvas.com/en/api/pc.GraphicsDevice.html).
-* success - A [Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) called when the glb has successfully loaded. Called with an array of [pc.Entity](https://developer.playcanvas.com/en/api/pc.Entity.html) objects representing the root nodes of the glTF scene.
+* success - A [Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) called when the glb has successfully loaded. Called with a [pc.Model](https://developer.playcanvas.com/en/api/pc.Model.html) object representing the glTF scene, an array of [pc.Texture](https://developer.playcanvas.com/en/api/pc.Texture.html) objects and an array of AnimationClip objects.
 
 ### Example
 ```javascript
 app.assets.loadFromUrl('assets/monkey/monkey.glb', 'binary', function (err, asset) {
     var glb = asset.resource;
-    loadGlb(glb, app.graphicsDevice, function (roots) {
-        // add the loaded scene to the hierarchy
-        roots.forEach(function (root) {
-            app.root.addChild(root);
+    loadGlb(glb, app.graphicsDevice, function (model, textures, animationClips) {
+        // Wrap the model as an asset and add to the asset registry
+        var asset = new pc.Asset('gltf', 'model', {
+            url: ''
         });
+        asset.resource = model;
+        asset.loaded = true;
+        app.assets.add(asset);
+
+        // Add the loaded scene to the hierarchy
+        var gltf = new pc.Entity('gltf');
+        gltf.addComponent('model', {
+            asset: asset
+        });
+        app.root.addChild(gltf);
     });
 });
 ```
@@ -43,7 +53,7 @@ loadGltf(gltf, device, success, options);
 ```
 * gltf - An [Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) representing the root of the glTF scene.
 * device - A [pc.GraphicsDevice](https://developer.playcanvas.com/en/api/pc.GraphicsDevice.html).
-* success - A [Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) called when the glb has successfully loaded. Called with an array of [pc.Entity](https://developer.playcanvas.com/en/api/pc.Entity.html) objects representing the root nodes of the glTF scene.
+* success - A [Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) called when the glb has successfully loaded. Called with a [pc.Model](https://developer.playcanvas.com/en/api/pc.Model.html) object representing the glTF scene, an array of [pc.Texture](https://developer.playcanvas.com/en/api/pc.Texture.html) objects and an array of AnimationClip objects.
 * options - An [Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) specifying optional parameters for the function.
 * options.buffers - An [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) of preloaded [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) objects holding the glTF file's buffer data.
 * options.basePath - A [String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) set to the relative path of the glTF file.
@@ -54,11 +64,21 @@ loadGltf(gltf, device, success, options);
 app.assets.loadFromUrl('assets/monkey/monkey.gltf', 'json', function (err, asset) {
     var json = asset.resource;
     var gltf = JSON.parse(json);
-    loadGltf(gltf, app.graphicsDevice, function (roots) {
-        // add the loaded scene to the hierarchy
-        roots.forEach(function (root) {
-            app.root.addChild(root);
+    loadGltf(gltf, app.graphicsDevice, function (model, textures, animationClips) {
+        // Wrap the model as an asset and add to the asset registry
+        var asset = new pc.Asset('gltf', 'model', {
+            url: ''
         });
+        asset.resource = model;
+        asset.loaded = true;
+        app.assets.add(asset);
+
+        // Add the loaded scene to the hierarchy
+        var gltf = new pc.Entity('gltf');
+        gltf.addComponent('model', {
+            asset: asset
+        });
+        app.root.addChild(gltf);
     }, {
         basePath: 'assets/monkey/'
     });
