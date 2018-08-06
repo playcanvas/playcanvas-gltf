@@ -1204,7 +1204,7 @@
         });
     }
 
-    function loadGlb(glb, device, success, options) {
+    function loadGlb(glb, device, success) {
         var dataView = new DataView(glb);
 
         // Read header
@@ -1249,10 +1249,9 @@
         var json = decoder.decode(jsonData);
         json = JSON.parse(json);
 
-        options = options ? options : {};
-        options.buffers = buffers;
-
-        loadGltf(json, device, success, options);
+        loadGltf(json, device, success, {
+            buffers: buffers
+        });
     }
 
     window.loadGltf = loadGltf;
