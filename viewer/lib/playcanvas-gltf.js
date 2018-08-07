@@ -1228,7 +1228,11 @@
             return null;
         }
         var jsonData = new Uint8Array(glb, 20, chunkLength);
+        var decoder = new TextDecoder('utf-8');
+        var json = decoder.decode(jsonData);
+        json = JSON.parse(json);
 
+        // Read the binary buffers
         var buffers = [];
         var byteOffset = 20 + chunkLength;
         while (byteOffset < length) {
@@ -1244,10 +1248,6 @@
 
             byteOffset += chunkLength + 8;
         }
-
-        var decoder = new TextDecoder('utf-8');
-        var json = decoder.decode(jsonData);
-        json = JSON.parse(json);
 
         loadGltf(json, device, success, {
             buffers: buffers

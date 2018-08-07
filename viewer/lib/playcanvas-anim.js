@@ -778,10 +778,12 @@ AnimationClipSnapshot.linearBlend = function (shot1, shot2, p) {
     var curveNames = Object.keys(shot2.curveKeyable);
     for (var i = 0; i < curveNames.length; i ++) {
         var cname = curveNames[i];
-        if (shot1.curveKeyable[cname]) {
+        if (shot1.curveKeyable[cname] && shot2.curveKeyable[cname]) {
             var resKey = AnimationKeyable.linearBlend(shot1.curveKeyable[cname], shot2.curveKeyable[cname], p);
             resShot.curveKeyable[cname] = resKey;
-        } else
+        } else if (shot1.curveKeyable[cname])
+            resShot.curveKeyable[cname] = shot1.curveKeyable[cname];
+        else if (shot2.curveKeyable[cname])
             resShot.curveKeyable[cname] = shot2.curveKeyable[cname];
     }
     return resShot;
@@ -1402,10 +1404,12 @@ AnimationSession.prototype.updateToTarget = function (input) {
             ctargets = this.animTargets[cname];
             if (!ctargets) continue;
 
-            for (j = 0; j < ctargets.length; j ++)
-                ctargets[j].updateToTarget(input.curveKeyable[cname].value);
+            for (j = 0; j < ctargets.length; j ++) {
+                if (input.curveKeyable[cname]) {
+                    ctargets[j].updateToTarget(input.curveKeyable[cname].value);
+                }
+            }
         }
-
     }
 };
 
@@ -1546,6 +1550,9 @@ var AnimationComponent = function AnimationComponent() {
     this.name = "";
     this.animClips = {}; // make it a map, easy to query clip by name
     this.curClip = "";
+
+    // For storing AnimationSessions
+    this.animSessions = {};
 };
 
 AnimationComponent.prototype.clipCount = function () {
@@ -1620,3 +1627,48 @@ AnimationComponent.prototype.unsetBlend = function(curveName) {
         curClip.session.unsetBlend(curveName);
 };
 
+
+// APIs for sessions =================================================
+AnimationComponent.prototype.getCurrentSession = function () {
+    return this.animSessions[this.curClip];
+};
+
+AnimationComponent.prototype.playSession = function (name) {
+    if (this.animSessions[name]) {
+        this.curClip = name;
+        this.animSessions[name].play();
+    }
+};
+
+AnimationComponent.prototype.stopSession = function () {
+    if (this.animSessions[this.curClip]) {
+        this.animSessions[this.curClip].stop();
+        this.curClip = "";
+    }
+};
+
+AnimationComponent.prototype.crossFadeToSession = function (name, duration) {
+    if (this.animSessions[this.curClip] && this.animSessions[name]) {
+        this.animSessions[this.curClip].fadeOut(duration);
+        this.animSessions[name].fadeIn(duration);
+        this.curClip = name;
+    } else if (this.animSessions[this.curClip]) {
+        this.animSessions[this.curClip].fadeOut(duration);
+        this.curClip = "";
+    } else if (this.animSessions[name]) {
+        this.animSessions[name].fadeIn(duration);
+        this.curClip = name;
+    }
+};
+
+AnimationComponent.prototype.setBlendSession = function (blendValue, weight, curveName) {
+    var curSession = this.animSessions[this.curClip];
+    if(curSession)
+        curSession.setBlend(blendValue, weight, curveName);
+};
+
+AnimationComponent.prototype.unsetBlendSession = function(curveName) {
+    var curSession = this.animSessions[this.curClip];
+    if(curSession)
+        curSession.unsetBlend(curveName);
+};
