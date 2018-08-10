@@ -611,7 +611,7 @@
                 vertexDesc.push({ semantic: pc.SEMANTIC_TEXCOORD1, components: 2, type: pc.TYPE_FLOAT32 });
             }
             if (colors) {
-                vertexDesc.push({ semantic: pc.SEMANTIC_COLOR, components: 4, type: pc.TYPE_FLOAT32 });
+                vertexDesc.push({ semantic: pc.SEMANTIC_COLOR, components: 4, type: pc.TYPE_UINT8, normalize: true });
             }
             if (joints) {
                 vertexDesc.push({ semantic: pc.SEMANTIC_BLENDINDICES, components: 4, type: pc.TYPE_UINT8 });
@@ -706,18 +706,18 @@
 
             if (colors !== null) {
                 attr = getAttribute(pc.SEMANTIC_COLOR);
-                dstOffset = attr.offset / 4;
-                dstStride = attr.stride / 4;
+                dstOffset = attr.offset;
+                dstStride = attr.stride;
 
                 accessor = gltf.accessors[primitive.attributes.COLOR_0];
 
                 for (i = 0; i < numVertices; i++) {
                     dstIndex = dstOffset + i * dstStride;
                     srcIndex = accessor.type === 'VEC4' ? i * 4 : i * 3;
-                    vertexDataF32[dstIndex]     = colors[srcIndex];
-                    vertexDataF32[dstIndex + 1] = colors[srcIndex + 1];
-                    vertexDataF32[dstIndex + 2] = colors[srcIndex + 2];
-                    vertexDataF32[dstIndex + 3] = accessor.type === 'VEC4' ? colors[srcIndex + 3] : 1;
+                    vertexDataU8[dstIndex]     = colors[srcIndex] * 255;
+                    vertexDataU8[dstIndex + 1] = colors[srcIndex + 1] * 255;
+                    vertexDataU8[dstIndex + 2] = colors[srcIndex + 2] * 255;
+                    vertexDataU8[dstIndex + 3] = accessor.type === 'VEC4' ? colors[srcIndex + 3] * 255 : 255;
                 }
             }
 
