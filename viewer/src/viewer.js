@@ -22,10 +22,12 @@ function Viewer() {
 
     // Create camera entity
     var camera = new pc.Entity('camera');
-    camera.addComponent('camera');
+    camera.addComponent('camera', {
+        fov: 45.8366
+    });
     camera.addComponent('script');
+    camera.setPosition(0, 0, 1);
     app.root.addChild(camera);
-    camera.setLocalPosition(0, 0, 1);
 
     // Make the camera interactive
     app.assets.loadFromUrl('./src/orbit-camera.js', 'script', function (err, asset) {
@@ -47,7 +49,9 @@ function Viewer() {
             }
         });
 
-        if (this.gltf) {
+        if (this.cameraPosition) {
+            camera.script.orbitCamera.distance = this.cameraPosition.length();
+        } else if (this.gltf) {
             camera.script.orbitCamera.focusEntity = this.gltf;
         }
     }.bind(this));
@@ -108,7 +112,9 @@ Viewer.prototype = {
             if (this.gltf.animComponent) {
                 this.gltf.animComponent.stopClip();
             }
-            this.camera.script.orbitCamera.focusEntity = null;
+            if (this.camera.script.orbitCamera.focusEntity) {
+                this.camera.script.orbitCamera.focusEntity = null;
+            }
             this.gltf.destroy();
         }
 
@@ -172,7 +178,11 @@ Viewer.prototype = {
 
         // Focus the camera on the newly loaded scene
         if (this.camera.script.orbitCamera) {
-            this.camera.script.orbitCamera.focusEntity = this.gltf;
+            if (this.cameraPosition) {
+                this.camera.script.orbitCamera.distance = this.cameraPosition.length();
+            } else {
+                this.camera.script.orbitCamera.focusEntity = this.gltf;
+            }
         }
     },
 
@@ -210,6 +220,14 @@ function main() {
                     viewer.loadGltf(gltf, basePath);
                 });
             });
+    }
+
+    var cameraPosition = getParameterByName('cameraPosition');
+    if (cameraPosition) {
+        var pos = cameraPosition.split(',');
+        if (pos.length === 3) {
+            viewer.cameraPosition = new pc.Vec3(parseFloat(pos[0]), parseFloat(pos[1]), parseFloat(pos[2]));
+        }
     }
 
     // Handle dropped GLB/GLTF files
