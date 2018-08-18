@@ -46,7 +46,11 @@ function Viewer() {
                 distanceSensitivity: 0.15
             }
         });
-    });
+
+        if (this.gltf) {
+            camera.script.orbitCamera.focusEntity = this.gltf;
+        }
+    }.bind(this));
 
     // Create directional light entity
     var light = new pc.Entity('light');
@@ -167,25 +171,46 @@ Viewer.prototype = {
         }
 
         // Focus the camera on the newly loaded scene
-        this.camera.script.orbitCamera.focusEntity = this.gltf;
+        if (this.camera.script.orbitCamera) {
+            this.camera.script.orbitCamera.focusEntity = this.gltf;
+        }
     },
 
     loadGlb: function (arrayBuffer) {
         loadGlb(arrayBuffer, this.app.graphicsDevice, this.initializeScene.bind(this));
     },
 
-    loadGltf: function (arrayBuffer, processUri) {
-        var decoder = new TextDecoder('utf-8');
-        var json = decoder.decode(arrayBuffer);
-        var gltf = JSON.parse(json);
+    loadGltf: function (gltf, basePath, processUri) {
         loadGltf(gltf, this.app.graphicsDevice, this.initializeScene.bind(this), {
+            basePath: basePath,
             processUri: processUri
         });
     }
 };
 
+function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, '\\$&');
+    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
+
 function main() {
-    var viewer;
+    var viewer = new Viewer();
+
+    var assetUrl = getParameterByName('assetUrl');
+    if (assetUrl) {
+        fetch(assetUrl)
+            .then(function(response) {
+                response.json().then(function(gltf) {
+                    var basePath = assetUrl.substring(0, assetUrl.lastIndexOf('/')) + "/";
+                    viewer.loadGltf(gltf, basePath);
+                });
+            });
+    }
 
     // Handle dropped GLB/GLTF files
     document.addEventListener('dragover', function (event) {
@@ -197,9 +222,6 @@ function main() {
 
         var dropzone = document.getElementById('dropzone');
         dropzone.style.display = 'none';
-
-        if (!viewer)
-            viewer = new Viewer();
 
         viewer.onlyLoadAnimations = event.ctrlKey;
 
@@ -227,9 +249,12 @@ function main() {
                 var extension = file.name.split('.').pop();
 
                 if (extension === 'glb') {
-                    viewer.loadGlb(arrayBuffer, event.ctrlKey);
+                    viewer.loadGlb(arrayBuffer);
                 } else if (extension === 'gltf') {
-                    viewer.loadGltf(arrayBuffer, processUri, event.ctrlKey);
+                    var decoder = new TextDecoder('utf-8');
+                    var json = decoder.decode(arrayBuffer);
+                    var gltf = JSON.parse(json);
+                    viewer.loadGltf(gltf, processUri);
                 }
             };
             fr.readAsArrayBuffer(file);
