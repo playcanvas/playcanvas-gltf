@@ -441,7 +441,11 @@
             material.emissiveTint = false;
         }
         if (data.hasOwnProperty('emissiveTexture')) {
-            material.emissiveMap = resources.textures[data.emissiveTexture.index];
+            var emissiveTexture = data.emissiveTexture;
+            material.emissiveMap = resources.textures[emissiveTexture.index];
+            if (emissiveTexture.hasOwnProperty('texCoord')) {
+                material.emissiveMapUv = emissiveTexture.texCoord;
+            }
         }
         if (data.hasOwnProperty('alphaMode')) {
             switch (data.alphaMode) {
