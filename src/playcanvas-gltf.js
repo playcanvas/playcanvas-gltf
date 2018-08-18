@@ -310,7 +310,7 @@
             material.name = data.name;
         }
 
-        var color;
+        var color, texture;
         if (data.hasOwnProperty('pbrMetallicRoughness')) {
             var pbrData = data.pbrMetallicRoughness;
 
@@ -325,7 +325,7 @@
             }
             if (pbrData.hasOwnProperty('baseColorTexture')) {
                 var baseColorTexture = pbrData.baseColorTexture;
-                var texture = resources.textures[baseColorTexture.index];
+                texture = resources.textures[baseColorTexture.index];
 
                 material.diffuseMap = texture;
                 material.diffuseMapChannel = 'rgb';
@@ -375,7 +375,7 @@
                 }
                 if (specData.hasOwnProperty('diffuseTexture')) {
                     var diffuseTexture = specData.diffuseTexture;
-                    var texture = resources.textures[diffuseTexture.index];
+                    texture = resources.textures[diffuseTexture.index];
 
                     material.diffuseMap = texture;
                     material.diffuseMapChannel = 'rgb';
