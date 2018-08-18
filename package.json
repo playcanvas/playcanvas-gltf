@@ -28,7 +28,7 @@
   },
   "scripts": {
     "viewer": "electron ./viewer/main.js",
-    "lint": "eslint viewer/lib/playcanvas-anim.js viewer/lib/playcanvas-gltf.js"
+    "lint": "eslint src/playcanvas-anim.js src/playcanvas-gltf.js"
   },
   "engines": {
     "node": ">= 0.6.12"
