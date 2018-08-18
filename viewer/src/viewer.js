@@ -224,9 +224,9 @@ function main() {
 
     var cameraPosition = getParameterByName('cameraPosition');
     if (cameraPosition) {
-        var pos = cameraPosition.split(',');
+        var pos = cameraPosition.split(',').map(Number);
         if (pos.length === 3) {
-            viewer.cameraPosition = new pc.Vec3(parseFloat(pos[0]), parseFloat(pos[1]), parseFloat(pos[2]));
+            viewer.cameraPosition = new pc.Vec3(pos);
         }
     }
 

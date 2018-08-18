@@ -10,7 +10,7 @@ The loader script returns a pc.Model structure. It can be used with the standalo
 
 To see an example of using the loader with the Engine, check out the viewer app in this repo.
 
-To use the loader with the Editor, simply add [playcanvas-gltf.js](https://github.com/playcanvas/playcanvas-gltf/blob/master/viewer/lib/playcanvas-gltf.js) and [playcanvas-anim.js](https://github.com/playcanvas/playcanvas-gltf/blob/master/viewer/lib/playcanvas-anim.js) into your project (ensuring they are first in your loading order) and call the following API:
+To use the loader with the Editor, simply add [playcanvas-gltf.js](https://github.com/playcanvas/playcanvas-gltf/blob/master/src/playcanvas-gltf.js) and [playcanvas-anim.js](https://github.com/playcanvas/playcanvas-gltf/blob/master/src/playcanvas-anim.js) into your project (ensuring they are first in your loading order) and call the following API:
 
 # API
 
