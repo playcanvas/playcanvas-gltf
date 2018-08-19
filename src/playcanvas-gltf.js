@@ -304,14 +304,62 @@
         material.occludeSpecular = true;
         material.diffuseTint = true;
         material.diffuseVertexColor = true;
-        material.chunks.glossPS = glossChunk;
 
         if (data.hasOwnProperty('name')) {
             material.name = data.name;
         }
 
         var color, texture;
-        if (data.hasOwnProperty('pbrMetallicRoughness')) {
+        if (data.hasOwnProperty('extensions') && data.extensions.hasOwnProperty('KHR_materials_pbrSpecularGlossiness')) {
+            var specData = data.extensions.KHR_materials_pbrSpecularGlossiness;
+
+            if (specData.hasOwnProperty('diffuseFactor')) {
+                color = specData.diffuseFactor;
+                // Convert from linear space to sRGB space
+                material.diffuse.set(Math.pow(color[0], 1 / 2.2), Math.pow(color[1], 1 / 2.2), Math.pow(color[2], 1 / 2.2));
+                material.opacity = (color[3] != null) ? color[3] : 1;
+            } else {
+                material.diffuse.set(1, 1, 1);
+                material.opacity = 1;
+            }
+            if (specData.hasOwnProperty('diffuseTexture')) {
+                var diffuseTexture = specData.diffuseTexture;
+                texture = resources.textures[diffuseTexture.index];
+
+                material.diffuseMap = texture;
+                material.diffuseMapChannel = 'rgb';
+                material.opacityMap = texture;
+                material.opacityMapChannel = 'a';
+                if (diffuseTexture.hasOwnProperty('texCoord')) {
+                    material.diffuseMapUv = diffuseTexture.texCoord;
+                    material.opacityMapUv = diffuseTexture.texCoord;
+                }
+            }
+            material.useMetalness = false;
+            if (specData.hasOwnProperty('specularFactor')) {
+                color = specData.specularFactor;
+                // Convert from linear space to sRGB space
+                material.specular.set(Math.pow(color[0], 1 / 2.2), Math.pow(color[1], 1 / 2.2), Math.pow(color[2], 1 / 2.2));
+                material.specularTint = true;
+            } else {
+                material.specular.set(1, 1, 1);
+                material.specularTint = false;
+            }
+            if (specData.hasOwnProperty('glossinessFactor')) {
+                material.shininess = 100 * specData.glossinessFactor;
+            } else {
+                material.shininess = 100;
+            }
+            if (specData.hasOwnProperty('specularGlossinessTexture')) {
+                var specularGlossinessTexture = specData.specularGlossinessTexture;
+                material.specularMap = resources.textures[specularGlossinessTexture.index];
+                material.specularMapChannel = 'a';
+                if (specularGlossinessTexture.hasOwnProperty('texCoord')) {
+                    material.glossMapUv = specularGlossinessTexture.texCoord;
+                    material.metalnessMapUv = specularGlossinessTexture.texCoord;
+                }
+            }
+        } else if (data.hasOwnProperty('pbrMetallicRoughness')) {
             var pbrData = data.pbrMetallicRoughness;
 
             if (pbrData.hasOwnProperty('baseColorFactor')) {
@@ -358,60 +406,10 @@
                     material.metalnessMapUv = metallicRoughnessTexture.texCoord;
                 }
             }
-        }
-        if (data.hasOwnProperty('extensions')) {
-            var extensions = data.extensions;
-            if (extensions.hasOwnProperty('KHR_materials_pbrSpecularGlossiness')) {
-                var specData = extensions.KHR_materials_pbrSpecularGlossiness;
 
-                if (specData.hasOwnProperty('diffuseFactor')) {
-                    color = specData.diffuseFactor;
-                    // Convert from linear space to sRGB space
-                    material.diffuse.set(Math.pow(color[0], 1 / 2.2), Math.pow(color[1], 1 / 2.2), Math.pow(color[2], 1 / 2.2));
-                    material.opacity = (color[3] != null) ? color[3] : 1;
-                } else {
-                    material.diffuse.set(1, 1, 1);
-                    material.opacity = 1;
-                }
-                if (specData.hasOwnProperty('diffuseTexture')) {
-                    var diffuseTexture = specData.diffuseTexture;
-                    texture = resources.textures[diffuseTexture.index];
-
-                    material.diffuseMap = texture;
-                    material.diffuseMapChannel = 'rgb';
-                    material.opacityMap = texture;
-                    material.opacityMapChannel = 'a';
-                    if (diffuseTexture.hasOwnProperty('texCoord')) {
-                        material.diffuseMapUv = diffuseTexture.texCoord;
-                        material.opacityMapUv = diffuseTexture.texCoord;
-                    }
-                }
-                material.useMetalness = false;
-                if (specData.hasOwnProperty('specularFactor')) {
-                    color = specData.specularFactor;
-                    // Convert from linear space to sRGB space
-                    material.specular.set(Math.pow(color[0], 1 / 2.2), Math.pow(color[1], 1 / 2.2), Math.pow(color[2], 1 / 2.2));
-                    material.specularTint = true;
-                } else {
-                    material.specular.set(0.2, 0.2, 0.2);
-                    material.specularTint = false;
-                }
-                if (specData.hasOwnProperty('glossinessFactor')) {
-                    material.shininess = 100 * specData.glossinessFactor;
-                } else {
-                    material.shininess = 100;
-                }
-                if (specData.hasOwnProperty('specularGlossinessTexture')) {
-                    var specularGlossinessTexture = specData.specularGlossinessTexture;
-                    material.specularMap = resources.textures[specularGlossinessTexture.index];
-                    material.specularMapChannel = 'a';
-                    if (specularGlossinessTexture.hasOwnProperty('texCoord')) {
-                        material.glossMapUv = specularGlossinessTexture.texCoord;
-                        material.metalnessMapUv = specularGlossinessTexture.texCoord;
-                    }
-                }
-            }
+            material.chunks.glossPS = glossChunk;
         }
+
         if (data.hasOwnProperty('normalTexture')) {
             var normalTexture = data.normalTexture;
             material.normalMap = resources.textures[normalTexture.index];
