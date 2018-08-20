@@ -272,7 +272,7 @@ function main() {
                     var decoder = new TextDecoder('utf-8');
                     var json = decoder.decode(arrayBuffer);
                     var gltf = JSON.parse(json);
-                    viewer.loadGltf(gltf, processUri);
+                    viewer.loadGltf(gltf, undefined, processUri);
                 }
             };
             fr.readAsArrayBuffer(file);
