@@ -298,7 +298,7 @@ AnimationTarget.prototype.updateToTarget = function (value) {
 };
 
 // static function
-AnimationTarget.constructTargetNodes = function (root, vec3Scale) {
+AnimationTarget.constructTargetNodes = function (root, vec3Scale, output) {
     if (!root)
         return;
 
@@ -307,13 +307,10 @@ AnimationTarget.constructTargetNodes = function (root, vec3Scale) {
     if (root.localScale)
         rootTargetNode.vScale = new pc.Vec3(root.localScale.x * vScale.x, root.localScale.y * vScale.y, root.localScale.z * vScale.z);
 
-    var arTargetsAll = [rootTargetNode];
+    output[rootTargetNode.targetNode.name] = rootTargetNode;
     for (var i = 0; i < root.children.length; i ++) {
-        var arTargets = AnimationTarget.constructTargetNodes(root.children[i], rootTargetNode.vScale);
-        if (arTargets)
-            arTargetsAll = arTargetsAll.concat(arTargets);
+        var arTargets = AnimationTarget.constructTargetNodes(root.children[i], rootTargetNode.vScale, output);
     }
-    return arTargetsAll;
 };
 
 // static function
@@ -1066,37 +1063,29 @@ AnimationClip.prototype.constructFromRoot = function (root) {
 //         newTarget.vScale = NS / AS = vScale * NS / RS;
 //
 */
-AnimationClip.prototype.transferToRoot = function (root) {
-    var arTarget = AnimationTarget.constructTargetNodes(root);// contains localScale information
+AnimationClip.prototype.transferToRoot = function (root) { 
+    var dictTarget = {};
+    AnimationTarget.constructTargetNodes(root, null, dictTarget);// contains localScale information
 
     var curveNames = Object.keys(this.animCurves);
     for (var i = 0; i < curveNames.length; i++) { // for each curve in clip
         if (!curveNames[i] || !this.animCurves[curveNames[i]])
             continue;
-
         var curve = this.animCurves[curveNames[i]];
-        for (var t = 0; t < curve.animTargets.length; t ++) { // for all targets
-            var ctarget = curve.animTargets[t];
-            var bFound = false;
-            for (var a = 0; a < arTarget.length; a ++) { // find matching under root
-                var atarget = arTarget[a];
-
-                if (ctarget.targetNode.name === atarget.targetNode.name) { // match by target name
-                    bFound = true;
-                    var cScale = AnimationTarget.getLocalScale(ctarget.targetNode);
-                    ctarget.targetNode = atarget.targetNode; // atarget contains scale information
-                    if (cScale && atarget.vScale) {
-                        ctarget.vScale = new pc.Vec3(cScale.x, cScale.y, cScale.z);
-                        if (atarget.vScale.x) ctarget.vScale.x /= atarget.vScale.x;
-                        if (atarget.vScale.y) ctarget.vScale.y /= atarget.vScale.y;
-                        if (atarget.vScale.z) ctarget.vScale.z /= atarget.vScale.z;
-                    }
-                }
+        var ctarget = curve.animTargets[0];
+        var atarget = dictTarget[ctarget.targetNode.name];
+        if (atarget) { // match by target name
+            var cScale = AnimationTarget.getLocalScale(ctarget.targetNode);
+            ctarget.targetNode = atarget.targetNode; // atarget contains scale information
+            if (cScale && atarget.vScale) {
+                ctarget.vScale = new pc.Vec3(cScale.x, cScale.y, cScale.z);
+                if (atarget.vScale.x) ctarget.vScale.x /= atarget.vScale.x;
+                if (atarget.vScale.y) ctarget.vScale.y /= atarget.vScale.y;
+                if (atarget.vScale.z) ctarget.vScale.z /= atarget.vScale.z;
             }
-            if (!bFound)
-                console.warn("transferToRoot: " + ctarget.targetNode.name + "in animation clip " + this.name + " has no transferred target under " + root.name);
-
         }
+        else //not found
+            console.warn("transferToRoot: " + ctarget.targetNode.name + "in animation clip " + this.name + " has no transferred target under " + root.name);
     }
 };
 
@@ -1188,6 +1177,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
         this.animTargets = targets;// collection of AnimationTarget
 
     this.animEvents = [];
+
     // blend related==========================================================
     this.blendables = {};
     this.blendWeights = {};
@@ -1197,6 +1187,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
     this.onTimer = function (dt) {
         self.curTime += (self.bySpeed * dt);
         self.accTime += (self.bySpeed * dt);
+
         if (!self.isPlaying ||// not playing
             (!self.loop && (self.curTime < self.begTime || self.curTime > self.endTime))){ // not in range
             self.invokeByTime(self.curTime);
@@ -1204,7 +1195,8 @@ var AnimationSession = function AnimationSession(playable, targets) {
             self.invokeByName("stop");
             return;
         }
-        //round time to duration
+
+        // round time to duration
         var duration = self.endTime - self.begTime;
         if (self.curTime > self.endTime) { // loop start
             self.invokeByTime(self.curTime);
@@ -1239,7 +1231,7 @@ AnimationSession.app = null;
 
 // blend related==========================================================
 AnimationSession.prototype.setBlend = function(blendValue, weight, curveName){
-    if(blendValue instanceof AnimationClip) {
+    if(blendValue instanceof AnimationClip){
         if(!curveName || curveName === "")
             curveName = "__default__";
         this.blendables[curveName] = blendValue;
@@ -1247,16 +1239,16 @@ AnimationSession.prototype.setBlend = function(blendValue, weight, curveName){
         return;
     }
 
-    //blendable is just a single DOF=================================
+    // blendable is just a single DOF=================================
     var keyType;
-    if(typeof blendValue === "number")//1 instanceof Number is false, don't know why
+    if(typeof blendValue === "number")// 1 instanceof Number is false, don't know why
         keyType =  AnimationKeyableType.NUM;
     else if(blendValue instanceof pc.Vec3)
         keyType = AnimationKeyableType.VEC;
     else if(blendValue instanceof pc.Quat)
         keyType = AnimationKeyableType.QUAT;
 
-    if(!curveName || curveName === "" || typeof keyType === "undefined")//has to specify curveName
+    if(!curveName || curveName === "" || typeof keyType === "undefined")// has to specify curveName
         return;
 
     this.blendWeights[curveName] = weight;
@@ -1273,6 +1265,7 @@ AnimationSession.prototype.unsetBlend = function(curveName) {
         delete this.blendWeights[curveName];
     }
 };
+
 // events related
 AnimationSession.prototype.on = function (name, time, fnCallback, context, parameter) {
     if (!name || !fnCallback)
@@ -1438,7 +1431,7 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
     if(fadeDir === 0 || fadeTime < fadeBegTime || fadeTime > fadeEndTime)
         this.updateToTarget(input);
     else {
-        var p = (fadeTime - fadeBegTime) / (fadeEndTime - fadeBegTime);
+        p = (fadeTime - fadeBegTime) / (fadeEndTime - fadeBegTime);
         if (fadeDir === -1)
             p = 1 - p;
         this.blendToTarget(input, p);
@@ -1471,6 +1464,10 @@ AnimationSession.prototype.play = function (playable, animTargets) {
         this.animTargets = playable.getAnimTargets();
     else
         this.animTargets = animTargets;
+
+    // reset events
+    for (i = 0; i < this.animEvents.length; i ++)
+        this.animEvents[i].triggered = false;
 
     // reset events
     for (i = 0; i < this.animEvents.length; i ++)
@@ -1604,6 +1601,7 @@ AnimationComponent.prototype.crossFadeToClip = function (name, duration) {
         this.curClip = name;
     }
 };
+
 
 // blend related
 AnimationComponent.prototype.setBlend = function (blendValue, weight, curveName) {
