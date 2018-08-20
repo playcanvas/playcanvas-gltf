@@ -1618,7 +1618,6 @@ AnimationComponent.prototype.unsetBlend = function(curveName) {
         curClip.session.unsetBlend(curveName);
 };
 
-
 // APIs for sessions =================================================
 AnimationComponent.prototype.getCurrentSession = function () {
     return this.animSessions[this.curClip];
