@@ -165,8 +165,8 @@ var AnimationTarget = function AnimationTarget(targetNode, targetPath, targetPro
     this.targetPath = targetPath;
     this.targetProp = targetProp;
 };
- 
-// blend related  
+
+// blend related
 AnimationTarget.prototype.toString = function(){
     var str = "";
     if(this.targetNode)
@@ -1099,7 +1099,7 @@ AnimationClip.prototype.transferToRoot = function (root) {
         }
     }
 };
- 
+
 // blend related
 AnimationClip.prototype.updateCurveNameFromTarget = function () {
     var curveNames = Object.keys(this.animCurves);
@@ -1138,9 +1138,9 @@ AnimationClip.prototype.setInterpolationType = function (type) {
 
 // *===============================================================================================================
 // * class AnimationEvent:
-// *=============================================================================================================== 
-var AnimationEvent = function AnimationEvent(name, time, fnCallback, context, parameter) { 
-    this.name = name; 
+// *===============================================================================================================
+var AnimationEvent = function AnimationEvent(name, time, fnCallback, context, parameter) {
+    this.name = name;
     this.triggerTime = time;
     this.fnCallback = fnCallback;
     this.context = context || this;
@@ -1148,10 +1148,10 @@ var AnimationEvent = function AnimationEvent(name, time, fnCallback, context, pa
 
     this.triggered = false;
 };
- 
+
 AnimationEvent.prototype.invoke = function () {
-    if (this.fnCallback) { 
-        this.fnCallback.call(this.context, this.parameter);  
+    if (this.fnCallback) {
+        this.fnCallback.call(this.context, this.parameter);
         this.triggered = true;
     }
 };
@@ -1188,24 +1188,22 @@ var AnimationSession = function AnimationSession(playable, targets) {
         this.animTargets = targets;// collection of AnimationTarget
 
     this.animEvents = [];
- 
     // blend related==========================================================
     this.blendables = {};
     this.blendWeights = {};
 
     // ontimer function for playback
-    var self = this; 
+    var self = this;
     this.onTimer = function (dt) {
         self.curTime += (self.bySpeed * dt);
-        self.accTime += (self.bySpeed * dt); 
+        self.accTime += (self.bySpeed * dt);
         if (!self.isPlaying ||// not playing
-            (!self.loop && (self.curTime < self.begTime || self.curTime > self.endTime))){ // not in range 
+            (!self.loop && (self.curTime < self.begTime || self.curTime > self.endTime))){ // not in range
             self.invokeByTime(self.curTime);
             self.stop();
             self.invokeByName("stop");
             return;
         }
-        
         //round time to duration
         var duration = self.endTime - self.begTime;
         if (self.curTime > self.endTime) { // loop start
@@ -1213,18 +1211,18 @@ var AnimationSession = function AnimationSession(playable, targets) {
             self.curTime -= duration;
             for (var i = 0; i < self.animEvents.length; i ++)
                 self.animEvents[i].triggered = false;
-        } 
-        if (self.curTime < self.begTime) 
+        }
+        if (self.curTime < self.begTime)
             self.curTime += duration;
 
         if(self.fadeDir) {
             self.fadeTime +=  dt;// (self.bySpeed * dt);
             if(self.fadeTime >= self.fadeEndTime) {
-                if(self.fadeDir === 1) { // fadein completed  
+                if(self.fadeDir === 1) { // fadein completed
                     self.fadeDir = 0;
                     self.fadeBegTime = -1;
                     self.fadeEndTime = -1;
-                    self.fadeTime = -1; 
+                    self.fadeTime = -1;
                 } else if (self.fadeDir === -1) { // fadeout completed
                     self.stop();
                     return;
@@ -1234,9 +1232,9 @@ var AnimationSession = function AnimationSession(playable, targets) {
 
         self.showAt(self.curTime, self.fadeDir, self.fadeBegTime, self.fadeEndTime, self.fadeTime);
         self.invokeByTime(self.curTime);
-    }; 
+    };
 };
- 
+
 AnimationSession.app = null;
 
 // blend related==========================================================
@@ -1245,7 +1243,7 @@ AnimationSession.prototype.setBlend = function(blendValue, weight, curveName){
         if(!curveName || curveName === "")
             curveName = "__default__";
         this.blendables[curveName] = blendValue;
-        this.blendWeights[curveName] = weight; 
+        this.blendWeights[curveName] = weight;
         return;
     }
 
@@ -1259,7 +1257,7 @@ AnimationSession.prototype.setBlend = function(blendValue, weight, curveName){
         keyType = AnimationKeyableType.QUAT;
 
     if(!curveName || curveName === "" || typeof keyType === "undefined")//has to specify curveName
-        return;  
+        return;
 
     this.blendWeights[curveName] = weight;
     this.blendables[curveName] = new AnimationKeyable(keyType, 0, blendValue);
@@ -1411,7 +1409,7 @@ AnimationSession.prototype.updateToTarget = function (input) {
     }
 };
 
-AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTime, fadeTime) { 
+AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTime, fadeTime) {
     var i, p;
     var input = this.playable.eval(time);
     // blend related==========================================================
@@ -1437,15 +1435,15 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
         input.curveKeyable[cname] = resKey;
     }
 
-    if(fadeDir === 0 || fadeTime < fadeBegTime || fadeTime > fadeEndTime) 
+    if(fadeDir === 0 || fadeTime < fadeBegTime || fadeTime > fadeEndTime)
         this.updateToTarget(input);
     else {
         var p = (fadeTime - fadeBegTime) / (fadeEndTime - fadeBegTime);
         if (fadeDir === -1)
             p = 1 - p;
-        this.blendToTarget(input, p); 
+        this.blendToTarget(input, p);
     }
-};  
+};
 
 AnimationSession.prototype.play = function (playable, animTargets) {
     var i;
@@ -1471,15 +1469,15 @@ AnimationSession.prototype.play = function (playable, animTargets) {
 
     if (!animTargets && typeof playable.getAnimTargets === "function")
         this.animTargets = playable.getAnimTargets();
-    else 
-        this.animTargets = animTargets; 
+    else
+        this.animTargets = animTargets;
 
     // reset events
     for (i = 0; i < this.animEvents.length; i ++)
         this.animEvents[i].triggered = false;
 
     var app = pc.Application.getApplication();
-    app.on('update', this.onTimer); 
+    app.on('update', this.onTimer);
     return this;
 };
 
@@ -1508,10 +1506,10 @@ AnimationSession.prototype.resume = function () {
         var app = pc.Application.getApplication();
         app.on('update', this.onTimer);
     }
-}; 
+};
 
-AnimationSession.prototype.fadeOut = function (duration) {  
-    this.fadeBegTime = this.curTime; 
+AnimationSession.prototype.fadeOut = function (duration) {
+    this.fadeBegTime = this.curTime;
     this.fadeTime = this.fadeBegTime;
     this.fadeEndTime = this.fadeBegTime + duration;
     this.fadeDir = -1;
@@ -1592,9 +1590,9 @@ AnimationComponent.prototype.stopClip = function () {
     }
 };
 
-AnimationComponent.prototype.crossFadeToClip = function (name, duration) { 
-    if (this.animClips[this.curClip] && this.animClips[name]) { 
-        // this.animClips[this.curClip].fadeTo(this.animClips[name], duration); 
+AnimationComponent.prototype.crossFadeToClip = function (name, duration) {
+    if (this.animClips[this.curClip] && this.animClips[name]) {
+        // this.animClips[this.curClip].fadeTo(this.animClips[name], duration);
         this.animClips[this.curClip].fadeOut(duration);
         this.animClips[name].fadeIn(duration);
         this.curClip = name;
