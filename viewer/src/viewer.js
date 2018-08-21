@@ -162,7 +162,7 @@ Viewer.prototype = {
             this.animationClips = animationClips;
 
             // If we don't already have an animation component, create one.
-            // Note that this isn't really a 'true' component like those 
+            // Note that this isn't really a 'true' component like those
             // found in the engine...
             if (!this.gltf.animComponent) {
                 this.gltf.animComponent = new AnimationComponent();
@@ -233,7 +233,7 @@ function main() {
     // Handle dropped GLB/GLTF files
     document.addEventListener('dragover', function (event) {
         event.preventDefault();
-    }, false); 
+    }, false);
 
     document.addEventListener('drop', function (event) {
         event.preventDefault();
@@ -330,7 +330,7 @@ function main() {
                     loadFile(files[filename], files);
                 }
             };
-        }); 
+        });
 
     }, false);
 }
