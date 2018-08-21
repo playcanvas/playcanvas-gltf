@@ -816,17 +816,12 @@
             if (indices !== null) {
                 accessor = gltf.accessors[primitive.indices];
                 var indexFormat;
-                switch (accessor.componentType) {
-                    case 5121:
-                        indexFormat = pc.INDEXFORMAT_UINT8;
-                        break;
-                    default:
-                    case 5123:
-                        indexFormat = pc.INDEXFORMAT_UINT16;
-                        break;
-                    case 5125:
-                        indexFormat = pc.INDEXFORMAT_UINT32;
-                        break;
+                if (indices instanceof Uint8Array) {
+                    indexFormat = pc.INDEXFORMAT_UINT8;
+                } else if (indices instanceof Uint16Array) {
+                    indexFormat = pc.INDEXFORMAT_UINT16;
+                } else {
+                    indexFormat = pc.INDEXFORMAT_UINT32;
                 }
                 var numIndices = indices.length;
                 var indexBuffer = new pc.IndexBuffer(resources.device, indexFormat, numIndices, pc.BUFFER_STATIC, indices);
