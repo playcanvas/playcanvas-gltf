@@ -1221,7 +1221,7 @@
 
         if (gltf.hasOwnProperty('extensionsUsed')) {
             if (gltf.extensionsUsed.indexOf('KHR_draco_mesh_compression') !== -1) {
-                resources.decoderModule = DracoDecoderModule();
+                resources.decoderModule = options.decoderModule;
             }
         }
 
