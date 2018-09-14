@@ -342,7 +342,7 @@
                 material.specular.set(Math.pow(color[0], 1 / 2.2), Math.pow(color[1], 1 / 2.2), Math.pow(color[2], 1 / 2.2));
                 material.specularTint = true;
             } else {
-                material.specular.set(1, 1, 1);
+                material.specular.set(0, 0, 0);
                 material.specularTint = false;
             }
             if (specData.hasOwnProperty('glossinessFactor')) {
