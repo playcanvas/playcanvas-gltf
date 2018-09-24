@@ -1101,7 +1101,7 @@ AnimationClip.prototype.updateCurveNameFromTarget = function () {
             continue;
 
         // change name to target string
-        var newName = curve.animTargets[0].toString();  
+        var newName = curve.animTargets[0].toString();
         curve.name = newName;
         this.animCurves[newName] = curve;
         delete this.animCurves[oldName];
@@ -1165,7 +1165,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
     this.fadeEndTime = -1;
     this.fadeTime = -1;
     this.fadeDir = 0;// 1 is in, -1 is out
-    this.fadeSpeed = 1;//WCH:09/17/2018, 
+    this.fadeSpeed = 1;
     /*fadeIn, speed starts 0
     fadeOut from fully-playing session, speed starts 1
     fadeOut from previously unfinished fading session, speed starts from value (0,1)
@@ -1181,7 +1181,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
     if (targets)
         this.animTargets = targets;// collection of AnimationTarget
 
-    this.animEvents = []; 
+    this.animEvents = [];
 
     // blend related==========================================================
     this.blendables = {};
@@ -1234,7 +1234,6 @@ var AnimationSession = function AnimationSession(playable, targets) {
 
 AnimationSession.app = null;
 
-//WCH: 09/17/2018
 AnimationSession.prototype.clone = function () {   
     var cloned = new AnimationSession();  
 
@@ -1251,7 +1250,7 @@ AnimationSession.prototype.clone = function () {
     cloned.fadeEndTime = this.fadeEndTime;
     cloned.fadtTime = this.fadeTime;
     cloned.fadeDir = this.fadeDir;// 1 is in, -1 is out
-    cloned.fadeSpeed = this.fadeSpeed;//WANGYI:09/17/2018
+    cloned.fadeSpeed = this.fadeSpeed;
 
     cloned.playable = this.playable;
 
@@ -1492,7 +1491,6 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
         if (fadeDir === -1)
             p = 1 - p;
 
-        //WCH:09/17/2018 
         if(this.fadeSpeed < 1 && fadeDir === -1) { //fadeOut from non-100% 
             p = p * this.fadeSpeed;  
         } 
@@ -1514,18 +1512,18 @@ AnimationSession.prototype.play = function (playable, animTargets) {
         return this;
 
     this.begTime = 0;
-    this.endTime = this.playable.duration;//WCH1-09/17/2018
+    this.endTime = this.playable.duration;
     this.curTime = 0;
     this.accTime = 0;
     this.isPlaying = true;
-    if (playable && this !== playable.session) {//WCH1-09/17/2018
+    if (playable && this !== playable.session) {
         this.bySpeed = playable.bySpeed;
         this.loop = playable.loop;
     }
 
-    if (!animTargets && playable && typeof playable.getAnimTargets === "function")//WCH1-09/17/2018
+    if (!animTargets && playable && typeof playable.getAnimTargets === "function")
         this.animTargets = playable.getAnimTargets();
-    else if(animTargets)//WCH1-09/17/2018
+    else if(animTargets)
         this.animTargets = animTargets;
 
     // reset events
@@ -1539,7 +1537,7 @@ AnimationSession.prototype.play = function (playable, animTargets) {
     var app = pc.Application.getApplication();
     app.on('update', this.onTimer);
     return this;
-}; 
+};
 
 AnimationSession.prototype.stop = function () {
     var app = pc.Application.getApplication();
@@ -1550,7 +1548,7 @@ AnimationSession.prototype.stop = function () {
     this.fadeEndTime = -1;
     this.fadeTime = -1;
     this.fadeDir = 0;
-    this.fadeSpeed = 1;//WCH:09/17/2018
+    this.fadeSpeed = 1;
     return this;
 };
 
@@ -1567,11 +1565,9 @@ AnimationSession.prototype.resume = function () {
         var app = pc.Application.getApplication();
         app.on('update', this.onTimer);
     }
-}; 
+};
 
 AnimationSession.prototype.fadeOut = function (duration) {
-    
-    //WCH:09/17/2018 check fade out speed
     if(this.fadeDir === 0) //fade out from normal playing session
         this.fadeSpeed = 1;
     else if(this.fadeDir === 1) //fade out from session in the middle of fading In
@@ -1579,7 +1575,7 @@ AnimationSession.prototype.fadeOut = function (duration) {
     else //fade out from seesion that is fading out
         return;//
 
-    if(typeof duration !== "number")//WCH:09/17/2018
+    if(typeof duration !== "number")
         duration = 0;
 
     this.fadeBegTime = this.curTime;
@@ -1589,12 +1585,12 @@ AnimationSession.prototype.fadeOut = function (duration) {
 };
 
 AnimationSession.prototype.fadeIn = function (duration, playable) {
-    if(this.isPlaying) {//WCH:09/17/2018 
+    if(this.isPlaying) {
         this.stop(); 
     }
-    this.fadeSpeed = 0;//WCH:09/17/2018 
-    this.curTime = 0;//WCH:09/17/2018
-    if(typeof duration !== "number") //WCH:09/17/2018
+    this.fadeSpeed = 0;
+    this.curTime = 0;
+    if(typeof duration !== "number")
         duration = 0; 
 
     this.fadeBegTime = this.curTime;
@@ -1613,7 +1609,6 @@ AnimationSession.prototype.fadeTo = function (playable, duration) {
     return session;
 };
 
-//WCH:09/17/2018 
 AnimationSession.prototype.fadeToSelf = function(duration) { 
     var session = this.clone(); 
     if(AnimationSession.app)
