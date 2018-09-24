@@ -1165,6 +1165,11 @@ var AnimationSession = function AnimationSession(playable, targets) {
     this.fadeEndTime = -1;
     this.fadeTime = -1;
     this.fadeDir = 0;// 1 is in, -1 is out
+    this.fadeSpeed = 1;
+    /*fadeIn, speed starts 0
+    fadeOut from fully-playing session, speed starts 1
+    fadeOut from previously unfinished fading session, speed starts from value (0,1)
+    this is solving such situation: session fadeIn a small amount unfinished yet, and it now fadeOut(it should not start updating 100% to target) */
 
     this.playable = null;
     this.animTargets = {};
@@ -1228,6 +1233,57 @@ var AnimationSession = function AnimationSession(playable, targets) {
 };
 
 AnimationSession.app = null;
+
+AnimationSession.prototype.clone = function () {   
+    var cloned = new AnimationSession();  
+
+    cloned.begTime = this.begTime;
+    cloned.endTime = this.endTime;
+    cloned.curTime = this.curTime;
+    cloned.accTime = this.accTime;
+    cloned.speed = this.speed;
+    cloned.loop = this.loop;
+    cloned.isPlaying = this.isPlaying; 
+
+    // fading
+    cloned.fadeBegTime = this.fadeBegTime;
+    cloned.fadeEndTime = this.fadeEndTime;
+    cloned.fadtTime = this.fadeTime;
+    cloned.fadeDir = this.fadeDir;// 1 is in, -1 is out
+    cloned.fadeSpeed = this.fadeSpeed;
+
+    cloned.playable = this.playable;
+
+    // targets
+    cloned.animTargets = {}; 
+    for(var key in this.animTargets) { 
+        if(!this.animTargets.hasOwnProperty(key)) continue;
+        var ttargets = this.animTargets[key];
+        var ctargets = [];
+        for(var j = 0; j < ttargets.length; j ++) {
+            ctargets.push(ttargets[j].clone());
+        } 
+        cloned.animTargets[key] = ctargets;
+    }
+
+    // events
+    cloned.animEvents = [];
+    for(var i = 0; i < this.animEvents.length; i ++)
+        cloned.animEvents.push(this.animEvents[i].clone()); 
+
+    // blending
+    cloned.blendables = {};  
+    for(var key in this.blendables)
+        if(this.blendables.hasOwnProperty(key)) 
+            cloned.blendables[key] = this.blendables[key];
+
+    cloned.blendWeights = {};  
+    for(var key in this.blendWeights)
+        if(this.blendWeights.hasOwnProperty(key))
+            cloned.blendWeights[key] = this.blendWeights[key];
+
+    return cloned;
+}; 
 
 // blend related==========================================================
 AnimationSession.prototype.setBlend = function(blendValue, weight, curveName){
@@ -1434,6 +1490,11 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
         p = (fadeTime - fadeBegTime) / (fadeEndTime - fadeBegTime);
         if (fadeDir === -1)
             p = 1 - p;
+
+        if(this.fadeSpeed < 1 && fadeDir === -1) { //fadeOut from non-100% 
+            p = p * this.fadeSpeed;  
+        } 
+
         this.blendToTarget(input, p);
     }
 };
@@ -1451,18 +1512,18 @@ AnimationSession.prototype.play = function (playable, animTargets) {
         return this;
 
     this.begTime = 0;
-    this.endTime = playable.duration;
+    this.endTime = this.playable.duration;
     this.curTime = 0;
     this.accTime = 0;
     this.isPlaying = true;
-    if (this !== playable.session) {
+    if (playable && this !== playable.session) {
         this.bySpeed = playable.bySpeed;
         this.loop = playable.loop;
     }
 
-    if (!animTargets && typeof playable.getAnimTargets === "function")
+    if (!animTargets && playable && typeof playable.getAnimTargets === "function")
         this.animTargets = playable.getAnimTargets();
-    else
+    else if(animTargets)
         this.animTargets = animTargets;
 
     // reset events
@@ -1487,6 +1548,7 @@ AnimationSession.prototype.stop = function () {
     this.fadeEndTime = -1;
     this.fadeTime = -1;
     this.fadeDir = 0;
+    this.fadeSpeed = 1;
     return this;
 };
 
@@ -1506,6 +1568,16 @@ AnimationSession.prototype.resume = function () {
 };
 
 AnimationSession.prototype.fadeOut = function (duration) {
+    if(this.fadeDir === 0) //fade out from normal playing session
+        this.fadeSpeed = 1;
+    else if(this.fadeDir === 1) //fade out from session in the middle of fading In
+        this.fadeSpeed = (this.fadeTime - this.fadeBegTime) / (this.fadeEndTime - this.fadeBegTime); 
+    else //fade out from seesion that is fading out
+        return;//
+
+    if(typeof duration !== "number")
+        duration = 0;
+
     this.fadeBegTime = this.curTime;
     this.fadeTime = this.fadeBegTime;
     this.fadeEndTime = this.fadeBegTime + duration;
@@ -1513,6 +1585,14 @@ AnimationSession.prototype.fadeOut = function (duration) {
 };
 
 AnimationSession.prototype.fadeIn = function (duration, playable) {
+    if(this.isPlaying) {
+        this.stop(); 
+    }
+    this.fadeSpeed = 0;
+    this.curTime = 0;
+    if(typeof duration !== "number")
+        duration = 0; 
+
     this.fadeBegTime = this.curTime;
     this.fadeTime = this.fadeBegTime;
     this.fadeEndTime = this.fadeBegTime + duration;
@@ -1527,6 +1607,16 @@ AnimationSession.prototype.fadeTo = function (playable, duration) {
     var session = new AnimationSession();
     session.fadeIn(duration, playable);
     return session;
+};
+
+AnimationSession.prototype.fadeToSelf = function(duration) { 
+    var session = this.clone(); 
+    if(AnimationSession.app)
+        AnimationSession.app.on('update', session.onTimer);
+    session.fadeOut(duration); 
+ 
+    this.stop();
+    this.fadeIn(duration);  
 };
 
 // *===============================================================================================================
