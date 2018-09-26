@@ -267,6 +267,7 @@
 
     // Specification:
     //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#material
+
     var glossChunk = [
         "#ifdef MAPFLOAT",
         "uniform float material_shininess;",
@@ -294,6 +295,33 @@
         "    dGlossiness = 1.0 - dGlossiness;",
         "",
         "    dGlossiness += 0.0000001;",
+        "}"
+    ].join('\n');
+
+    var specularChunk = [
+        "#ifdef MAPCOLOR",
+        "uniform vec3 material_specular;",
+        "#endif",
+        "",
+        "#ifdef MAPTEXTURE",
+        "uniform sampler2D texture_specularMap;",
+        "#endif",
+        "",
+        "void getSpecularity() {",
+        "    dSpecularity = vec3(1.0);",
+        "",
+        "    #ifdef MAPCOLOR",
+        "        dSpecularity *= material_specular;",
+        "    #endif",
+        "",
+        "    #ifdef MAPTEXTURE",
+        "        vec3 srgb = texture2D(texture_specularMap, $UV).$CH;",
+        "        dSpecularity *= vec3(pow(srgb.r, 2.2), pow(srgb.g, 2.2), pow(srgb.b, 2.2));",
+        "    #endif",
+        "",
+        "    #ifdef MAPVERTEX",
+        "        dSpecularity *= saturate(vVertexColor.$VC);",
+        "    #endif",
         "}"
     ].join('\n');
 
@@ -383,6 +411,9 @@
                     }
                 }
             }
+
+            material.chunks.specularPS = specularChunk;
+
         } else if (data.hasOwnProperty('pbrMetallicRoughness')) {
             var pbrData = data.pbrMetallicRoughness;
 
