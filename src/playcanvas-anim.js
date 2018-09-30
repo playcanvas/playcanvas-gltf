@@ -402,8 +402,7 @@ AnimationCurve.prototype.copy = function (curve) {
 };
 
 AnimationCurve.prototype.clone = function () {
-    var cloned = new AnimationCurve().copy(this);
-    return cloned;
+    return new AnimationCurve().copy(this);
 };
 
 AnimationCurve.prototype.addTarget = function (targetNode, targetPath, targetProp) {
@@ -799,7 +798,8 @@ var AnimationClip = function AnimationClip(root) {
     AnimationClip.count ++;
     this.name = "clip" + AnimationClip.count.toString();
     this.duration = 0;
-    this.animCurves = {}; // a map for easy query
+    this.animCurvesMap = {}; // a map for easy query
+    this.animCurves = [];
     this.root = null;
     if (root) {
         this.root = root;
@@ -841,27 +841,26 @@ AnimationClip.prototype.copy = function (clip) {
     this.duration = clip.duration;
 
     // copy curves
-    this.animCurves = {};
-    var curveNames = Object.keys(clip.animCurves);
-    for (var i = 0; i < curveNames.length; i++) {
-        var cname = curveNames[i];
-        var curve = new AnimationCurve().copy(clip.animCurves[cname]);
-        this.animCurves[curve.name] = curve;
+    this.animCurves.length = 0;
+    this.animCurvesMap = {};
+
+    for (var i = 0, len = clip.animCurves.length; i < len; i++) {
+        var curve = clip.animCurves[i];
+        this.addCurve(curve.clone());
     }
+
     return this;
 };
 
 AnimationClip.prototype.clone = function () {
-    var cloned = new AnimationClip().copy(this);
-    return cloned;
+    return new AnimationClip().copy(this);
 };
 
 AnimationClip.prototype.updateDuration = function () {
     this.duration = 0;
-    var curveNames = Object.keys(this.animCurves);
-    for (var i = 0; i < curveNames.length; i++) {
-        var cname = curveNames[i];
-        this.duration = Math.max(this.duration, this.animCurves[cname].duration);
+    for (var i = 0, len = this.animCurves.length; i < len; i++) {
+        var curve = clip.animCurves[i];
+        this.duration = Math.max(this.duration, curve.duration);
     }
 };
 
@@ -880,13 +879,10 @@ AnimationClip.prototype.updateToTarget = function (snapshot) {
 // a dictionary: retrieve animTargets with curve name
 AnimationClip.prototype.getAnimTargets = function () {
     var animTargets = {};
-    var curveNames = Object.keys(this.animCurves);
-    for (var i = 0; i < curveNames.length; i ++) {
-        if (!curveNames[i] || !this.animCurves[curveNames[i]])
-            continue;
-
-        var curveTarget = this.animCurves[curveNames[i]].getAnimTargets();
-        animTargets[curveNames[i]] = curveTarget[curveNames[i]];
+    for (var i = 0, len = this.animCurves.length; i < len; i++) {
+        var curve = clip.animCurves[i];
+        var curveTarget = curve.getAnimTargets();
+        animTargets[curve.name] = curveTarget[curve.name];
     }
     return animTargets;
 };
@@ -933,21 +929,31 @@ AnimationClip.prototype.fadeTo = function (toClip, duration) {
 // curve related
 AnimationClip.prototype.addCurve = function (curve) {
     if (curve && curve.name) {
-        this.animCurves[curve.name] = curve;
+        this.animCurves.push(curve);
+        this.animCurvesMap[curve.name] = curve;
         if (curve.duration > this.duration)
             this.duration = curve.duration;
     }
 };
 
 AnimationClip.prototype.removeCurve = function (name) {
-    if (name && this.animCurves[name]) {
-        delete this.animCurves[name];
-        this.updateDuration();
+    if (name) {
+        var curve = this.animCurvesMap[name];
+        if (curve) {
+            var idx = this.animCurves.indexOf(curve);
+            if (idx !== -1) {
+                this.animCurves.splice(idx, 1);
+            }
+            delete this.animCurvesMap[name];
+            this.updateDuration();
+        }
     }
 };
 
 AnimationClip.prototype.removeAllCurves = function () {
-    this.animCurves = {};
+    this.animCurves.length = 0;
+    this.animCurvesMap = {};
+
     this.duration = 0;
 };
 
@@ -977,12 +983,9 @@ AnimationClip.prototype.getSubClip = function (tmBeg, tmEnd) {
     subClip.name = this.name + "_sub";
     subClip.root = this.root;
 
-    var curveNames = Object.keys(this.animCurves);
-    for (var i = 0; i < curveNames.length; i++) {
-        if (!curveNames[i] || !this.animCurves[curveNames[i]])
-            continue;
-
-        var subCurve = this.animCurves[curveNames[i]].getSubCurve(tmBeg, tmEnd);
+    for (var i = 0, len = this.animCurves.length; i < len; i++) {
+        var curve = this.animCurves[i];
+        var subCurve = curve.getSubCurve(tmBeg, tmEnd);
         subClip.addCurve(subCurve);
     }
 
@@ -994,13 +997,10 @@ AnimationClip.prototype.eval = function (time) {
     var snapshot = new AnimationClipSnapshot();
     snapshot.time = time;
 
-    var curveNames = Object.keys(this.animCurves);
-    for (var i = 0; i < curveNames.length; i++) {
-        if (!curveNames[i] || !this.animCurves[curveNames[i]])
-            continue;
-
-        var keyable = this.animCurves[curveNames[i]].eval(time);
-        snapshot.curveKeyable[curveNames[i]] = keyable;
+    for (var i = 0, len = this.animCurves.length; i < len; i++) {
+        var curve = this.animCurves[i];
+        var keyable = curve.eval(time);
+        snapshot.curveKeyable[curve.name] = keyable;
     }
     return snapshot;
 };
@@ -1067,11 +1067,8 @@ AnimationClip.prototype.transferToRoot = function (root) {
     var dictTarget = {};
     AnimationTarget.constructTargetNodes(root, null, dictTarget);// contains localScale information
 
-    var curveNames = Object.keys(this.animCurves);
-    for (var i = 0; i < curveNames.length; i++) { // for each curve in clip
-        if (!curveNames[i] || !this.animCurves[curveNames[i]])
-            continue;
-        var curve = this.animCurves[curveNames[i]];
+    for (var i = 0, len = this.animCurves.length; i < len; i++) {
+        var curve = this.animCurves[i];
         var ctarget = curve.animTargets[0];
         var atarget = dictTarget[ctarget.targetNode.name];
         if (atarget) { // match by target name
@@ -1091,37 +1088,34 @@ AnimationClip.prototype.transferToRoot = function (root) {
 
 // blend related
 AnimationClip.prototype.updateCurveNameFromTarget = function () {
-    var curveNames = Object.keys(this.animCurves);
-    for (var i = 0; i < curveNames.length; i++) { // for each curve in clip
-        var oldName = curveNames[i];
-        if (!oldName || !this.animCurves[oldName])
-            continue;
-        var curve = this.animCurves[oldName];
-        if(!curve.animTargets || curve.animTargets.length < 1)
+    for (var i = 0, len = this.animCurves.length; i < len; i++) {
+        var curve = clip.animCurves[i];
+        if (!curve.animTargets || curve.animTargets.length < 1)
             continue;
 
         // change name to target string
         var newName = curve.animTargets[0].toString();
         curve.name = newName;
-        this.animCurves[newName] = curve;
-        delete this.animCurves[oldName];
+        delete this.animCurvesMap[oldName];
+        this.animCurvesMap[newName] = curve;
     }
 };
 
 AnimationClip.prototype.removeEmptyCurves = function () {
-    var curveNames = Object.keys(this.animCurves);
-    for (var i = 0; i < curveNames.length; i++) {
-        if (!this.animCurves[curveNames[i]] ||
-            !this.animCurves[curveNames[i]].animKeys || this.animCurves[curveNames[i]].animKeys.length == 0)
-            delete this.animCurves[curveNames[i]];
+    for (var i = 0, len = this.animCurves.length; i < len; i++) {
+        var curve = clip.animCurves[i];
+        if (!curve || !curve.animKeys || curve.animKeys.length === 0) {
+            this.removeCurve(curve.name);
+        }
     }
 };
 
 AnimationClip.prototype.setInterpolationType = function (type) {
-    var curveNames = Object.keys(this.animCurves);
-    for (var i = 0; i < curveNames.length; i++) {
-        if (this.animCurves[curveNames[i]])
-            this.animCurves[curveNames[i]].type = type;
+    for (var i = 0, len = this.animCurves.length; i < len; i++) {
+        var curve = this.animCurves[i];
+        if (curve) {
+            curve.type = type;
+        }
     }
 };
 
@@ -1627,7 +1621,8 @@ AnimationSession.prototype.fadeToSelf = function(duration) {
 // *===============================================================================================================
 var AnimationComponent = function AnimationComponent() {
     this.name = "";
-    this.animClips = {}; // make it a map, easy to query clip by name
+    this.animClipsMap = {}; // make it a map, easy to query clip by name
+    this.animClips = [];
     this.curClip = "";
 
     // For storing AnimationSessions
@@ -1635,59 +1630,69 @@ var AnimationComponent = function AnimationComponent() {
 };
 
 AnimationComponent.prototype.clipCount = function () {
-    var clipNames = Object.keys(this.animClips);
-    return clipNames.length;
+    return this.animClips.length;
 };
 
 AnimationComponent.prototype.getCurrentClip = function () {
-    return this.animClips[this.curClip];
+    return this.animClipsMap[this.curClip];
 };
 
 AnimationComponent.prototype.clipAt = function (index) {
-    var clipNames = Object.keys(this.animClips);
-    if (clipNames.length <= index)
+    if (this.animClips.length <= index)
         return null;
-    return this.animClips[clipNames[index]];
+    return this.animClips[index];
 };
 
 AnimationComponent.prototype.addClip = function (clip) {
-    if (clip && clip.name)
-        this.animClips[clip.name] = clip;
+    if (clip && clip.name) {
+        this.animClips.push(clip);
+        this.animClipsMap[clip.name] = clip;
+    }
 };
 
 AnimationComponent.prototype.removeClip = function (name) {
-    if (name && this.animClips[name])
-        delete this.animClips[name];
+    var clip = this.animClipsMap[name];
+    if (clip) {
+        var idx = this.animClips.indexOf(clip);
+        if (idx !== -1) {
+            this.animClips.splice(idx, 1);
+        }
+        delete this.animClipsMap[name];
+    }
 
     if (this.curClip === name)
         this.curClip = "";
 };
 
 AnimationComponent.prototype.playClip = function (name) {
-    if (this.animClips[name]) {
+    var clip = this.animClipsMap[name];
+    if (clip) {
         this.curClip = name;
-        this.animClips[name].play();
+        clip.play();
     }
 };
 
 AnimationComponent.prototype.stopClip = function () {
-    if (this.animClips[this.curClip]) {
-        this.animClips[this.curClip].stop();
+    var clip = this.animClips[this.curClip];
+    if (clip) {
+        clip.stop();
         this.curClip = "";
     }
 };
 
 AnimationComponent.prototype.crossFadeToClip = function (name, duration) {
-    if (this.animClips[this.curClip] && this.animClips[name]) {
-        // this.animClips[this.curClip].fadeTo(this.animClips[name], duration);
-        this.animClips[this.curClip].fadeOut(duration);
-        this.animClips[name].fadeIn(duration);
+    var fromClip = this.animClipsMap[this.curClip];
+    var toClip = this.animClipsMap[name];
+
+    if (fromClip && toClip) {
+        fromClip.fadeOut(duration);
+        toClip.fadeIn(duration);
         this.curClip = name;
-    } else if (this.animClips[this.curClip]) {
-        this.animClips[this.curClip].fadeOut(duration);
+    } else if (fromClip) {
+        fromClip.fadeOut(duration);
         this.curClip = "";
-    } else if (this.animClips[name]) {
-        this.animClips[name].fadeIn(duration);
+    } else if (toClip) {
+        toClip.fadeIn(duration);
         this.curClip = name;
     }
 };
@@ -1696,13 +1701,13 @@ AnimationComponent.prototype.crossFadeToClip = function (name, duration) {
 // blend related
 AnimationComponent.prototype.setBlend = function (blendValue, weight, curveName) {
     var curClip = this.getCurrentClip();
-    if(curClip && curClip.session)
+    if (curClip && curClip.session)
         curClip.session.setBlend(blendValue, weight, curveName);
 };
 
 AnimationComponent.prototype.unsetBlend = function(curveName) {
     var curClip = this.getCurrentClip();
-    if(curClip && curClip.session)
+    if (curClip && curClip.session)
         curClip.session.unsetBlend(curveName);
 };
 
@@ -1713,41 +1718,48 @@ AnimationComponent.prototype.getCurrentSession = function () {
 };
 
 AnimationComponent.prototype.playSession = function (name) {
-    if (this.animSessions[name]) {
+    var session = this.animSessions[name];
+    if (session) {
+        session.play();
         this.curClip = name;
-        this.animSessions[name].play();
     }
 };
 
 AnimationComponent.prototype.stopSession = function () {
-    if (this.animSessions[this.curClip]) {
-        this.animSessions[this.curClip].stop();
+    var session = this.animSessions[this.curClip];
+    if (session) {
+        session.stop();
         this.curClip = "";
     }
 };
 
 AnimationComponent.prototype.crossFadeToSession = function (name, duration) {
-    if (this.animSessions[this.curClip] && this.animSessions[name]) {
-        this.animSessions[this.curClip].fadeOut(duration);
-        this.animSessions[name].fadeIn(duration);
+    var fromSession = this.animSessions[this.curClip];
+    var toSession = this.animSessions[name];
+
+    if (fromSession && this.animSessions[name]) {
+        fromSession.fadeOut(duration);
+        toSession.fadeIn(duration);
         this.curClip = name;
-    } else if (this.animSessions[this.curClip]) {
-        this.animSessions[this.curClip].fadeOut(duration);
+    } else if (fromSession) {
+        fromSession.fadeOut(duration);
         this.curClip = "";
-    } else if (this.animSessions[name]) {
-        this.animSessions[name].fadeIn(duration);
+    } else if (toSession) {
+        toSession.fadeIn(duration);
         this.curClip = name;
     }
 };
 
 AnimationComponent.prototype.setBlendSession = function (blendValue, weight, curveName) {
     var curSession = this.animSessions[this.curClip];
-    if(curSession)
+    if (curSession) {
         curSession.setBlend(blendValue, weight, curveName);
+    }
 };
 
 AnimationComponent.prototype.unsetBlendSession = function(curveName) {
     var curSession = this.animSessions[this.curClip];
-    if(curSession)
+    if (curSession) {
         curSession.unsetBlend(curveName);
+    }
 };
