@@ -1367,7 +1367,7 @@
         });
     }
 
-    function loadGlb(glb, device, success) {
+    function loadGlb(glb, device, success, options) {
         var dataView = new DataView(glb);
 
         // Read header
@@ -1412,9 +1412,9 @@
             byteOffset += chunkLength + 8;
         }
 
-        loadGltf(json, device, success, {
-            buffers: buffers
-        });
+        options = options || {};
+        options.buffers = buffers;
+        loadGltf(json, device, success, options);
     }
 
     window.loadGltf = loadGltf;
