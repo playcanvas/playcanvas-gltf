@@ -859,7 +859,7 @@ AnimationClip.prototype.clone = function () {
 AnimationClip.prototype.updateDuration = function () {
     this.duration = 0;
     for (var i = 0, len = this.animCurves.length; i < len; i++) {
-        var curve = clip.animCurves[i];
+        var curve = this.animCurves[i];
         this.duration = Math.max(this.duration, curve.duration);
     }
 };
@@ -1089,12 +1089,15 @@ AnimationClip.prototype.transferToRoot = function (root) {
 // blend related
 AnimationClip.prototype.updateCurveNameFromTarget = function () {
     for (var i = 0, len = this.animCurves.length; i < len; i++) {
-        var curve = clip.animCurves[i];
+        var curve = this.animCurves[i];
         if (!curve.animTargets || curve.animTargets.length < 1)
             continue;
-
+ 
         // change name to target string
         var newName = curve.animTargets[0].toString();
+        if (curve.name == newName)// no need to change name
+            continue;
+
         curve.name = newName;
         delete this.animCurvesMap[oldName];
         this.animCurvesMap[newName] = curve;
@@ -1103,7 +1106,7 @@ AnimationClip.prototype.updateCurveNameFromTarget = function () {
 
 AnimationClip.prototype.removeEmptyCurves = function () {
     for (var i = 0, len = this.animCurves.length; i < len; i++) {
-        var curve = clip.animCurves[i];
+        var curve = this.animCurves[i];
         if (!curve || !curve.animKeys || curve.animKeys.length === 0) {
             this.removeCurve(curve.name);
         }
