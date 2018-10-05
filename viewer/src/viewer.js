@@ -1,3 +1,5 @@
+var decoderModule;
+
 function Viewer() {
     var canvas = document.createElement('canvas');
     document.body.appendChild(canvas);
@@ -192,6 +194,7 @@ Viewer.prototype = {
 
     loadGltf: function (gltf, basePath, processUri) {
         loadGltf(gltf, this.app.graphicsDevice, this.initializeScene.bind(this), {
+            decoderModule: decoderModule,
             basePath: basePath,
             processUri: processUri
         });
@@ -208,18 +211,52 @@ function getParameterByName(name, url) {
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
+function loadScript(src) {
+    var head = document.getElementsByTagName('head')[0];
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = src;
+    return new Promise(function (resolve) {
+        script.onload = resolve;
+        head.appendChild(script);
+    });
+}
+
 function main() {
+    if (true) {//typeof WebAssembly !== 'object') {
+        loadScript('../draco/draco_decoder.js').then(function () {
+            decoderModule = DracoDecoderModule();
+        });
+    } else {
+        loadScript('../draco/draco_wasm_wrapper.js').then(function () {
+            fetch('../draco/draco_decoder.wasm').then(function (response) {
+                response.arrayBuffer().then(function (arrayBuffer) {
+                    decoderModule = DracoDecoderModule({ wasmBinary: arrayBuffer });
+                });
+            });
+        });
+    }
+
     var viewer = new Viewer();
 
     var assetUrl = getParameterByName('assetUrl');
     if (assetUrl) {
-        fetch(assetUrl)
-            .then(function(response) {
-                response.json().then(function(gltf) {
-                    var basePath = assetUrl.substring(0, assetUrl.lastIndexOf('/')) + "/";
-                    viewer.loadGltf(gltf, basePath);
+        if (assetUrl.endsWith('gltf')) {
+            fetch(assetUrl)
+                .then(function(response) {
+                    response.json().then(function(gltf) {
+                        var basePath = assetUrl.substring(0, assetUrl.lastIndexOf('/')) + "/";
+                        viewer.loadGltf(gltf, basePath);
+                    });
                 });
-            });
+        } else if (assetUrl.endsWith('glb')) {
+            fetch(assetUrl)
+                .then(function(response) {
+                    response.arrayBuffer().then(function(glb) {
+                        viewer.loadGlb(glb);
+                    });
+                });
+        }
     }
 
     var cameraPosition = getParameterByName('cameraPosition');
