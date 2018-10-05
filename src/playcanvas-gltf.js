@@ -175,8 +175,12 @@
                 }
                 clip.addCurve(curve);
             }
-        });
-        
+        }); 
+
+        if (data.hasOwnProperty('extras') && resources.processAnimationExtras) {
+            resources.processAnimationExtras(clip, data.extras);
+        }
+ 
         return clip;
     }
 
@@ -267,6 +271,7 @@
 
     // Specification:
     //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#material
+
     var glossChunk = [
         "#ifdef MAPFLOAT",
         "uniform float material_shininess;",
@@ -297,16 +302,51 @@
         "}"
     ].join('\n');
 
+    var specularChunk = [
+        "#ifdef MAPCOLOR",
+        "uniform vec3 material_specular;",
+        "#endif",
+        "",
+        "#ifdef MAPTEXTURE",
+        "uniform sampler2D texture_specularMap;",
+        "#endif",
+        "",
+        "void getSpecularity() {",
+        "    dSpecularity = vec3(1.0);",
+        "",
+        "    #ifdef MAPCOLOR",
+        "        dSpecularity *= material_specular;",
+        "    #endif",
+        "",
+        "    #ifdef MAPTEXTURE",
+        "        vec3 srgb = texture2D(texture_specularMap, $UV).$CH;",
+        "        dSpecularity *= vec3(pow(srgb.r, 2.2), pow(srgb.g, 2.2), pow(srgb.b, 2.2));",
+        "    #endif",
+        "",
+        "    #ifdef MAPVERTEX",
+        "        dSpecularity *= saturate(vVertexColor.$VC);",
+        "    #endif",
+        "}"
+    ].join('\n');
+
     function translateMaterial(data, resources) {
         var material = new pc.StandardMaterial();
 
         // glTF dooesn't define how to occlude specular
         material.occludeSpecular = true;
+
         material.diffuseTint = true;
         material.diffuseVertexColor = true;
 
+        material.specularTint = true;
+        material.specularVertexColor = true;
+
         if (data.hasOwnProperty('name')) {
             material.name = data.name;
+        }
+
+        if (data.hasOwnProperty('extensions') && data.extensions.hasOwnProperty('KHR_materials_unlit')) {
+            material.useLighting = false;
         }
 
         var color, texture;
@@ -334,16 +374,25 @@
                     material.diffuseMapUv = diffuseTexture.texCoord;
                     material.opacityMapUv = diffuseTexture.texCoord;
                 }
+                if (diffuseTexture.hasOwnProperty('extensions') && diffuseTexture.extensions.hasOwnProperty('KHR_texture_transform')) {
+                    var diffuseTransformData = diffuseTexture.extensions.KHR_texture_transform;
+                    if (diffuseTransformData.hasOwnProperty('scale')) {
+                        material.diffuseMapTiling = new pc.Vec2(diffuseTransformData.scale[0], diffuseTransformData.scale[1]);
+                        material.opacityMapTiling = new pc.Vec2(diffuseTransformData.scale[0], diffuseTransformData.scale[1]);
+                    }
+                    if (diffuseTransformData.hasOwnProperty('offset')) {
+                        material.diffuseMapOffset = new pc.Vec2(diffuseTransformData.offset[0], diffuseTransformData.offset[1]);
+                        material.opacityMapOffset = new pc.Vec2(diffuseTransformData.offset[0], diffuseTransformData.offset[1]);
+                    }
+                }
             }
             material.useMetalness = false;
             if (specData.hasOwnProperty('specularFactor')) {
                 color = specData.specularFactor;
                 // Convert from linear space to sRGB space
                 material.specular.set(Math.pow(color[0], 1 / 2.2), Math.pow(color[1], 1 / 2.2), Math.pow(color[2], 1 / 2.2));
-                material.specularTint = true;
             } else {
                 material.specular.set(1, 1, 1);
-                material.specularTint = false;
             }
             if (specData.hasOwnProperty('glossinessFactor')) {
                 material.shininess = 100 * specData.glossinessFactor;
@@ -352,13 +401,29 @@
             }
             if (specData.hasOwnProperty('specularGlossinessTexture')) {
                 var specularGlossinessTexture = specData.specularGlossinessTexture;
-                material.specularMap = resources.textures[specularGlossinessTexture.index];
-                material.specularMapChannel = 'a';
+                material.specularMap = resources.textures[specularGlossinessTexture.index] 
+                material.specularMapChannel = 'rgb';
+                material.glossMap = resources.textures[specularGlossinessTexture.index];
+                material.glossMapChannel = 'a';                
                 if (specularGlossinessTexture.hasOwnProperty('texCoord')) {
                     material.glossMapUv = specularGlossinessTexture.texCoord;
                     material.metalnessMapUv = specularGlossinessTexture.texCoord;
                 }
+                if (specularGlossinessTexture.hasOwnProperty('extensions') && specularGlossinessTexture.extensions.hasOwnProperty('KHR_texture_transform')) {
+                    var specGlossTransformData = specularGlossinessTexture.extensions.KHR_texture_transform;
+                    if (specGlossTransformData.hasOwnProperty('scale')) {
+                        material.glossMapTiling = new pc.Vec2(specGlossTransformData.scale[0], specGlossTransformData.scale[1]);
+                        material.metalnessMapTiling = new pc.Vec2(specGlossTransformData.scale[0], specGlossTransformData.scale[1]);
+                    }
+                    if (specGlossTransformData.hasOwnProperty('offset')) {
+                        material.glossMapOffset = new pc.Vec2(specGlossTransformData.offset[0], specGlossTransformData.offset[1]);
+                        material.metalnessMapOffset = new pc.Vec2(specGlossTransformData.offset[0], specGlossTransformData.offset[1]);
+                    }
+                }
             }
+
+            material.chunks.specularPS = specularChunk;
+
         } else if (data.hasOwnProperty('pbrMetallicRoughness')) {
             var pbrData = data.pbrMetallicRoughness;
 
@@ -383,6 +448,17 @@
                     material.diffuseMapUv = baseColorTexture.texCoord;
                     material.opacityMapUv = baseColorTexture.texCoord;
                 }
+                if (baseColorTexture.hasOwnProperty('extensions') && baseColorTexture.extensions.hasOwnProperty('KHR_texture_transform')) {
+                    var baseColorTransformData = baseColorTexture.extensions.KHR_texture_transform;
+                    if (baseColorTransformData.hasOwnProperty('scale')) {
+                        material.diffuseMapTiling = new pc.Vec2(baseColorTransformData.scale[0], baseColorTransformData.scale[1]);
+                        material.opacityMapTiling = new pc.Vec2(baseColorTransformData.scale[0], baseColorTransformData.scale[1]);
+                    }
+                    if (baseColorTransformData.hasOwnProperty('offset')) {
+                        material.diffuseMapOffset = new pc.Vec2(baseColorTransformData.offset[0], baseColorTransformData.offset[1]);
+                        material.opacityMapOffset = new pc.Vec2(baseColorTransformData.offset[0], baseColorTransformData.offset[1]);
+                    }
+                }
             }
             material.useMetalness = true;
             if (pbrData.hasOwnProperty('metallicFactor')) {
@@ -405,6 +481,17 @@
                     material.glossMapUv = metallicRoughnessTexture.texCoord;
                     material.metalnessMapUv = metallicRoughnessTexture.texCoord;
                 }
+                if (metallicRoughnessTexture.hasOwnProperty('extensions') && metallicRoughnessTexture.extensions.hasOwnProperty('KHR_texture_transform')) {
+                    var metallicTransformData = metallicRoughnessTexture.extensions.KHR_texture_transform;
+                    if (metallicTransformData.hasOwnProperty('scale')) {
+                        material.glossMapTiling = new pc.Vec2(metallicTransformData.scale[0], metallicTransformData.scale[1]);
+                        material.metalnessMapTiling = new pc.Vec2(metallicTransformData.scale[0], metallicTransformData.scale[1]);
+                    }
+                    if (metallicTransformData.hasOwnProperty('offset')) {
+                        material.glossMapOffset = new pc.Vec2(metallicTransformData.offset[0], metallicTransformData.offset[1]);
+                        material.metalnessMapOffset = new pc.Vec2(metallicTransformData.offset[0], metallicTransformData.offset[1]);
+                    }
+                }
             }
 
             material.chunks.glossPS = glossChunk;
@@ -416,6 +503,15 @@
             if (normalTexture.hasOwnProperty('texCoord')) {
                 material.normalMapUv = normalTexture.texCoord;
             }
+            if (normalTexture.hasOwnProperty('extensions') && normalTexture.extensions.hasOwnProperty('KHR_texture_transform')) {
+                var normalTransformData = normalTexture.extensions.KHR_texture_transform;
+                if (normalTransformData.hasOwnProperty('scale')) {
+                    material.normalMapTiling = new pc.Vec2(normalTransformData.scale[0], normalTransformData.scale[1]);
+                }
+                if (normalTransformData.hasOwnProperty('offset')) {
+                    material.normalMapOffset = new pc.Vec2(normalTransformData.offset[0], normalTransformData.offset[1]);
+                }
+            }
             if (normalTexture.hasOwnProperty('scale')) {
                 material.bumpiness = normalTexture.scale;
             }
@@ -426,6 +522,15 @@
             material.aoMapChannel = 'r';
             if (occlusionTexture.hasOwnProperty('texCoord')) {
                 material.aoMapUv = occlusionTexture.texCoord;
+            }
+            if (occlusionTexture.hasOwnProperty('extensions') && occlusionTexture.extensions.hasOwnProperty('KHR_texture_transform')) {
+                var occlusionTransformData = occlusionTexture.extensions.KHR_texture_transform;
+                if (occlusionTransformData.hasOwnProperty('scale')) {
+                    material.aoMapTiling = new pc.Vec2(occlusionTransformData.scale[0], occlusionTransformData.scale[1]);
+                }
+                if (occlusionTransformData.hasOwnProperty('offset')) {
+                    material.aoMapOffset = new pc.Vec2(occlusionTransformData.offset[0], occlusionTransformData.offset[1]);
+                }
             }
             // TODO: support 'strength'
         }
@@ -443,6 +548,15 @@
             material.emissiveMap = resources.textures[emissiveTexture.index];
             if (emissiveTexture.hasOwnProperty('texCoord')) {
                 material.emissiveMapUv = emissiveTexture.texCoord;
+            }
+            if (emissiveTexture.hasOwnProperty('extensions') && emissiveTexture.extensions.hasOwnProperty('KHR_texture_transform')) {
+                var emissiveTransformData = emissiveTexture.extensions.KHR_texture_transform;
+                if (emissiveTransformData.hasOwnProperty('scale')) {
+                    material.emissiveMapTiling = new pc.Vec2(emissiveTransformData.scale[0], emissiveTransformData.scale[1]);
+                }
+                if (emissiveTransformData.hasOwnProperty('offset')) {
+                    material.emissiveMapOffset = new pc.Vec2(emissiveTransformData.offset[0], emissiveTransformData.offset[1]);
+                }
             }
         }
         if (data.hasOwnProperty('alphaMode')) {
@@ -472,6 +586,10 @@
         } else {
             material.twoSidedLighting = false;
             material.cull = pc.CULLFACE_BACK;
+        }
+
+        if (data.hasOwnProperty('extras') && resources.processMaterialExtras) {
+            resources.processMaterialExtras(material, data.extras);
         }
 
         material.update();
@@ -816,17 +934,12 @@
             if (indices !== null) {
                 accessor = gltf.accessors[primitive.indices];
                 var indexFormat;
-                switch (accessor.componentType) {
-                    case 5121:
-                        indexFormat = pc.INDEXFORMAT_UINT8;
-                        break;
-                    default:
-                    case 5123:
-                        indexFormat = pc.INDEXFORMAT_UINT16;
-                        break;
-                    case 5125:
-                        indexFormat = pc.INDEXFORMAT_UINT32;
-                        break;
+                if (indices instanceof Uint8Array) {
+                    indexFormat = pc.INDEXFORMAT_UINT8;
+                } else if (indices instanceof Uint16Array) {
+                    indexFormat = pc.INDEXFORMAT_UINT16;
+                } else {
+                    indexFormat = pc.INDEXFORMAT_UINT32;
                 }
                 var numIndices = indices.length;
                 var indexBuffer = new pc.IndexBuffer(resources.device, indexFormat, numIndices, pc.BUFFER_STATIC, indices);
@@ -1212,6 +1325,8 @@
         var buffers = (options && options.hasOwnProperty('buffers')) ? options.buffers : undefined;
         var basePath = (options && options.hasOwnProperty('basePath')) ? options.basePath : undefined;
         var processUri = (options && options.hasOwnProperty('processUri')) ? options.processUri : undefined;
+        var processAnimationExtras = (options && options.hasOwnProperty('processAnimationExtras')) ? options.processAnimationExtras : undefined;
+        var processMaterialExtras = (options && options.hasOwnProperty('processMaterialExtras')) ? options.processMaterialExtras : undefined;
 
         var resources = {
             basePath: basePath,
@@ -1221,12 +1336,14 @@
             gltf: gltf,
             imagesLoaded: 0,
             nodeCounter: 0,
-            processUri: processUri
+            processUri: processUri,
+            processAnimationExtras: processAnimationExtras,
+            processMaterialExtras: processMaterialExtras
         };
 
         if (gltf.hasOwnProperty('extensionsUsed')) {
             if (gltf.extensionsUsed.indexOf('KHR_draco_mesh_compression') !== -1) {
-                resources.decoderModule = DracoDecoderModule();
+                resources.decoderModule = options.decoderModule;
             }
         }
 
@@ -1252,7 +1369,7 @@
         });
     }
 
-    function loadGlb(glb, device, success) {
+    function loadGlb(glb, device, success, options) {
         var dataView = new DataView(glb);
 
         // Read header
@@ -1297,9 +1414,9 @@
             byteOffset += chunkLength + 8;
         }
 
-        loadGltf(json, device, success, {
-            buffers: buffers
-        });
+        options = options || {};
+        options.buffers = buffers;
+        loadGltf(json, device, success, options);
     }
 
     window.loadGltf = loadGltf;
