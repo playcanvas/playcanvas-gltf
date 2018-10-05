@@ -175,12 +175,12 @@
                 }
                 clip.addCurve(curve);
             }
-        }); 
+        });
 
         if (data.hasOwnProperty('extras') && resources.processAnimationExtras) {
             resources.processAnimationExtras(clip, data.extras);
         }
- 
+
         return clip;
     }
 

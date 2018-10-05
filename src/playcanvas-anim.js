@@ -1092,10 +1092,11 @@ AnimationClip.prototype.updateCurveNameFromTarget = function () {
         var curve = this.animCurves[i];
         if (!curve.animTargets || curve.animTargets.length < 1)
             continue;
- 
+
         // change name to target string
+        var oldName = curve.name;//backup before change
         var newName = curve.animTargets[0].toString();
-        if (curve.name == newName)// no need to change name
+        if (oldName == newName)// no need to change name
             continue;
 
         curve.name = newName;
