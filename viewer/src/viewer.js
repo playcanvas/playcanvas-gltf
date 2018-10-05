@@ -157,6 +157,15 @@ Viewer.prototype = {
                 asset: asset
             });
             this.app.root.addChild(this.gltf);
+
+            //now that model is created after translateAnimation, have to hook here
+            for(var i = 0; i < animationClips.length; i++) {
+                for(var c = 0; c < animationClips[i].animCurves.length; c++) {
+                    var curve = animationClips[i].animCurves[c];
+                    if (curve.animTargets[0].targetNode === "model")
+                        curve.animTargets[0].targetNode = this.gltf;
+                }
+            }
         }
 
         // Load any animations
