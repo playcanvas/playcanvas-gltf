@@ -125,7 +125,7 @@
                 for (i = 0; i < numCurves; i++) {
                     curve = new AnimationCurve();
                     keyType = AnimationKeyableType.NUM;
-                    curve.keyableType = keyType; 
+                    curve.keyableType = keyType;
                     curve.addTarget("model", path, i);
                     if (sampler.interpolation === "CUBIC")
                         curve.type = AnimationCurveType.CUBIC;
