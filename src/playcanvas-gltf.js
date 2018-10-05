@@ -176,7 +176,7 @@
                 clip.addCurve(curve);
             }
         });
-
+        
         return clip;
     }
 

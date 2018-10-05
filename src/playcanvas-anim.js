@@ -2,7 +2,7 @@
 // * class AnimationKeyable
 // *
 // *===============================================================================================================
-var AnimationKeyableType = { NUM: 0, VEC: 1, QUAT: 2 };
+var AnimationKeyableType = { NUM: 0, VEC: 1, QUAT: 2};
 var AnimationKeyable = function AnimationKeyable(type, time, value) {
     this.init(type, time, value);
 };
@@ -1063,7 +1063,7 @@ AnimationClip.prototype.constructFromRoot = function (root) {
 //         newTarget.vScale = NS / AS = vScale * NS / RS;
 //
 */
-AnimationClip.prototype.transferToRoot = function (root) { 
+AnimationClip.prototype.transferToRoot = function (root, model, textures) { 
     var dictTarget = {};
     AnimationTarget.constructTargetNodes(root, null, dictTarget);// contains localScale information
 
@@ -1071,8 +1071,12 @@ AnimationClip.prototype.transferToRoot = function (root) {
     for (var i = 0; i < curveNames.length; i++) { // for each curve in clip
         if (!curveNames[i] || !this.animCurves[curveNames[i]])
             continue;
+
         var curve = this.animCurves[curveNames[i]];
-        var ctarget = curve.animTargets[0];
+        if(curve.animTargets.length <= 0)//09/27 curve with no targets
+            continue;
+
+        var ctarget = curve.animTargets[0];  
         var atarget = dictTarget[ctarget.targetNode.name];
         if (atarget) { // match by target name
             var cScale = AnimationTarget.getLocalScale(ctarget.targetNode);
