@@ -171,8 +171,9 @@ Viewer.prototype = {
             }
 
             // Add all animations to the model's animation component
-            for (var i = 0; i < animationClips.length; i++) { 
+            for (var i = 0; i < animationClips.length; i++) {
                 animationClips[i].transferToRoot(this.gltf);
+                this.gltf.animComponent.addClip(animationClips[i]);
             }
             this.gltf.animComponent.playClip(animationClips[0].name);
         }

@@ -1764,6 +1764,6 @@ AnimationComponent.prototype.setBlendSession = function (blendValue, weight, cur
 AnimationComponent.prototype.unsetBlendSession = function(curveName) {
     var curSession = this.animSessions[this.curClip];
     if (curSession) {
-        curSession.unsetBlend(curveName); 
+        curSession.unsetBlend(curveName);
     }
 };
