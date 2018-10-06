@@ -1263,11 +1263,13 @@
     }
 
     function createModel(resources) {
+        var gltf = resources.gltf;
+
         var meshInstances = [];
         var skinInstances = [];
         var morphInstances = [];
 
-        resources.gltf.nodes.forEach(function (node, idx) {
+        gltf.nodes.forEach(function (node, idx) {
             if (node.hasOwnProperty('mesh')) {
                 var meshGroup = resources.meshes[node.mesh];
                 for (var i = 0; i < meshGroup.length; i++) {
@@ -1283,7 +1285,7 @@
 
                     if (meshGroup[i].morph) {
                         var morphInstance = new pc.MorphInstance(meshGroup[i].morph);
-                        var weights = resources.gltf.meshes[i].weights;
+                        var weights = gltf.meshes[i].weights;
                         if (weights) {
                             weights.forEach(function (weight, idx) {
                                 morphInstance.setWeight(idx, weight);
