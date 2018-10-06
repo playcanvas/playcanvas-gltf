@@ -987,6 +987,10 @@
             meshes.push(mesh);
         });
 
+        if (data.hasOwnProperty('weights')) {
+             meshes.weights = data.weights.slice();
+        }
+
         return meshes;
     }
 
@@ -1283,6 +1287,11 @@
 
                     if (meshGroup[i].morph) {
                         var morphInstance = new pc.MorphInstance(meshGroup[i].morph);
+                        if (meshGroup.weights) {
+                            meshGroup.weights.forEach(function (weight, idx) {
+                                morphInstance.setWeight(idx, weight);
+                            });
+                        }
                         meshInstance.morphInstance = morphInstance;
                         // HACK: need to force calculation of the morph's AABB due to a bug
                         // in the engine. This is a private function and will be removed!
