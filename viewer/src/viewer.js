@@ -135,6 +135,8 @@ Viewer.prototype = {
     },
 
     initializeScene: function (model, textures, animationClips) {
+        var i;
+
         if (!this.onlyLoadAnimations) {
             // Blow away whatever is currently loaded
             this.destroyScene();
@@ -158,12 +160,14 @@ Viewer.prototype = {
             });
             this.app.root.addChild(this.gltf);
 
-            //now that model is created after translateAnimation, have to hook here
-            for(var i = 0; i < animationClips.length; i++) {
-                for(var c = 0; c < animationClips[i].animCurves.length; c++) {
-                    var curve = animationClips[i].animCurves[c];
-                    if (curve.animTargets[0].targetNode === "model")
-                        curve.animTargets[0].targetNode = this.gltf;
+            // Now that the model is created, after translateAnimation, we have to hook here
+            if (animationClips) {
+                for (i = 0; i < animationClips.length; i++) {
+                    for(var c = 0; c < animationClips[i].animCurves.length; c++) {
+                        var curve = animationClips[i].animCurves[c];
+                        if (curve.animTargets[0].targetNode === "model")
+                            curve.animTargets[0].targetNode = this.gltf;
+                    }
                 }
             }
         }
@@ -180,7 +184,7 @@ Viewer.prototype = {
             }
 
             // Add all animations to the model's animation component
-            for (var i = 0; i < animationClips.length; i++) {
+            for (i = 0; i < animationClips.length; i++) {
                 animationClips[i].transferToRoot(this.gltf);
                 this.gltf.animComponent.addClip(animationClips[i]);
             }
