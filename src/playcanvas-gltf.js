@@ -987,10 +987,6 @@
             meshes.push(mesh);
         });
 
-        if (data.hasOwnProperty('weights')) {
-             meshes.weights = data.weights.slice();
-        }
-
         return meshes;
     }
 
@@ -1287,8 +1283,9 @@
 
                     if (meshGroup[i].morph) {
                         var morphInstance = new pc.MorphInstance(meshGroup[i].morph);
-                        if (meshGroup.weights) {
-                            meshGroup.weights.forEach(function (weight, idx) {
+                        var weights = resources.gltf.meshes[i].weights;
+                        if (weights) {
+                            weights.forEach(function (weight, idx) {
                                 morphInstance.setWeight(idx, weight);
                             });
                         }
