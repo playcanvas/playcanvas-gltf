@@ -1284,16 +1284,16 @@
 
                     if (meshGroup[i].morph) {
                         var morphInstance = new pc.MorphInstance(meshGroup[i].morph);
+                        meshInstance.morphInstance = morphInstance;
+                        // HACK: need to force calculation of the morph's AABB due to a bug
+                        // in the engine. This is a private function and will be removed!
+                        morphInstance.updateBounds(meshInstance.mesh);
                         var weights = gltf.meshes[i].weights;
                         if (weights) {
                             weights.forEach(function (weight, idx) {
                                 morphInstance.setWeight(idx, weight);
                             });
                         }
-                        meshInstance.morphInstance = morphInstance;
-                        // HACK: need to force calculation of the morph's AABB due to a bug
-                        // in the engine. This is a private function and will be removed!
-                        morphInstance.updateBounds(meshInstance.mesh);
 
                         morphInstances.push(morphInstance);
                     }

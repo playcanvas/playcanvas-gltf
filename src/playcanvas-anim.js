@@ -214,7 +214,7 @@ AnimationTarget.prototype.blendToTarget = function (value, p) {
     }
 
     // p*cur + (1-p)*prev
-    if (this.targetNode && this.targetNode.hasOwnProperty(this.targetPath)) {
+    if (this.targetNode && this.targetNode[this.targetPath] !== undefined) {
         var blendValue;
         if (this.targetProp && this.targetProp in this.targetNode[this.targetPath]) {
             blendValue = AnimationKeyable.linearBlendValue(this.targetNode[this.targetPath][this.targetProp], value, p);
@@ -235,7 +235,9 @@ AnimationTarget.prototype.blendToTarget = function (value, p) {
         }
 
         // execute update target
-        this.targetNode._dirtify(true);
+        if (typeof this.targetNode._dirtify === 'function') {
+            this.targetNode._dirtify(true);
+        }
     }
 
     /* /special wrapping for morph weights
@@ -266,7 +268,7 @@ AnimationTarget.prototype.updateToTarget = function (value) {
         }
     }
 
-    if (this.targetNode && this.targetNode.hasOwnProperty(this.targetPath)) {
+    if (this.targetNode && this.targetNode[this.targetPath] !== undefined) {
         if (this.targetProp && this.targetProp in this.targetNode[this.targetPath])
             this.targetNode[this.targetPath][this.targetProp] = value;
         else
@@ -283,7 +285,9 @@ AnimationTarget.prototype.updateToTarget = function (value) {
         }
 
         // execute update target
-        this.targetNode._dirtify(true);
+        if (typeof this.targetNode._dirtify === 'function') {
+            this.targetNode._dirtify(true);
+        }
     }
 
     // special wrapping for morph weights
