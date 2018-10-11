@@ -1681,7 +1681,7 @@ AnimationComponent.prototype.playClip = function (name) {
 };
 
 AnimationComponent.prototype.stopClip = function () {
-    var clip = this.animClips[this.curClip];
+    var clip = this.animClipsMap[this.curClip];
     if (clip) {
         clip.stop();
         this.curClip = "";
