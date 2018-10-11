@@ -1074,6 +1074,9 @@ AnimationClip.prototype.transferToRoot = function (root) {
     for (var i = 0, len = this.animCurves.length; i < len; i++) {
         var curve = this.animCurves[i];
         var ctarget = curve.animTargets[0];
+        if (curve.animTargets.length === 0) {
+            continue;
+        }
         var atarget = dictTarget[ctarget.targetNode.name];
         if (atarget) { // match by target name
             var cScale = AnimationTarget.getLocalScale(ctarget.targetNode);
