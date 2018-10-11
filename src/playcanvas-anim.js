@@ -1401,7 +1401,7 @@ AnimationSession.prototype.blendToTarget = function (input, p) {
         cname = this.playable.name;
         ctargets = this.animTargets[cname];
         if (!ctargets)
-            return; 
+            return;
  
         // 10/10, if curve is step, let's not blend
         var blendUpdateNone = 0;
@@ -1410,7 +1410,7 @@ AnimationSession.prototype.blendToTarget = function (input, p) {
             else blendUpdateNone = 2;
         }
 
-        for (j = 0; j < ctargets.length; j ++) { 
+        for (j = 0; j < ctargets.length; j ++) {
             if (blendUpdateNone === 0) ctargets[j].blendToTarget(input.value, p);
             else if (blendUpdateNone === 1) ctargets[j].updateToTarget(input.value);
         }
@@ -1437,10 +1437,10 @@ AnimationSession.prototype.blendToTarget = function (input, p) {
             for (j = 0; j < ctargets.length; j ++) {
                 if (blendUpdateNone === 0) ctargets[j].blendToTarget(input.curveKeyable[cname].value, p);
                 else if (blendUpdateNone === 1) ctargets[j].updateToTarget(input.value);
-            } 
+            }
         }
     }
-}; 
+};
 
 AnimationSession.prototype.updateToTarget = function (input) {
     var i, j;
