@@ -696,7 +696,7 @@
 
                     if (geometryType == decoderModule.TRIANGULAR_MESH) {
                         var face = new decoderModule.DracoInt32Array();
-                        indices = new Uint16Array(numFaces * 3);
+                        indices = (numPoints > 65535) ? new Uint32Array(numFaces * 3) : new Uint16Array(numFaces * 3);
                         for (i = 0; i < numFaces; ++i) {
                             decoder.GetFaceFromMesh(outputGeometry, i, face);
                             indices[i * 3]     = face.GetValue(0);
@@ -932,7 +932,6 @@
             mesh.primitive[0].base = 0;
             mesh.primitive[0].indexed = (indices !== null);
             if (indices !== null) {
-                accessor = gltf.accessors[primitive.indices];
                 var indexFormat;
                 if (indices instanceof Uint8Array) {
                     indexFormat = pc.INDEXFORMAT_UINT8;
@@ -1263,11 +1262,13 @@
     }
 
     function createModel(resources) {
+        var gltf = resources.gltf;
+
         var meshInstances = [];
         var skinInstances = [];
         var morphInstances = [];
 
-        resources.gltf.nodes.forEach(function (node, idx) {
+        gltf.nodes.forEach(function (node, idx) {
             if (node.hasOwnProperty('mesh')) {
                 var meshGroup = resources.meshes[node.mesh];
                 for (var i = 0; i < meshGroup.length; i++) {
@@ -1287,6 +1288,12 @@
                         // HACK: need to force calculation of the morph's AABB due to a bug
                         // in the engine. This is a private function and will be removed!
                         morphInstance.updateBounds(meshInstance.mesh);
+                        var weights = gltf.meshes[i].weights;
+                        if (weights) {
+                            weights.forEach(function (weight, idx) {
+                                morphInstance.setWeight(idx, weight);
+                            });
+                        }
 
                         morphInstances.push(morphInstance);
                     }
