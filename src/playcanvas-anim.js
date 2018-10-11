@@ -1402,9 +1402,18 @@ AnimationSession.prototype.blendToTarget = function (input, p) {
         ctargets = this.animTargets[cname];
         if (!ctargets)
             return;
+ 
+        // 10/10, if curve is step, let's not blend
+        var blendUpdateNone = 0;
+        if (this.playable.type === AnimationCurveType.STEP && this.fadeDir) {
+            if ((this.fadeDir == -1 && p <= 0.5) || (this.fadeDir == 1 && p > 0.5)) blendUpdateNone = 1;
+            else blendUpdateNone = 2;
+        }
 
-        for (j = 0; j < ctargets.length; j ++)
-            ctargets[j].blendToTarget(input.value, p);
+        for (j = 0; j < ctargets.length; j ++) {
+            if (blendUpdateNone === 0) ctargets[j].blendToTarget(input.value, p);
+            else if (blendUpdateNone === 1) ctargets[j].updateToTarget(input.value);
+        }
         return;
     }
 
@@ -1414,11 +1423,21 @@ AnimationSession.prototype.blendToTarget = function (input, p) {
         for (i = 0; i < curveNames.length; i ++) {
             cname = curveNames[i];
             if (!cname) continue;
+
+            // 10/10, if curve is step, let's not blend
+            var blendUpdateNone = 0;
+            if (this.playable.animCurvesMap[cname] && this.playable.animCurvesMap[cname].type === AnimationCurveType.STEP && this.fadeDir) {
+                if ((this.fadeDir == -1 && p <= 0.5) || (this.fadeDir == 1 && p > 0.5)) blendUpdateNone = 1;
+                else blendUpdateNone = 2;
+            }
+
             ctargets = this.animTargets[cname];
             if (!ctargets) continue;
 
-            for (j = 0; j < ctargets.length; j ++)
-                ctargets[j].blendToTarget(input.curveKeyable[cname].value, p);
+            for (j = 0; j < ctargets.length; j ++) {
+                if (blendUpdateNone === 0) ctargets[j].blendToTarget(input.curveKeyable[cname].value, p);
+                else if (blendUpdateNone === 1) ctargets[j].updateToTarget(input.value);
+            }
         }
     }
 };
