@@ -252,32 +252,32 @@ Viewer.prototype = {
     },
     
     pauseAnimationsAndSeekToTime: function(curTime) {
-		if (this.gltf && this.gltf.animComponent) {
-			// once we seek into the animation, stop the default playing
-			this.pauseAnimationClips();
-			// now set the seeked time for the last played clip
-			const clip = this.gltf.animComponent.getCurrentClip()
-			const session = clip.session;
-			const self = session;
-			session.curTime = curTime;
-			self.showAt(self.curTime, self.fadeDir, self.fadeBegTime, self.fadeEndTime, self.fadeTime);
-			self.invokeByTime(self.curTime);
-		} else {
-			this.anim_info.innerHTML = "please load a gltf with animation clips";
-		}
+        if (this.gltf && this.gltf.animComponent) {
+            // once we seek into the animation, stop the default playing
+            this.pauseAnimationClips();
+            // now set the seeked time for the last played clip
+            const clip = this.gltf.animComponent.getCurrentClip()
+            const session = clip.session;
+            const self = session;
+            session.curTime = curTime;
+            self.showAt(self.curTime, self.fadeDir, self.fadeBegTime, self.fadeEndTime, self.fadeTime);
+            self.invokeByTime(self.curTime);
+        } else {
+            this.anim_info.innerHTML = "please load a gltf with animation clips";
+        }
     },
     
     switchToClipByName: function(clipName) {
-		if (this.gltf && this.gltf.animComponent) {
-			const clip = this.gltf.animComponent.animClipsMap[clipName];
-			this.anim_info.innerHTML = clip.duration + "s " + clipName;
-			this.anim_slider.max = clip.duration;
-			this.gltf.animComponent.curClip = clipName;
-			this.pauseAnimationClips();
-			this.playCurrentAnimationClip();
-		} else {
-			this.anim_info.innerHTML = "please load a gltf with animation clips";
-		}
+        if (this.gltf && this.gltf.animComponent) {
+            const clip = this.gltf.animComponent.animClipsMap[clipName];
+            this.anim_info.innerHTML = clip.duration + "s " + clipName;
+            this.anim_slider.max = clip.duration;
+            this.gltf.animComponent.curClip = clipName;
+            this.pauseAnimationClips();
+            this.playCurrentAnimationClip();
+        } else {
+            this.anim_info.innerHTML = "please load a gltf with animation clips";
+        }
     },
     
     setupAnimControls: function() {
