@@ -313,7 +313,7 @@ AnimationTarget.constructTargetNodes = function (root, vec3Scale, output) {
 
     output[rootTargetNode.targetNode.name] = rootTargetNode;
     for (var i = 0; i < root.children.length; i ++) {
-        var arTargets = AnimationTarget.constructTargetNodes(root.children[i], rootTargetNode.vScale, output);
+        AnimationTarget.constructTargetNodes(root.children[i], rootTargetNode.vScale, output);
     }
 };
 
@@ -1239,6 +1239,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
 AnimationSession.app = null;
 
 AnimationSession.prototype.clone = function () {
+    var i, key;
     var cloned = new AnimationSession();
 
     cloned.begTime = this.begTime;
@@ -1260,30 +1261,30 @@ AnimationSession.prototype.clone = function () {
 
     // targets
     cloned.animTargets = {};
-    for(var key in this.animTargets) {
+    for (key in this.animTargets) {
         if(!this.animTargets.hasOwnProperty(key)) continue;
         var ttargets = this.animTargets[key];
         var ctargets = [];
-        for(var j = 0; j < ttargets.length; j ++) {
-            ctargets.push(ttargets[j].clone());
+        for(i = 0; i < ttargets.length; i++) {
+            ctargets.push(ttargets[i].clone());
         }
         cloned.animTargets[key] = ctargets;
     }
 
     // events
     cloned.animEvents = [];
-    for(var i = 0; i < this.animEvents.length; i ++)
+    for (i = 0; i < this.animEvents.length; i ++)
         cloned.animEvents.push(this.animEvents[i].clone());
 
     // blending
     cloned.blendables = {};
-    for(var key in this.blendables)
-        if(this.blendables.hasOwnProperty(key))
+    for (key in this.blendables)
+        if (this.blendables.hasOwnProperty(key))
             cloned.blendables[key] = this.blendables[key];
 
     cloned.blendWeights = {};
-    for(var key in this.blendWeights)
-        if(this.blendWeights.hasOwnProperty(key))
+    for (key in this.blendWeights)
+        if (this.blendWeights.hasOwnProperty(key))
             cloned.blendWeights[key] = this.blendWeights[key];
 
     return cloned;
@@ -1388,7 +1389,7 @@ AnimationSession.prototype.invokeByTime = function (time) {
 
 AnimationSession.prototype.blendToTarget = function (input, p) {
     var i, j;
-    var cname, ctargets;
+    var cname, ctargets, blendUpdateNone;
 
     if (!input || p > 1 || p <= 0)// p===0 remain prev
         return;
@@ -1406,7 +1407,7 @@ AnimationSession.prototype.blendToTarget = function (input, p) {
             return;
 
         // 10/10, if curve is step, let's not blend
-        var blendUpdateNone = 0;
+        blendUpdateNone = 0;
         if (this.playable.type === AnimationCurveType.STEP && this.fadeDir) {
             if ((this.fadeDir == -1 && p <= 0.5) || (this.fadeDir == 1 && p > 0.5)) blendUpdateNone = 1;
             else blendUpdateNone = 2;
@@ -1427,7 +1428,7 @@ AnimationSession.prototype.blendToTarget = function (input, p) {
             if (!cname) continue;
 
             // 10/10, if curve is step, let's not blend
-            var blendUpdateNone = 0;
+            blendUpdateNone = 0;
             if (this.playable.animCurvesMap[cname] && this.playable.animCurvesMap[cname].type === AnimationCurveType.STEP && this.fadeDir) {
                 if ((this.fadeDir == -1 && p <= 0.5) || (this.fadeDir == 1 && p > 0.5)) blendUpdateNone = 1;
                 else blendUpdateNone = 2;

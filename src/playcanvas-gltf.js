@@ -1268,30 +1268,30 @@
         var skinInstances = [];
         var morphInstances = [];
 
-        gltf.nodes.forEach(function (node, idx) {
+        gltf.nodes.forEach(function (node, nodeIndex) {
             if (node.hasOwnProperty('mesh')) {
                 var meshGroup = resources.meshes[node.mesh];
-                for (var i = 0; i < meshGroup.length; i++) {
+                meshGroup.forEach(function (mesh) {
                     var material;
-                    if (meshGroup[i].materialIndex === undefined) {
+                    if (mesh.materialIndex === undefined) {
                         material = resources.defaultMaterial;
                     } else {
-                        material = resources.materials[meshGroup[i].materialIndex];
+                        material = resources.materials[mesh.materialIndex];
                     }
 
-                    var meshInstance = new pc.MeshInstance(resources.nodes[idx], meshGroup[i], material);
+                    var meshInstance = new pc.MeshInstance(resources.nodes[nodeIndex], mesh, material);
                     meshInstances.push(meshInstance);
 
-                    if (meshGroup[i].morph) {
-                        var morphInstance = new pc.MorphInstance(meshGroup[i].morph);
+                    if (mesh.morph) {
+                        var morphInstance = new pc.MorphInstance(mesh.morph);
                         meshInstance.morphInstance = morphInstance;
                         // HACK: need to force calculation of the morph's AABB due to a bug
                         // in the engine. This is a private function and will be removed!
                         morphInstance.updateBounds(meshInstance.mesh);
                         var weights = gltf.meshes[i].weights;
                         if (weights) {
-                            weights.forEach(function (weight, idx) {
-                                morphInstance.setWeight(idx, weight);
+                            weights.forEach(function (weight, weightIndex) {
+                                morphInstance.setWeight(weightIndex, weight);
                             });
                         }
 
@@ -1300,7 +1300,7 @@
 
                     if (node.hasOwnProperty('skin')) {
                         var skin = resources.skins[node.skin];
-                        meshGroup[i].skin = skin;
+                        mesh.skin = skin;
 
                         var skinInstance = new pc.SkinInstance(skin);
                         skinInstance.bones = skin.bones;
@@ -1308,7 +1308,7 @@
 
                         skinInstances.push(skinInstance);
                     }
-                }
+                });
             }
         });
 
