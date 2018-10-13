@@ -99,6 +99,7 @@ function Viewer() {
             this.destroyScene();
         }
     }, this);
+    this.playing = true; // for play/pause button
 }
 
 Viewer.prototype = {
@@ -218,7 +219,28 @@ Viewer.prototype = {
             basePath: basePath,
             processUri: processUri
         });
-    }
+    },
+	
+	pauseAnimationClips: function() {
+		this.gltf.animComponent.pauseAll();
+		this.playing = false;
+		anim_pause.value = ">";
+	},
+	
+	playCurrentAnimationClip: function() {
+		//this.gltf.animComponent.getCurrentClip().resume(); // resume doesn't work yet
+		this.gltf.animComponent.getCurrentClip().play(); // just play it again, until resume() works
+		this.playing = true;
+		anim_pause.value = "||";
+	},
+	
+	togglePlayPauseAnimation: function() {
+		if (this.playing) {
+			this.pauseAnimationClips();
+		} else {
+			this.playCurrentAnimationClip();
+		}
+	}
 };
 
 function getParameterByName(name, url) {
@@ -294,7 +316,7 @@ function main() {
 	anim_slider.oninput = function(e) {
 		const curTime = anim_slider.value;
 		// once we seek into the animation, stop the default playing
-		viewer.gltf.animComponent.pauseAll();
+		viewer.pauseAnimationClips();
 		// now set the seeked time for the last played clip
 		const clip = viewer.gltf.animComponent.getCurrentClip()
 		const session = clip.session;
@@ -306,14 +328,22 @@ function main() {
 	
 	anim_pause = document.getElementById("anim_pause");
 	anim_pause.onclick = function(e) {
-		console.log("Animation clips paused");
-		viewer.gltf.animComponent.pauseAll();
+		viewer.togglePlayPauseAnimation();
 	}
 	
 	anim_info = document.getElementById("anim_info");
 	
     viewer = new Viewer();
 
+	viewer.app.on("update", function() {
+		if (viewer.gltf && viewer.gltf.animComponent) {
+			// mirror the playback time of the playing clip into the html range slider
+			const curTime = viewer.gltf.animComponent.getCurrentClip().session.curTime;
+			anim_slider.value = curTime;
+		}
+		
+	})
+	
     var assetUrl = getParameterByName('assetUrl');
     if (assetUrl) {
         if (assetUrl.endsWith('gltf')) {
