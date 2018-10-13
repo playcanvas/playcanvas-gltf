@@ -1792,16 +1792,20 @@ AnimationComponent.prototype.unsetBlendSession = function(curveName) {
 };
 
 AnimationComponent.prototype.playSubstring = function(substr) {
-    for (var clip of this.animClips) {
+    const n = this.animClips.length;
+    for (var i=0; i<n; i++) {
+        const clip = this.animClips[i];
         if (clip.isPlaying)
             clip.pause();
-        if (clip.name.includes(substr))
+        if (clip.name.indexOf(substr) !== -1)
             clip.play();
     }
 };
 
 AnimationComponent.prototype.pauseAll = function() {
-    for (var clip of this.animClips) {
+    const n = this.animClips.length;
+    for (var i=0; i<n; i++) {
+        const clip = this.animClips[i];
         if (clip.isPlaying)
             clip.pause();
     }
