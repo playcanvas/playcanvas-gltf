@@ -190,13 +190,12 @@ Viewer.prototype = {
                 this.gltf.animComponent.addClip(animationClips[i]);
             }
             this.gltf.animComponent.playClip(animationClips[0].name);
-			
-			select_remove_options(anim_select);
-			for (var clip of animationClips) {
-				select_add_option(anim_select, clip.name);
-			}
-			
-			anim_info.innerHTML = animationClips.length + " animation clips loaded";
+            
+            select_remove_options(anim_select);
+            for (var clip of animationClips) {
+                select_add_option(anim_select, clip.name);
+            }
+            anim_info.innerHTML = animationClips.length + " animation clips loaded";
         }
 
         // Focus the camera on the newly loaded scene
@@ -220,27 +219,27 @@ Viewer.prototype = {
             processUri: processUri
         });
     },
-	
-	pauseAnimationClips: function() {
-		this.gltf.animComponent.pauseAll();
-		this.playing = false;
-		anim_pause.value = ">";
-	},
-	
-	playCurrentAnimationClip: function() {
-		//this.gltf.animComponent.getCurrentClip().resume(); // resume doesn't work yet
-		this.gltf.animComponent.getCurrentClip().play(); // just play it again, until resume() works
-		this.playing = true;
-		anim_pause.value = "||";
-	},
-	
-	togglePlayPauseAnimation: function() {
-		if (this.playing) {
-			this.pauseAnimationClips();
-		} else {
-			this.playCurrentAnimationClip();
-		}
-	}
+    
+    pauseAnimationClips: function() {
+        this.gltf.animComponent.pauseAll();
+        this.playing = false;
+        anim_pause.value = ">";
+    },
+    
+    playCurrentAnimationClip: function() {
+        //this.gltf.animComponent.getCurrentClip().resume(); // resume doesn't work yet
+        this.gltf.animComponent.getCurrentClip().play(); // just play it again, until resume() works
+        this.playing = true;
+        anim_pause.value = "||";
+    },
+    
+    togglePlayPauseAnimation: function() {
+        if (this.playing) {
+            this.pauseAnimationClips();
+        } else {
+            this.playCurrentAnimationClip();
+        }
+    }
 };
 
 function getParameterByName(name, url) {
@@ -265,15 +264,15 @@ function loadScript(src) {
 }
 
 select_add_option = function(select, option_text) {
-	const option = document.createElement("option");
-	option.text = option_text;
-	select.add(option);
-	return option;
+    const option = document.createElement("option");
+    option.text = option_text;
+    select.add(option);
+    return option;
 }
 
 select_remove_options = function(select) {
-	for (var i=select.options.length-1; i>=0; i--)
-		select.remove(i);
+    for (var i=select.options.length-1; i>=0; i--)
+        select.remove(i);
 }
 
 function main() {
@@ -291,59 +290,58 @@ function main() {
         });
     }
 
-	anim = document.getElementById("anim");
-	anim.onmousedown = function(e) {
-		// make sure that mouse actions on the <div id="anim"> don't manipulate the orbit camera
-		e.preventOrbit = true;
-	}
-	
-	anim_select = document.getElementById("anim_select");
-	anim_select.onchange = function(e) {
-		const clipName = anim_select.value;
-		const clip = viewer.gltf.animComponent.animClipsMap[clipName];
-		
-		anim_info.innerHTML = clip.duration + "s " + clipName;
-		anim_slider.max = clip.duration;
-		viewer.gltf.animComponent.curClip = clipName;
-		viewer.gltf.animComponent.pauseAll();
-		clip.play();
-	}
-	anim_select.onclick = function(e) {
-		console.log(e, anim_select.value);
-	}
-	
-	anim_slider = document.getElementById("anim_slider");
-	anim_slider.oninput = function(e) {
-		const curTime = anim_slider.value;
-		// once we seek into the animation, stop the default playing
-		viewer.pauseAnimationClips();
-		// now set the seeked time for the last played clip
-		const clip = viewer.gltf.animComponent.getCurrentClip()
-		const session = clip.session;
-		const self = session;
-		session.curTime = curTime;
-		self.showAt(self.curTime, self.fadeDir, self.fadeBegTime, self.fadeEndTime, self.fadeTime);
-		self.invokeByTime(self.curTime);
-	}
-	
-	anim_pause = document.getElementById("anim_pause");
-	anim_pause.onclick = function(e) {
-		viewer.togglePlayPauseAnimation();
-	}
-	
-	anim_info = document.getElementById("anim_info");
-	
+    anim = document.getElementById("anim");
+    anim.onmousedown = function(e) {
+        // make sure that mouse actions on the <div id="anim"> don't manipulate the orbit camera
+        e.preventOrbit = true;
+    }
+    
+    anim_select = document.getElementById("anim_select");
+    anim_select.onchange = function(e) {
+        const clipName = anim_select.value;
+        const clip = viewer.gltf.animComponent.animClipsMap[clipName];
+        anim_info.innerHTML = clip.duration + "s " + clipName;
+        anim_slider.max = clip.duration;
+        viewer.gltf.animComponent.curClip = clipName;
+        viewer.pauseAnimationClips();
+        viewer.playCurrentAnimationClip();
+    }
+    anim_select.onclick = function(e) {
+        console.log(e, anim_select.value);
+    }
+    
+    anim_slider = document.getElementById("anim_slider");
+    anim_slider.oninput = function(e) {
+        const curTime = anim_slider.value;
+        // once we seek into the animation, stop the default playing
+        viewer.pauseAnimationClips();
+        // now set the seeked time for the last played clip
+        const clip = viewer.gltf.animComponent.getCurrentClip()
+        const session = clip.session;
+        const self = session;
+        session.curTime = curTime;
+        self.showAt(self.curTime, self.fadeDir, self.fadeBegTime, self.fadeEndTime, self.fadeTime);
+        self.invokeByTime(self.curTime);
+    }
+    
+    anim_pause = document.getElementById("anim_pause");
+    anim_pause.onclick = function(e) {
+        viewer.togglePlayPauseAnimation();
+    }
+    
+    anim_info = document.getElementById("anim_info");
+    
     viewer = new Viewer();
 
-	viewer.app.on("update", function() {
-		if (viewer.gltf && viewer.gltf.animComponent) {
-			// mirror the playback time of the playing clip into the html range slider
-			const curTime = viewer.gltf.animComponent.getCurrentClip().session.curTime;
-			anim_slider.value = curTime;
-		}
-		
-	})
-	
+    viewer.app.on("update", function() {
+        if (viewer.gltf && viewer.gltf.animComponent) {
+            // mirror the playback time of the playing clip into the html range slider
+            const curTime = viewer.gltf.animComponent.getCurrentClip().session.curTime;
+            anim_slider.value = curTime;
+        }
+        
+    })
+    
     var assetUrl = getParameterByName('assetUrl');
     if (assetUrl) {
         if (assetUrl.endsWith('gltf')) {
