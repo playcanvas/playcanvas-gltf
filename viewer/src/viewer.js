@@ -269,6 +269,12 @@ function main() {
         });
     }
 
+	anim = document.getElementById("anim");
+	anim.onmousedown = function(e) {
+		// make sure that mouse actions on the <div id="anim"> don't manipulate the orbit camera
+		e.preventOrbit = true;
+	}
+	
 	anim_select = document.getElementById("anim_select");
 	anim_select.onchange = function(e) {
 		const clipName = anim_select.value;

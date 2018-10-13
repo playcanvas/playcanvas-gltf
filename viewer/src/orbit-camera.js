@@ -107,6 +107,8 @@ MouseInput.prototype.pan = function(screenPoint) {
 
 
 MouseInput.prototype.onMouseDown = function (event) {
+	if (event.event.preventOrbit === true)
+		return;
     switch (event.button) {
         case pc.MOUSEBUTTON_LEFT: {
             this.lookButtonDown = true;
