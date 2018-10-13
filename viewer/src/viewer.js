@@ -189,6 +189,13 @@ Viewer.prototype = {
                 this.gltf.animComponent.addClip(animationClips[i]);
             }
             this.gltf.animComponent.playClip(animationClips[0].name);
+			
+			select_remove_options(anim_select);
+			for (var clip of animationClips) {
+				select_add_option(anim_select, clip.name);
+			}
+			
+			anim_info.innerHTML = animationClips.length + " animation clips loaded";
         }
 
         // Focus the camera on the newly loaded scene
@@ -235,6 +242,18 @@ function loadScript(src) {
     });
 }
 
+select_add_option = function(select, option_text) {
+	const option = document.createElement("option");
+	option.text = option_text;
+	select.add(option);
+	return option;
+}
+
+select_remove_options = function(select) {
+	for (var i=select.options.length-1; i>=0; i--)
+		select.remove(i);
+}
+
 function main() {
     if (true) {//typeof WebAssembly !== 'object') {
         loadScript('../draco/draco_decoder.js').then(function () {
@@ -250,7 +269,44 @@ function main() {
         });
     }
 
-    var viewer = new Viewer();
+	anim_select = document.getElementById("anim_select");
+	anim_select.onchange = function(e) {
+		const clipName = anim_select.value;
+		const clip = viewer.gltf.animComponent.animClipsMap[clipName];
+		
+		anim_info.innerHTML = clip.duration + "s " + clipName;
+		anim_slider.max = clip.duration;
+		viewer.gltf.animComponent.curClip = clipName;
+		viewer.gltf.animComponent.pauseAll();
+		clip.play();
+	}
+	anim_select.onclick = function(e) {
+		console.log(e, anim_select.value);
+	}
+	
+	anim_slider = document.getElementById("anim_slider");
+	anim_slider.oninput = function(e) {
+		const curTime = anim_slider.value;
+		// once we seek into the animation, stop the default playing
+		viewer.gltf.animComponent.pauseAll();
+		// now set the seeked time for the last played clip
+		const clip = viewer.gltf.animComponent.getCurrentClip()
+		const session = clip.session;
+		const self = session;
+		session.curTime = curTime;
+		self.showAt(self.curTime, self.fadeDir, self.fadeBegTime, self.fadeEndTime, self.fadeTime);
+		self.invokeByTime(self.curTime);
+	}
+	
+	anim_pause = document.getElementById("anim_pause");
+	anim_pause.onclick = function(e) {
+		console.log("Animation clips paused");
+		viewer.gltf.animComponent.pauseAll();
+	}
+	
+	anim_info = document.getElementById("anim_info");
+	
+    viewer = new Viewer();
 
     var assetUrl = getParameterByName('assetUrl');
     if (assetUrl) {
