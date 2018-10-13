@@ -1794,7 +1794,7 @@ AnimationComponent.prototype.unsetBlendSession = function(curveName) {
 AnimationComponent.prototype.playSubstring = function(substr) {
     var n = this.animClips.length;
     for (var i=0; i<n; i++) {
-        const clip = this.animClips[i];
+        var clip = this.animClips[i];
         if (clip.isPlaying)
             clip.pause();
         if (clip.name.indexOf(substr) !== -1)
