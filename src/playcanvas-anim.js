@@ -1790,3 +1790,23 @@ AnimationComponent.prototype.unsetBlendSession = function(curveName) {
         curSession.unsetBlend(curveName);
     }
 };
+
+AnimationComponent.prototype.playSubstring = function(substr) {
+    var n = this.animClips.length;
+    for (var i=0; i<n; i++) {
+        var clip = this.animClips[i];
+        if (clip.isPlaying)
+            clip.pause();
+        if (clip.name.indexOf(substr) !== -1)
+            clip.play();
+    }
+};
+
+AnimationComponent.prototype.pauseAll = function() {
+    var n = this.animClips.length;
+    for (var i=0; i<n; i++) {
+        var clip = this.animClips[i];
+        if (clip.isPlaying)
+            clip.pause();
+    }
+};

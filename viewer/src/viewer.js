@@ -92,11 +92,18 @@ function Viewer() {
 
     this.app = app;
     this.camera = camera;
+    this.playing = true; // for play/pause button
+    this.setupAnimControls();
 
     // Press 'D' to delete the currently loaded model
     app.on('update', function () {
         if (this.app.keyboard.wasPressed(pc.KEY_D)) {
             this.destroyScene();
+        }
+        if (this.gltf && this.gltf.animComponent) {
+            // mirror the playback time of the playing clip into the html range slider
+            const curTime = this.gltf.animComponent.getCurrentClip().session.curTime;
+            this.anim_slider.value = curTime;
         }
     }, this);
 }
@@ -189,6 +196,12 @@ Viewer.prototype = {
                 this.gltf.animComponent.addClip(animationClips[i]);
             }
             this.gltf.animComponent.playClip(animationClips[0].name);
+            
+            select_remove_options(this.anim_select);
+            for (i = 0; i < animationClips.length; i++) {
+                select_add_option(this.anim_select, animationClips[i].name);
+            }
+            this.anim_info.innerHTML = animationClips.length + " animation clips loaded";
         }
 
         // Focus the camera on the newly loaded scene
@@ -211,6 +224,87 @@ Viewer.prototype = {
             basePath: basePath,
             processUri: processUri
         });
+    },
+    
+    pauseAnimationClips: function() {
+        if (this.gltf && this.gltf.animComponent) {
+            this.gltf.animComponent.pauseAll();
+            this.playing = false;
+            this.anim_pause.value = ">";
+        }
+    },
+    
+    playCurrentAnimationClip: function() {
+        if (this.gltf && this.gltf.animComponent) {
+            //this.gltf.animComponent.getCurrentClip().resume(); // resume doesn't work yet
+            this.gltf.animComponent.getCurrentClip().play(); // just play it again, until resume() works
+            this.playing = true;
+            this.anim_pause.value = "||";
+        }
+    },
+    
+    togglePlayPauseAnimation: function() {
+        if (this.playing) {
+            this.pauseAnimationClips();
+        } else {
+            this.playCurrentAnimationClip();
+        }
+    },
+    
+    pauseAnimationsAndSeekToTime: function(curTime) {
+        if (this.gltf && this.gltf.animComponent) {
+            // once we seek into the animation, stop the default playing
+            this.pauseAnimationClips();
+            // now set the seeked time for the last played clip
+            const clip = this.gltf.animComponent.getCurrentClip()
+            const session = clip.session;
+            const self = session;
+            session.curTime = curTime;
+            self.showAt(self.curTime, self.fadeDir, self.fadeBegTime, self.fadeEndTime, self.fadeTime);
+            self.invokeByTime(self.curTime);
+        } else {
+            this.anim_info.innerHTML = "please load a gltf with animation clips";
+        }
+    },
+    
+    switchToClipByName: function(clipName) {
+        if (this.gltf && this.gltf.animComponent) {
+            const clip = this.gltf.animComponent.animClipsMap[clipName];
+            this.anim_info.innerHTML = clip.duration + "s " + clipName;
+            this.anim_slider.max = clip.duration;
+            this.gltf.animComponent.curClip = clipName;
+            this.pauseAnimationClips();
+            this.playCurrentAnimationClip();
+        } else {
+            this.anim_info.innerHTML = "please load a gltf with animation clips";
+        }
+    },
+    
+    setupAnimControls: function() {
+        this.anim = document.getElementById("anim");
+        this.anim.onmousedown = function(e) {
+            // make sure that mouse actions on the <div id="anim"> don't manipulate the orbit camera
+            e.preventOrbit = true;
+        }.bind(this);
+        
+        this.anim_select = document.getElementById("anim_select");
+        this.anim_select.onchange = function(e) {
+            const clipName = this.anim_select.value;
+            this.switchToClipByName(clipName);
+        }.bind(this);
+        
+        this.anim_slider = document.getElementById("anim_slider");
+        this.anim_slider.oninput = function(e) {
+            const curTime = this.anim_slider.value;
+            this.pauseAnimationsAndSeekToTime(curTime);
+        }.bind(this);
+        
+        this.anim_pause = document.getElementById("anim_pause");
+        this.anim_pause.onclick = function(e) {
+            this.togglePlayPauseAnimation();
+        }.bind(this);
+        
+        this.anim_info = document.getElementById("anim_info");
     }
 };
 
@@ -235,6 +329,18 @@ function loadScript(src) {
     });
 }
 
+select_add_option = function(select, option_text) {
+    const option = document.createElement("option");
+    option.text = option_text;
+    select.add(option);
+    return option;
+}
+
+select_remove_options = function(select) {
+    for (var i=select.options.length-1; i>=0; i--)
+        select.remove(i);
+}
+
 function main() {
     if (true) {//typeof WebAssembly !== 'object') {
         loadScript('../draco/draco_decoder.js').then(function () {
@@ -250,7 +356,7 @@ function main() {
         });
     }
 
-    var viewer = new Viewer();
+    viewer = new Viewer();
 
     var assetUrl = getParameterByName('assetUrl');
     if (assetUrl) {
