@@ -401,10 +401,10 @@
             }
             if (specData.hasOwnProperty('specularGlossinessTexture')) {
                 var specularGlossinessTexture = specData.specularGlossinessTexture;
-                material.specularMap = resources.textures[specularGlossinessTexture.index] 
+                material.specularMap = resources.textures[specularGlossinessTexture.index];
                 material.specularMapChannel = 'rgb';
                 material.glossMap = resources.textures[specularGlossinessTexture.index];
-                material.glossMapChannel = 'a';                
+                material.glossMapChannel = 'a';
                 if (specularGlossinessTexture.hasOwnProperty('texCoord')) {
                     material.glossMapUv = specularGlossinessTexture.texCoord;
                     material.metalnessMapUv = specularGlossinessTexture.texCoord;
