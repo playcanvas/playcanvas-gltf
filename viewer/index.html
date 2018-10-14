@@ -14,9 +14,10 @@
     <body onload='main()'>
         <div id="anim">
             <select id="anim_select"></select>
-            <input type="button" id="anim_pause" value="||">
-            <input type="range" min="0" max="1" value="0" step="any" id="anim_slider">
-            <span id="anim_info"></span>
+            <input  id="anim_pause"  type="button" value="||">
+            <input  id="anim_slider" type="range" min="0" max="1" value="0" step="any">
+            <span   id="anim_info"></span>
+			<canvas id="anim_timeline" width=500 height=500></canvas>
         </div>
         <div id="dropzone" class="dropzone">
             <!--

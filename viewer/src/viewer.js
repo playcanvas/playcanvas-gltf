@@ -195,13 +195,17 @@ Viewer.prototype = {
                 animationClips[i].transferToRoot(this.gltf);
                 this.gltf.animComponent.addClip(animationClips[i]);
             }
-            this.gltf.animComponent.playClip(animationClips[0].name);
+            //this.gltf.animComponent.playClip(animationClips[0].name);
+            this.gltf.animComponent.curClip = animationClips[0].name;
+            this.pauseAnimationClips();
+            this.playCurrentAnimationClip();
             
             select_remove_options(this.anim_select);
             for (i = 0; i < animationClips.length; i++) {
                 select_add_option(this.anim_select, animationClips[i].name);
             }
             this.anim_info.innerHTML = animationClips.length + " animation clips loaded";
+            this.renderTimeline();
         }
 
         // Focus the camera on the newly loaded scene
@@ -237,9 +241,12 @@ Viewer.prototype = {
     playCurrentAnimationClip: function() {
         if (this.gltf && this.gltf.animComponent) {
             //this.gltf.animComponent.getCurrentClip().resume(); // resume doesn't work yet
-            this.gltf.animComponent.getCurrentClip().play(); // just play it again, until resume() works
+            var clip = this.gltf.animComponent.getCurrentClip();
+            clip.play(); // just play it again, until resume() works
+            this.anim_slider.max = clip.duration;
             this.playing = true;
             this.anim_pause.value = "||";
+            this.renderTimeline();
         }
     },
     
@@ -271,7 +278,6 @@ Viewer.prototype = {
         if (this.gltf && this.gltf.animComponent) {
             const clip = this.gltf.animComponent.animClipsMap[clipName];
             this.anim_info.innerHTML = clip.duration + "s " + clipName;
-            this.anim_slider.max = clip.duration;
             this.gltf.animComponent.curClip = clipName;
             this.pauseAnimationClips();
             this.playCurrentAnimationClip();
@@ -305,8 +311,22 @@ Viewer.prototype = {
         }.bind(this);
         
         this.anim_info = document.getElementById("anim_info");
+        
+        this.anim_timeline = document.getElementById("anim_timeline");
+        this.anim_timeline_context = this.anim_timeline.getContext("2d");
     }
 };
+
+Viewer.prototype.renderTimeline = function() {
+    if (this.gltf && this.gltf.animComponent) {
+        const clip = this.gltf.animComponent.getCurrentClip();
+        var left = 0;
+        var top = 0;
+        //this.anim_timeline_context.font = "14px 'Lucida Console'";
+        this.anim_timeline_context.fillText("hai" + clip.name, 10, 20);
+        //this.anim_timeline_context.fillText("hai", 10, 20);
+    }
+}
 
 function getParameterByName(name, url) {
     if (!url) url = window.location.href;
