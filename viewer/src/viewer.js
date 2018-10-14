@@ -94,7 +94,8 @@ function Viewer() {
     this.camera = camera;
     this.playing = true; // for play/pause button
     this.setupAnimControls();
-
+    this.timelineCurveHeight = 12;
+    
     // Press 'D' to delete the currently loaded model
     app.on('update', function () {
         if (this.app.keyboard.wasPressed(pc.KEY_D)) {
@@ -104,6 +105,7 @@ function Viewer() {
             // mirror the playback time of the playing clip into the html range slider
             const curTime = this.gltf.animComponent.getCurrentClip().session.curTime;
             this.anim_slider.value = curTime;
+            this.renderTimeline();
         }
     }, this);
 }
@@ -205,7 +207,6 @@ Viewer.prototype = {
                 select_add_option(this.anim_select, animationClips[i].name);
             }
             this.anim_info.innerHTML = animationClips.length + " animation clips loaded";
-            this.renderTimeline();
         }
 
         // Focus the camera on the newly loaded scene
@@ -321,10 +322,14 @@ Viewer.prototype = {
             if (this.clip === undefined) {
                 return;
             }
-            var curve_id = Math.floor(pos_top / 20);
+            var curve_id = Math.floor(pos_top / this.timelineCurveHeight);
             var curve = this.clip.animCurves[curve_id];
             this.hoveredCurve = curve;
             this.renderTimeline();
+        }.bind(this);
+        this.anim_timeline.width = window.innerWidth;
+        window.onresize = function () {
+            this.anim_timeline.width = window.innerWidth;
         }.bind(this);
     }
 };
@@ -340,24 +345,23 @@ Viewer.prototype.renderTimeline = function() {
         var left = 0;
         var top = 0;
         //this.anim_timeline_context.font = "14px 'Lucida Console'";
-        ctx.fillText("Clip: " + clip.name, 10, 20);
-        top += 20;
-        
-        
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-        
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.lineWidth = 1;
         // e.g. width==1000, 4 animCurves
         // 4 animcurves need 3 separators [ 1 | 2 | 3 | 4]
         // first separator will be at 1000/4==250
         for (var animCurve of clip.animCurves) {
             
-            if (animCurve == this.hoveredCurve)
+            if (animCurve == this.hoveredCurve) {
+                ctx.strokeStyle = "red";
                 ctx.fillStyle = "red";
-            else
+            } else {
+                ctx.strokeStyle = "rgba(0,0,0, 0.4)";
                 ctx.fillStyle = "black";
+            }
             
-            ctx.fillText(animCurve.name, 10, top);
+            //ctx.fillText(animCurve.name, 10, top);
             
             const steptime = clip.duration / animCurve.animKeys.length;
             //console.log("Steptime: ", steptime);
@@ -368,15 +372,29 @@ Viewer.prototype.renderTimeline = function() {
                 
                 //const left = (animKey.time - steptime) * multiplier;
                 const left = i * eg250;
-                ctx.fillText("|", left, top);
+                //ctx.fillText("|", left, top);
+                
+                ctx.beginPath();
+                ctx.moveTo(left, top);
+                ctx.lineTo(left, top + this.timelineCurveHeight);
+                ctx.stroke();
+                
                 //top += 20;
             }
             
             
-            top += 20;
+            top += this.timelineCurveHeight;
             
         }
         //this.anim_timeline_context.fillText("hai", 10, 20);
+        
+        // draw the position
+        var slider_left = clip.session.curTime * multiplier;
+        ctx.strokeStyle = "lime";
+        ctx.beginPath();
+        ctx.moveTo(slider_left, 0);
+        ctx.lineTo(slider_left, ctx.canvas.height);
+        ctx.stroke();
     }
 }
 
