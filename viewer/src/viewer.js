@@ -318,17 +318,13 @@ Viewer.prototype = {
         this.anim_timeline.onmousemove = function(e) {
             var pos_left = e.pageX - e.currentTarget.offsetLeft;
             var pos_top = e.pageY - e.currentTarget.offsetTop;
-            console.log(pos_left, pos_top);
             if (this.clip === undefined) {
                 return;
-                
             }
             var curve_id = Math.floor(pos_top / 20);
             var curve = this.clip.animCurves[curve_id];
-            if (curve) {
-                console.log(curve);
-                
-            }
+            this.hoveredCurve = curve;
+            this.renderTimeline();
         }.bind(this);
     }
 };
@@ -355,15 +351,20 @@ Viewer.prototype.renderTimeline = function() {
         // 4 animcurves need 3 separators [ 1 | 2 | 3 | 4]
         // first separator will be at 1000/4==250
         for (var animCurve of clip.animCurves) {
+            
+            if (animCurve == this.hoveredCurve)
+                ctx.fillStyle = "red";
+            else
+                ctx.fillStyle = "black";
+            
             ctx.fillText(animCurve.name, 10, top);
             
             const steptime = clip.duration / animCurve.animKeys.length;
-            console.log("Steptime: ", steptime);
+            //console.log("Steptime: ", steptime);
             const eg250 = canvasWidth / animCurve.animKeys.length;
             //for (var animKey of animCurve.animKeys) {
             // e.g. length==4, loop over [1,2,3]
             for (var i=1; i<animCurve.animKeys.length; i++) {
-                
                 
                 //const left = (animKey.time - steptime) * multiplier;
                 const left = i * eg250;
