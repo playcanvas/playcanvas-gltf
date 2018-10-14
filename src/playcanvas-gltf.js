@@ -101,7 +101,7 @@
     function translateAnimation(data, resources) {
         var clip = new AnimationClip();
         clip.loop = true;
-        if(data.hasOwnProperty('name'))
+        if (data.hasOwnProperty('name'))
             clip.name = data.name;
 
         var gltf = resources.gltf;
@@ -143,7 +143,7 @@
                 // translation, rotation or scale
                 keyType = AnimationKeyableType.NUM;
                 var targetPath = path;
-                switch(path) {
+                switch (path) {
                     case "translation":
                         keyType = AnimationKeyableType.VEC;
                         targetPath = "localPosition";
@@ -160,9 +160,9 @@
                 curve = new AnimationCurve();
                 curve.keyableType = keyType;
                 curve.setTarget(entity, targetPath);
-                if(sampler.interpolation === "CUBIC")
+                if (sampler.interpolation === "CUBIC")
                     curve.type = AnimationCurveType.CUBIC;
-                else if(sampler.interpolation === "STEP")
+                else if (sampler.interpolation === "STEP")
                     curve.type = AnimationCurveType.STEP;
 
                 for (i = 0; i < times.length; i++) {
@@ -245,7 +245,7 @@
             if (isDataURI(data.uri)) {
                 image.src = data.uri;
             } else if (resources.processUri) {
-                resources.processUri(data.uri, function(uri) {
+                resources.processUri(data.uri, function (uri) {
                     image.crossOrigin = "anonymous";
                     image.src = uri;
                 });
@@ -1178,7 +1178,7 @@
                             success();
                         }
                     } else if (resources.processUri) {
-                        resources.processUri(buffer.uri, function(result) {
+                        resources.processUri(buffer.uri, function (result) {
                             resources.buffers[idx] = result;
                             if (gltf.buffers.length === ++numLoaded) {
                                 success();
@@ -1189,7 +1189,7 @@
                         xhr.open('GET', resources.basePath + buffer.uri, true);
                         xhr.responseType = 'arraybuffer';
 
-                        xhr.onload = function(e) {
+                        xhr.onload = function (e) {
                             // response is unsigned 8 bit integer
                             resources.buffers[idx] = this.response;
 
