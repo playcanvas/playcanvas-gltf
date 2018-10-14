@@ -247,6 +247,7 @@ Viewer.prototype = {
             this.playing = true;
             this.anim_pause.value = "||";
             this.renderTimeline();
+            this.clip = clip; // quick access for f12 devtools
         }
     },
     
@@ -314,16 +315,66 @@ Viewer.prototype = {
         
         this.anim_timeline = document.getElementById("anim_timeline");
         this.anim_timeline_context = this.anim_timeline.getContext("2d");
+        this.anim_timeline.onmousemove = function(e) {
+            var pos_left = e.pageX - e.currentTarget.offsetLeft;
+            var pos_top = e.pageY - e.currentTarget.offsetTop;
+            console.log(pos_left, pos_top);
+            if (this.clip === undefined) {
+                return;
+                
+            }
+            var curve_id = Math.floor(pos_top / 20);
+            var curve = this.clip.animCurves[curve_id];
+            if (curve) {
+                console.log(curve);
+                
+            }
+        }.bind(this);
     }
 };
 
 Viewer.prototype.renderTimeline = function() {
     if (this.gltf && this.gltf.animComponent) {
+        const ctx = this.anim_timeline_context;
         const clip = this.gltf.animComponent.getCurrentClip();
+        const canvasWidth = ctx.canvas.width;
+        const multiplier = canvasWidth / clip.duration; // multiply with this for animKey.time to canvas "left"
+        
+        
         var left = 0;
         var top = 0;
         //this.anim_timeline_context.font = "14px 'Lucida Console'";
-        this.anim_timeline_context.fillText("hai" + clip.name, 10, 20);
+        ctx.fillText("Clip: " + clip.name, 10, 20);
+        top += 20;
+        
+        
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+        
+        // e.g. width==1000, 4 animCurves
+        // 4 animcurves need 3 separators [ 1 | 2 | 3 | 4]
+        // first separator will be at 1000/4==250
+        for (var animCurve of clip.animCurves) {
+            ctx.fillText(animCurve.name, 10, top);
+            
+            const steptime = clip.duration / animCurve.animKeys.length;
+            console.log("Steptime: ", steptime);
+            const eg250 = canvasWidth / animCurve.animKeys.length;
+            //for (var animKey of animCurve.animKeys) {
+            // e.g. length==4, loop over [1,2,3]
+            for (var i=1; i<animCurve.animKeys.length; i++) {
+                
+                
+                //const left = (animKey.time - steptime) * multiplier;
+                const left = i * eg250;
+                ctx.fillText("|", left, top);
+                //top += 20;
+            }
+            
+            
+            top += 20;
+            
+        }
         //this.anim_timeline_context.fillText("hai", 10, 20);
     }
 }
