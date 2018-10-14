@@ -324,12 +324,20 @@ Viewer.prototype = {
             }
             var curve_id = Math.floor(pos_top / this.timelineCurveHeight);
             var curve = this.clip.animCurves[curve_id];
-            this.hoveredCurve = curve;
+            if (curve !== undefined) {
+                var eg250 = window.innerWidth / curve.animKeys.length; // 1000px / 4 animkeys
+                var animkey_id = Math.floor(pos_left / eg250);
+                var animKey = curve.animKeys[animkey_id];
+                this.hoveredCurve = curve;
+                this.hoveredAnimKey = animKey;
+            }
             this.renderTimeline();
         }.bind(this);
         this.anim_timeline.width = window.innerWidth;
+        this.anim_timeline.style.top = (window.innerHeight - 200) + "px";
         window.onresize = function () {
             this.anim_timeline.width = window.innerWidth;
+            this.anim_timeline.style.top = (window.innerHeight - 200) + "px";
         }.bind(this);
     }
 };
@@ -352,45 +360,39 @@ Viewer.prototype.renderTimeline = function() {
         // 4 animcurves need 3 separators [ 1 | 2 | 3 | 4]
         // first separator will be at 1000/4==250
         for (var animCurve of clip.animCurves) {
-            
+            var linecolor = "rgba(0,0,0, 0.4)";
             if (animCurve == this.hoveredCurve) {
-                ctx.strokeStyle = "red";
-                ctx.fillStyle = "red";
-            } else {
-                ctx.strokeStyle = "rgba(0,0,0, 0.4)";
-                ctx.fillStyle = "black";
+                linecolor = "blue";
             }
-            
-            //ctx.fillText(animCurve.name, 10, top);
-            
             const steptime = clip.duration / animCurve.animKeys.length;
-            //console.log("Steptime: ", steptime);
             const eg250 = canvasWidth / animCurve.animKeys.length;
-            //for (var animKey of animCurve.animKeys) {
-            // e.g. length==4, loop over [1,2,3]
-            for (var i=1; i<animCurve.animKeys.length; i++) {
-                
-                //const left = (animKey.time - steptime) * multiplier;
+            for (var i=0; i<animCurve.animKeys.length; i++) {
+                var animKey = animCurve.animKeys[i];
                 const left = i * eg250;
-                //ctx.fillText("|", left, top);
-                
-                ctx.beginPath();
-                ctx.moveTo(left, top);
-                ctx.lineTo(left, top + this.timelineCurveHeight);
-                ctx.stroke();
-                
-                //top += 20;
+                if (left != 0) { // dont draw a marker line on left==0px
+                    //const left = (animKey.time - steptime) * multiplier;
+                    //ctx.fillText("|", left, top);
+                    ctx.beginPath();
+                    ctx.strokeStyle = linecolor;
+                    ctx.moveTo(left, top);
+                    ctx.lineTo(left, top + this.timelineCurveHeight);
+                    ctx.stroke();
+                }
+                if (animKey == this.hoveredAnimKey) {
+                    ctx.beginPath();
+                    ctx.fillStyle = "rgba(0,0,255, 0.2)";
+                    ctx.fillRect( // left, top, width, height
+                        left + 1     , top + 1,
+                        eg250 - 2, this.timelineCurveHeight - 2
+                    );
+                    ctx.stroke();
+                }
             }
-            
-            
             top += this.timelineCurveHeight;
-            
         }
-        //this.anim_timeline_context.fillText("hai", 10, 20);
-        
-        // draw the position
+        // draw the time slider position
         var slider_left = clip.session.curTime * multiplier;
-        ctx.strokeStyle = "lime";
+        ctx.strokeStyle = "white";
         ctx.beginPath();
         ctx.moveTo(slider_left, 0);
         ctx.lineTo(slider_left, ctx.canvas.height);
