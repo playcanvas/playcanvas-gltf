@@ -95,6 +95,7 @@ function Viewer() {
     this.playing = true; // for play/pause button
     this.setupAnimControls();
     this.timelineCurveHeight = 12;
+    this.timelineDisable();
     
     // Press 'D' to delete the currently loaded model
     app.on('update', function () {
@@ -105,8 +106,8 @@ function Viewer() {
             // mirror the playback time of the playing clip into the html range slider
             const curTime = this.gltf.animComponent.getCurrentClip().session.curTime;
             this.anim_slider.value = curTime;
-            this.renderTimeline();
         }
+        this.renderTimeline();
     }, this);
 }
 
@@ -247,7 +248,6 @@ Viewer.prototype = {
             this.anim_slider.max = clip.duration;
             this.playing = true;
             this.anim_pause.value = "||";
-            this.renderTimeline();
             this.clip = clip; // quick access for f12 devtools
         }
     },
@@ -314,6 +314,12 @@ Viewer.prototype = {
         
         this.anim_info = document.getElementById("anim_info");
         
+        
+        this.anim_timeline_toggle = document.getElementById("anim_timeline_toggle");
+        this.anim_timeline_toggle.onclick = function(e) {
+            this.timelineToggle();
+        }.bind(this);
+        
         this.anim_timeline = document.getElementById("anim_timeline");
         this.anim_timeline_context = this.anim_timeline.getContext("2d");
         this.anim_timeline.onmousemove = function(e) {
@@ -331,7 +337,10 @@ Viewer.prototype = {
                 this.hoveredCurve = curve;
                 this.hoveredAnimKey = animKey;
             }
-            this.renderTimeline();
+        }.bind(this);
+        this.anim_timeline.onmouseleave = function(e) {
+            this.hoveredCurve = undefined;
+            this.hoveredAnimKey = undefined;
         }.bind(this);
         this.anim_timeline.width = window.innerWidth;
         this.anim_timeline.style.top = (window.innerHeight - 200) + "px";
@@ -339,36 +348,54 @@ Viewer.prototype = {
             this.anim_timeline.width = window.innerWidth;
             this.anim_timeline.style.top = (window.innerHeight - 200) + "px";
         }.bind(this);
+        
+        
+    },
+    
+    timelineEnable: function() {
+        this.anim_timeline.style.display = "";
+        this.timelineEnabled = true;
+        this.anim_timeline_toggle.value = "Timeline: On";
+    },
+    
+    timelineDisable: function() {
+        this.anim_timeline.style.display = "none";
+        this.timelineEnabled = false;
+        this.anim_timeline_toggle.value = "Timeline: Off";
+    },
+    
+    timelineToggle: function() {
+        if (this.timelineEnabled)
+            this.timelineDisable();
+        else
+            this.timelineEnable();
     }
 };
 
 Viewer.prototype.renderTimeline = function() {
+    if (this.timelineEnabled === false) {
+        return;
+    }
     if (this.gltf && this.gltf.animComponent) {
-        const ctx = this.anim_timeline_context;
-        const clip = this.gltf.animComponent.getCurrentClip();
-        const canvasWidth = ctx.canvas.width;
-        const multiplier = canvasWidth / clip.duration; // multiply with this for animKey.time to canvas "left"
-        
-        
+        var ctx = this.anim_timeline_context;
+        var clip = this.gltf.animComponent.getCurrentClip();
+        var canvasWidth = ctx.canvas.width;
+        var multiplier = canvasWidth / clip.duration; // multiply with this for animKey.time to canvas "left"
         var left = 0;
         var top = 0;
-        //this.anim_timeline_context.font = "14px 'Lucida Console'";
-
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.lineWidth = 1;
-        // e.g. width==1000, 4 animCurves
-        // 4 animcurves need 3 separators [ 1 | 2 | 3 | 4]
-        // first separator will be at 1000/4==250
-        for (var animCurve of clip.animCurves) {
+        for (var animcurve_id = 0; animcurve_id < clip.animCurves.length; animcurve_id++) {
+            var animCurve = clip.animCurves[animcurve_id];
             var linecolor = "rgba(0,0,0, 0.4)";
             if (animCurve == this.hoveredCurve) {
-                linecolor = "blue";
+                linecolor = "rgba(0,0,255, 0.8)";
             }
             const steptime = clip.duration / animCurve.animKeys.length;
             const eg250 = canvasWidth / animCurve.animKeys.length;
-            for (var i=0; i<animCurve.animKeys.length; i++) {
-                var animKey = animCurve.animKeys[i];
-                const left = i * eg250;
+            for (var animkey_id=0; animkey_id<animCurve.animKeys.length; animkey_id++) {
+                var animKey = animCurve.animKeys[animkey_id];
+                const left = animkey_id * eg250;
                 if (left != 0) { // dont draw a marker line on left==0px
                     //const left = (animKey.time - steptime) * multiplier;
                     //ctx.fillText("|", left, top);
@@ -380,7 +407,7 @@ Viewer.prototype.renderTimeline = function() {
                 }
                 if (animKey == this.hoveredAnimKey) {
                     ctx.beginPath();
-                    ctx.fillStyle = "rgba(0,0,255, 0.2)";
+                    ctx.fillStyle = "rgba(0,0,255, 0.1)";
                     ctx.fillRect( // left, top, width, height
                         left + 1     , top + 1,
                         eg250 - 2, this.timelineCurveHeight - 2
