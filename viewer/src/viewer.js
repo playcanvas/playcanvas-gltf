@@ -96,6 +96,11 @@ function Viewer() {
     this.setupAnimControls();
     this.timelineCurveHeight = 12;
     this.timelineDisable();
+    this.timelineColorLines        = "rgba(0,0,  0, 0.4)"; // grayish
+    this.timelineColorLinesHovered = "rgba(0,0,255, 0.8)"; // quite blue
+    this.timelineColorRectHovered  = "rgba(0,0,255, 0.1)"; // blueish transparent
+    this.timelineColorRectSelected = "rgba(0,255,0, 0.1)"; // greenish transparent
+    this.timelineColorLineSlider   = "white";
     
     // Press 'D' to delete the currently loaded model
     app.on('update', function () {
@@ -104,7 +109,7 @@ function Viewer() {
         }
         if (this.gltf && this.gltf.animComponent) {
             // mirror the playback time of the playing clip into the html range slider
-            const curTime = this.gltf.animComponent.getCurrentClip().session.curTime;
+            var curTime = this.gltf.animComponent.getCurrentClip().session.curTime;
             this.anim_slider.value = curTime;
         }
         this.renderTimeline();
@@ -266,9 +271,9 @@ Viewer.prototype = {
             // once we seek into the animation, stop the default playing
             this.pauseAnimationClips();
             // now set the seeked time for the last played clip
-            const clip = this.gltf.animComponent.getCurrentClip()
-            const session = clip.session;
-            const self = session;
+            var clip = this.gltf.animComponent.getCurrentClip()
+            var session = clip.session;
+            var self = session;
             session.curTime = curTime;
             self.showAt(self.curTime, self.fadeDir, self.fadeBegTime, self.fadeEndTime, self.fadeTime);
             self.invokeByTime(self.curTime);
@@ -279,7 +284,7 @@ Viewer.prototype = {
     
     switchToClipByName: function(clipName) {
         if (this.gltf && this.gltf.animComponent) {
-            const clip = this.gltf.animComponent.animClipsMap[clipName];
+            var clip = this.gltf.animComponent.animClipsMap[clipName];
             this.anim_info.innerHTML = clip.duration + "s " + clipName;
             this.gltf.animComponent.curClip = clipName;
             this.pauseAnimationClips();
@@ -356,7 +361,7 @@ Viewer.prototype = {
         var needPixels = 0;
         if (this.timelineEnabled && this.gltf && this.gltf.animComponent) {
             needPixels = this.clip.animCurves.length * this.timelineCurveHeight;
-            console.log("needPixels", needPixels);
+            //console.log("needPixels", needPixels);
             var thirdOfScreen = window.innerHeight / 3; // use max 1/3 of all height
             if (needPixels > thirdOfScreen) {
                 // if all animation curves dont fit into third of screen, just ignore the rest
@@ -374,14 +379,17 @@ Viewer.prototype = {
     timelineEnable: function() {
         this.anim_timeline.style.display = "";
         this.timelineEnabled = true;
-        this.anim_timeline_toggle.value = "Timeline: On";
+        this.anim_timeline_toggle.value = "Disable Timeline";
         this.timelineResize();
+        if ( (this.gltf && this.gltf.animComponent) === undefined) {
+            this.anim_info.innerHTML = "please load a gltf/glb with animation data to see the timeline \uD83C\uDF4B";
+        }
     },
     
     timelineDisable: function() {
         this.anim_timeline.style.display = "none";
         this.timelineEnabled = false;
-        this.anim_timeline_toggle.value = "Timeline: Off";
+        this.anim_timeline_toggle.value = "Enable Timeline";
         this.timelineResize();
     },
     
@@ -448,9 +456,9 @@ Viewer.prototype.renderTimeline = function() {
         ctx.lineWidth = 1;
         for (var animcurve_id = 0; animcurve_id < clip.animCurves.length; animcurve_id++) {
             var animCurve = clip.animCurves[animcurve_id];
-            var linecolor = "rgba(0,0,0, 0.4)";
+            var linecolor = this.timelineColorLines;
             if (animCurve == this.hoveredCurve) {
-                linecolor = "rgba(0,0,255, 0.8)";
+                linecolor = this.timelineColorLinesHovered;
             }
             var steptime = clip.duration / animCurve.animKeys.length;
             var eg250 = canvasWidth / animCurve.animKeys.length;
@@ -466,7 +474,7 @@ Viewer.prototype.renderTimeline = function() {
                 }
                 if (animKey == this.hoveredAnimKey) {
                     ctx.beginPath();
-                    ctx.fillStyle = "rgba(0,0,255, 0.1)"; // blueish
+                    ctx.fillStyle = this.timelineColorRectHovered;
                     ctx.fillRect( // left, top, width, height
                         left + 1, top + 1,
                         eg250 - 2, this.timelineCurveHeight - 2
@@ -475,7 +483,7 @@ Viewer.prototype.renderTimeline = function() {
                 }
                 if (animKey == this.selectedAnimKey) {
                     ctx.beginPath();
-                    ctx.fillStyle = "rgba(0,255,0, 0.1)"; // greenish
+                    ctx.fillStyle = this.timelineColorRectSelected;
                     ctx.fillRect( // left, top, width, height
                         left + 1, top + 1,
                         eg250 - 2, this.timelineCurveHeight - 2
@@ -487,7 +495,7 @@ Viewer.prototype.renderTimeline = function() {
         }
         // draw the time slider position
         var slider_left = clip.session.curTime * multiplier;
-        ctx.strokeStyle = "white";
+        ctx.strokeStyle = this.timelineColorLineSlider;
         ctx.beginPath();
         ctx.moveTo(slider_left, 0);
         ctx.lineTo(slider_left, ctx.canvas.height);
@@ -517,7 +525,7 @@ function loadScript(src) {
 }
 
 select_add_option = function(select, option_text) {
-    const option = document.createElement("option");
+    var option = document.createElement("option");
     option.text = option_text;
     select.add(option);
     return option;
