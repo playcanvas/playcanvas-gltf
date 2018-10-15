@@ -297,13 +297,13 @@ Viewer.prototype = {
         
         this.anim_select = document.getElementById("anim_select");
         this.anim_select.onchange = function(e) {
-            const clipName = this.anim_select.value;
+            var clipName = this.anim_select.value;
             this.switchToClipByName(clipName);
         }.bind(this);
         
         this.anim_slider = document.getElementById("anim_slider");
         this.anim_slider.oninput = function(e) {
-            const curTime = this.anim_slider.value;
+            var curTime = this.anim_slider.value;
             this.pauseAnimationsAndSeekToTime(curTime);
         }.bind(this);
         
@@ -324,19 +324,22 @@ Viewer.prototype = {
         this.anim_timeline_context = this.anim_timeline.getContext("2d");
         this.anim_timeline.onmousemove = function(e) {
             var pos_left = e.pageX - e.currentTarget.offsetLeft;
-            var pos_top = e.pageY - e.currentTarget.offsetTop;
-            if (this.clip === undefined) {
-                return;
+            var pos_top  = e.pageY - e.currentTarget.offsetTop;
+            this.timelineMouseMove(pos_left, pos_top);
+        }.bind(this);
+        this.anim_timeline.onmousedown = function(e) {
+            var pos_left = e.pageX - e.currentTarget.offsetLeft;
+            var pos_top  = e.pageY - e.currentTarget.offsetTop;
+            if (e.button == 0) {
+                this.timelineMouseClickLeft(pos_left, pos_top);
             }
-            var curve_id = Math.floor(pos_top / this.timelineCurveHeight);
-            var curve = this.clip.animCurves[curve_id];
-            if (curve !== undefined) {
-                var eg250 = window.innerWidth / curve.animKeys.length; // 1000px / 4 animkeys
-                var animkey_id = Math.floor(pos_left / eg250);
-                var animKey = curve.animKeys[animkey_id];
-                this.hoveredCurve = curve;
-                this.hoveredAnimKey = animKey;
+            if (e.button == 1) {
+                this.timelineMouseClickMiddle(pos_left, pos_top);
             }
+            if (e.button == 2) {
+                this.timelineMouseClickRight(pos_left, pos_top);
+            }
+            e.preventDefault();
         }.bind(this);
         this.anim_timeline.onmouseleave = function(e) {
             this.hoveredCurve = undefined;
@@ -348,8 +351,6 @@ Viewer.prototype = {
             this.anim_timeline.width = window.innerWidth;
             this.anim_timeline.style.top = (window.innerHeight - 200) + "px";
         }.bind(this);
-        
-        
     },
     
     timelineEnable: function() {
@@ -369,6 +370,34 @@ Viewer.prototype = {
             this.timelineDisable();
         else
             this.timelineEnable();
+    },
+    
+    timelineMouseMove: function(left, top) {
+        if (this.clip === undefined) {
+            return;
+        }
+        var curve_id = Math.floor(top / this.timelineCurveHeight);
+        var curve = this.clip.animCurves[curve_id];
+        if (curve !== undefined) {
+            var eg250 = window.innerWidth / curve.animKeys.length; // 1000px / 4 animkeys
+            var animkey_id = Math.floor(left / eg250);
+            var animKey = curve.animKeys[animkey_id];
+            this.hoveredCurve = curve;
+            this.hoveredAnimKey = animKey;
+        }
+    },
+    
+    timelineMouseClickLeft: function(left, top) {
+        this.selectedCurve     = this.hoveredCurve;
+        this.selectedAnimKey   = this.hoveredAnimKey;
+    },
+    
+    timelineMouseClickMiddle: function(left, top) {
+        this.anim_info.innerHTML = "scrolling not implemented yet \uD83D\uDE09";
+    },
+    
+    timelineMouseClickRight: function(left, top) {
+        this.anim_info.innerHTML = "what happens on rightclick? \uD83E\uDD14";
     }
 };
 
@@ -391,14 +420,12 @@ Viewer.prototype.renderTimeline = function() {
             if (animCurve == this.hoveredCurve) {
                 linecolor = "rgba(0,0,255, 0.8)";
             }
-            const steptime = clip.duration / animCurve.animKeys.length;
-            const eg250 = canvasWidth / animCurve.animKeys.length;
+            var steptime = clip.duration / animCurve.animKeys.length;
+            var eg250 = canvasWidth / animCurve.animKeys.length;
             for (var animkey_id=0; animkey_id<animCurve.animKeys.length; animkey_id++) {
                 var animKey = animCurve.animKeys[animkey_id];
-                const left = animkey_id * eg250;
+                var left = animkey_id * eg250;
                 if (left != 0) { // dont draw a marker line on left==0px
-                    //const left = (animKey.time - steptime) * multiplier;
-                    //ctx.fillText("|", left, top);
                     ctx.beginPath();
                     ctx.strokeStyle = linecolor;
                     ctx.moveTo(left, top);
@@ -407,9 +434,18 @@ Viewer.prototype.renderTimeline = function() {
                 }
                 if (animKey == this.hoveredAnimKey) {
                     ctx.beginPath();
-                    ctx.fillStyle = "rgba(0,0,255, 0.1)";
+                    ctx.fillStyle = "rgba(0,0,255, 0.1)"; // blueish
                     ctx.fillRect( // left, top, width, height
-                        left + 1     , top + 1,
+                        left + 1, top + 1,
+                        eg250 - 2, this.timelineCurveHeight - 2
+                    );
+                    ctx.stroke();
+                }
+                if (animKey == this.selectedAnimKey) {
+                    ctx.beginPath();
+                    ctx.fillStyle = "rgba(0,255,0, 0.1)"; // greenish
+                    ctx.fillRect( // left, top, width, height
+                        left + 1, top + 1,
                         eg250 - 2, this.timelineCurveHeight - 2
                     );
                     ctx.stroke();
