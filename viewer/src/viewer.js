@@ -203,7 +203,6 @@ Viewer.prototype = {
                 animationClips[i].transferToRoot(this.gltf);
                 this.gltf.animComponent.addClip(animationClips[i]);
             }
-            //this.gltf.animComponent.playClip(animationClips[0].name);
             this.gltf.animComponent.curClip = animationClips[0].name;
             this.pauseAnimationClips();
             this.playCurrentAnimationClip();
@@ -271,7 +270,7 @@ Viewer.prototype = {
             // once we seek into the animation, stop the default playing
             this.pauseAnimationClips();
             // now set the seeked time for the last played clip
-            var clip = this.gltf.animComponent.getCurrentClip()
+            var clip = this.gltf.animComponent.getCurrentClip();
             var session = clip.session;
             var self = session;
             session.curTime = curTime;
