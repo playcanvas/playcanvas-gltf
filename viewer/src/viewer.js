@@ -188,7 +188,7 @@ Viewer.prototype = {
                 animationClips[i].transferToRoot(this.gltf);
                 this.gltf.animComponent.addClip(animationClips[i]);
             }
-            this.gltf.animComponent.playClip(animationClips[0].name);
+            this.gltf.animComponent.playClip(animationClips[3].name);//10/15 wangyi test
         }
 
         // Focus the camera on the newly loaded scene

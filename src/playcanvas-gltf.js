@@ -127,7 +127,7 @@
                     keyType = AnimationKeyableType.NUM;
                     curve.keyableType = keyType;
                     curve.addTarget("model", path, i);
-                    if (sampler.interpolation === "CUBIC")
+                    if (sampler.interpolation === "CUBIC" || sampler.interpolation === "CUBICSPLINE") // 10/15
                         curve.type = AnimationCurveType.CUBIC;
                     else if (sampler.interpolation === "STEP")
                         curve.type = AnimationCurveType.STEP;
@@ -160,7 +160,7 @@
                 curve = new AnimationCurve();
                 curve.keyableType = keyType;
                 curve.setTarget(entity, targetPath);
-                if(sampler.interpolation === "CUBIC")
+                if(sampler.interpolation === "CUBIC" || sampler.interpolation === "CUBICSPLINE") // 10/15
                     curve.type = AnimationCurveType.CUBIC;
                 else if(sampler.interpolation === "STEP")
                     curve.type = AnimationCurveType.STEP;
