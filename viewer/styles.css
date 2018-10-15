@@ -1,15 +1,21 @@
 body {
-	background-color: #AAAAAA;
-	margin: 0;
-	overflow: hidden;
+    background-color: #AAAAAA;
+    margin: 0;
+    overflow: hidden;
 }
 
 .dropzone {
-	font-family: Arial, Helvetica, sans-serif;
-	text-align: center;
-	font-size: large;
+    font-family: Arial, Helvetica, sans-serif;
+    text-align: center;
+    font-size: large;
 }
 
 #anim {
-	position: absolute;
+    position: absolute;
+}
+
+#anim_timeline {
+    position: absolute;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    left: 0px;
 }
