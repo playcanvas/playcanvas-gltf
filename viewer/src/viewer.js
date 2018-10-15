@@ -249,6 +249,7 @@ Viewer.prototype = {
             this.playing = true;
             this.anim_pause.value = "||";
             this.clip = clip; // quick access for f12 devtools
+            this.timelineResize();
         }
     },
     
@@ -345,24 +346,43 @@ Viewer.prototype = {
             this.hoveredCurve = undefined;
             this.hoveredAnimKey = undefined;
         }.bind(this);
-        this.anim_timeline.width = window.innerWidth;
-        this.anim_timeline.style.top = (window.innerHeight - 200) + "px";
+        
         window.onresize = function () {
-            this.anim_timeline.width = window.innerWidth;
-            this.anim_timeline.style.top = (window.innerHeight - 200) + "px";
+            this.timelineResize();
         }.bind(this);
+    },
+    
+    timelineResize: function() {
+        var needPixels = 0;
+        if (this.timelineEnabled && this.gltf && this.gltf.animComponent) {
+            needPixels = this.clip.animCurves.length * this.timelineCurveHeight;
+            console.log("needPixels", needPixels);
+            var thirdOfScreen = window.innerHeight / 3; // use max 1/3 of all height
+            if (needPixels > thirdOfScreen) {
+                // if all animation curves dont fit into third of screen, just ignore the rest
+                // either implement scrolling or decrease this.timelineCurveHeight automatically
+                needPixels = thirdOfScreen;
+            } else {
+                // smallest timeline height possible, keep this
+            }
+        }
+        this.anim_timeline.width = window.innerWidth;
+        this.anim_timeline.height = needPixels;
+        this.anim_timeline.style.top = (window.innerHeight - needPixels) + "px";
     },
     
     timelineEnable: function() {
         this.anim_timeline.style.display = "";
         this.timelineEnabled = true;
         this.anim_timeline_toggle.value = "Timeline: On";
+        this.timelineResize();
     },
     
     timelineDisable: function() {
         this.anim_timeline.style.display = "none";
         this.timelineEnabled = false;
         this.anim_timeline_toggle.value = "Timeline: Off";
+        this.timelineResize();
     },
     
     timelineToggle: function() {
