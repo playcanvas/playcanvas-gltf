@@ -376,12 +376,12 @@ Viewer.prototype = {
         if (this.clip === undefined) {
             return;
         }
-        var curve_id = Math.floor(top / this.timelineCurveHeight);
-        var curve = this.clip.animCurves[curve_id];
+        this.curve_id = Math.floor(top / this.timelineCurveHeight);
+        var curve = this.clip.animCurves[this.curve_id];
         if (curve !== undefined) {
             var eg250 = window.innerWidth / curve.animKeys.length; // 1000px / 4 animkeys
-            var animkey_id = Math.floor(left / eg250);
-            var animKey = curve.animKeys[animkey_id];
+            this.animkey_id = Math.floor(left / eg250);
+            var animKey = curve.animKeys[this.animkey_id];
             this.hoveredCurve = curve;
             this.hoveredAnimKey = animKey;
         }
@@ -390,6 +390,18 @@ Viewer.prototype = {
     timelineMouseClickLeft: function(left, top) {
         this.selectedCurve     = this.hoveredCurve;
         this.selectedAnimKey   = this.hoveredAnimKey;
+        if (this.gltf && this.gltf.animComponent) {
+            var msg = "open f12/devtools and check <code>viewer.selectedAnimKey</code> or ";
+            msg += "<code>";
+            if (this.curve_id !== undefined)
+                msg += "viewer.clip.animCurves[" + this.curve_id + "]";
+            if (this.animkey_id !== undefined)
+                msg += ".animKeys[" + this.animkey_id + "]";
+            msg += "</code> \uD83D\uDD75";
+            this.anim_info.innerHTML = msg;
+        } else {
+            this.anim_info.innerHTML = "please load a gltf/glb with animation data to use the timeline \uD83C\uDF4B";
+        }
     },
     
     timelineMouseClickMiddle: function(left, top) {
