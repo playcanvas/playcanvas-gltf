@@ -92,12 +92,27 @@ function Viewer() {
 
     this.app = app;
     this.camera = camera;
-
+    this.playing = true; // for play/pause button
+    this.setupAnimControls();
+    this.timelineCurveHeight = 12;
+    this.timelineDisable();
+    this.timelineColorLines        = "rgba(0,0,  0, 0.4)"; // grayish
+    this.timelineColorLinesHovered = "rgba(0,0,255, 0.8)"; // quite blue
+    this.timelineColorRectHovered  = "rgba(0,0,255, 0.1)"; // blueish transparent
+    this.timelineColorRectSelected = "rgba(0,255,0, 0.1)"; // greenish transparent
+    this.timelineColorLineSlider   = "white";
+    
     // Press 'D' to delete the currently loaded model
     app.on('update', function () {
         if (this.app.keyboard.wasPressed(pc.KEY_D)) {
             this.destroyScene();
         }
+        if (this.gltf && this.gltf.animComponent) {
+            // mirror the playback time of the playing clip into the html range slider
+            var curTime = this.gltf.animComponent.getCurrentClip().session.curTime;
+            this.anim_slider.value = curTime;
+        }
+        this.renderTimeline();
     }, this);
 }
 
@@ -188,7 +203,15 @@ Viewer.prototype = {
                 animationClips[i].transferToRoot(this.gltf);
                 this.gltf.animComponent.addClip(animationClips[i]);
             }
-            this.gltf.animComponent.playClip(animationClips[0].name);
+            this.gltf.animComponent.curClip = animationClips[0].name;
+            this.pauseAnimationClips();
+            this.playCurrentAnimationClip();
+            
+            select_remove_options(this.anim_select);
+            for (i = 0; i < animationClips.length; i++) {
+                select_add_option(this.anim_select, animationClips[i].name);
+            }
+            this.anim_info.innerHTML = animationClips.length + " animation clips loaded";
         }
 
         // Focus the camera on the newly loaded scene
@@ -211,8 +234,273 @@ Viewer.prototype = {
             basePath: basePath,
             processUri: processUri
         });
+    },
+    
+    pauseAnimationClips: function() {
+        if (this.gltf && this.gltf.animComponent) {
+            this.gltf.animComponent.pauseAll();
+            this.playing = false;
+            this.anim_pause.value = ">";
+        }
+    },
+    
+    playCurrentAnimationClip: function() {
+        if (this.gltf && this.gltf.animComponent) {
+            //this.gltf.animComponent.getCurrentClip().resume(); // resume doesn't work yet
+            var clip = this.gltf.animComponent.getCurrentClip();
+            clip.play(); // just play it again, until resume() works
+            this.anim_slider.max = clip.duration;
+            this.playing = true;
+            this.anim_pause.value = "||";
+            this.clip = clip; // quick access for f12 devtools
+            this.timelineResize();
+        }
+    },
+    
+    togglePlayPauseAnimation: function() {
+        if (this.playing) {
+            this.pauseAnimationClips();
+        } else {
+            this.playCurrentAnimationClip();
+        }
+    },
+    
+    pauseAnimationsAndSeekToTime: function(curTime) {
+        if (this.gltf && this.gltf.animComponent) {
+            // once we seek into the animation, stop the default playing
+            this.pauseAnimationClips();
+            // now set the seeked time for the last played clip
+            var clip = this.gltf.animComponent.getCurrentClip();
+            var session = clip.session;
+            var self = session;
+            session.curTime = curTime;
+            self.showAt(self.curTime, self.fadeDir, self.fadeBegTime, self.fadeEndTime, self.fadeTime);
+            self.invokeByTime(self.curTime);
+        } else {
+            this.anim_info.innerHTML = "please load a gltf with animation clips";
+        }
+    },
+    
+    switchToClipByName: function(clipName) {
+        if (this.gltf && this.gltf.animComponent) {
+            var clip = this.gltf.animComponent.animClipsMap[clipName];
+            this.anim_info.innerHTML = clip.duration + "s " + clipName;
+            this.gltf.animComponent.curClip = clipName;
+            this.pauseAnimationClips();
+            this.playCurrentAnimationClip();
+        } else {
+            this.anim_info.innerHTML = "please load a gltf with animation clips";
+        }
+    },
+    
+    setupAnimControls: function() {
+        this.anim = document.getElementById("anim");
+        this.anim.onmousedown = function(e) {
+            // make sure that mouse actions on the <div id="anim"> don't manipulate the orbit camera
+            e.preventOrbit = true;
+        }.bind(this);
+        
+        this.anim_select = document.getElementById("anim_select");
+        this.anim_select.onchange = function(e) {
+            var clipName = this.anim_select.value;
+            this.switchToClipByName(clipName);
+        }.bind(this);
+        
+        this.anim_slider = document.getElementById("anim_slider");
+        this.anim_slider.oninput = function(e) {
+            var curTime = this.anim_slider.value;
+            this.pauseAnimationsAndSeekToTime(curTime);
+        }.bind(this);
+        
+        this.anim_pause = document.getElementById("anim_pause");
+        this.anim_pause.onclick = function(e) {
+            this.togglePlayPauseAnimation();
+        }.bind(this);
+        
+        this.anim_info = document.getElementById("anim_info");
+        
+        
+        this.anim_timeline_toggle = document.getElementById("anim_timeline_toggle");
+        this.anim_timeline_toggle.onclick = function(e) {
+            this.timelineToggle();
+        }.bind(this);
+        
+        this.anim_timeline = document.getElementById("anim_timeline");
+        this.anim_timeline_context = this.anim_timeline.getContext("2d");
+        this.anim_timeline.onmousemove = function(e) {
+            var pos_left = e.pageX - e.currentTarget.offsetLeft;
+            var pos_top  = e.pageY - e.currentTarget.offsetTop;
+            this.timelineMouseMove(pos_left, pos_top);
+        }.bind(this);
+        this.anim_timeline.onmousedown = function(e) {
+            var pos_left = e.pageX - e.currentTarget.offsetLeft;
+            var pos_top  = e.pageY - e.currentTarget.offsetTop;
+            if (e.button == 0) {
+                this.timelineMouseClickLeft(pos_left, pos_top);
+            }
+            if (e.button == 1) {
+                this.timelineMouseClickMiddle(pos_left, pos_top);
+            }
+            if (e.button == 2) {
+                this.timelineMouseClickRight(pos_left, pos_top);
+            }
+            e.preventDefault();
+        }.bind(this);
+        this.anim_timeline.onmouseleave = function(e) {
+            this.hoveredCurve = undefined;
+            this.hoveredAnimKey = undefined;
+        }.bind(this);
+        
+        window.onresize = function () {
+            this.timelineResize();
+        }.bind(this);
+    },
+    
+    timelineResize: function() {
+        var needPixels = 0;
+        if (this.timelineEnabled && this.gltf && this.gltf.animComponent) {
+            needPixels = this.clip.animCurves.length * this.timelineCurveHeight;
+            //console.log("needPixels", needPixels);
+            var thirdOfScreen = window.innerHeight / 3; // use max 1/3 of all height
+            if (needPixels > thirdOfScreen) {
+                // if all animation curves dont fit into third of screen, just ignore the rest
+                // either implement scrolling or decrease this.timelineCurveHeight automatically
+                needPixels = thirdOfScreen;
+            } else {
+                // smallest timeline height possible, keep this
+            }
+        }
+        this.anim_timeline.width = window.innerWidth;
+        this.anim_timeline.height = needPixels;
+        this.anim_timeline.style.top = (window.innerHeight - needPixels) + "px";
+    },
+    
+    timelineEnable: function() {
+        this.anim_timeline.style.display = "";
+        this.timelineEnabled = true;
+        this.anim_timeline_toggle.value = "Disable Timeline";
+        this.timelineResize();
+        if ( (this.gltf && this.gltf.animComponent) === undefined) {
+            this.anim_info.innerHTML = "please load a gltf/glb with animation data to see the timeline \uD83C\uDF4B";
+        }
+    },
+    
+    timelineDisable: function() {
+        this.anim_timeline.style.display = "none";
+        this.timelineEnabled = false;
+        this.anim_timeline_toggle.value = "Enable Timeline";
+        this.timelineResize();
+    },
+    
+    timelineToggle: function() {
+        if (this.timelineEnabled)
+            this.timelineDisable();
+        else
+            this.timelineEnable();
+    },
+    
+    timelineMouseMove: function(left, top) {
+        if (this.clip === undefined) {
+            return;
+        }
+        this.curve_id = Math.floor(top / this.timelineCurveHeight);
+        var curve = this.clip.animCurves[this.curve_id];
+        if (curve !== undefined) {
+            var eg250 = window.innerWidth / curve.animKeys.length; // 1000px / 4 animkeys
+            this.animkey_id = Math.floor(left / eg250);
+            var animKey = curve.animKeys[this.animkey_id];
+            this.hoveredCurve = curve;
+            this.hoveredAnimKey = animKey;
+        }
+    },
+    
+    timelineMouseClickLeft: function(left, top) {
+        this.selectedCurve     = this.hoveredCurve;
+        this.selectedAnimKey   = this.hoveredAnimKey;
+        if (this.gltf && this.gltf.animComponent) {
+            var msg = "open f12/devtools and check <code>viewer.selectedAnimKey</code> or ";
+            msg += "<code>";
+            if (this.curve_id !== undefined)
+                msg += "viewer.clip.animCurves[" + this.curve_id + "]";
+            if (this.animkey_id !== undefined)
+                msg += ".animKeys[" + this.animkey_id + "]";
+            msg += "</code> \uD83D\uDD75";
+            this.anim_info.innerHTML = msg;
+        } else {
+            this.anim_info.innerHTML = "please load a gltf/glb with animation data to use the timeline \uD83C\uDF4B";
+        }
+    },
+    
+    timelineMouseClickMiddle: function(left, top) {
+        this.anim_info.innerHTML = "scrolling not implemented yet \uD83D\uDE09";
+    },
+    
+    timelineMouseClickRight: function(left, top) {
+        this.anim_info.innerHTML = "what happens on rightclick? \uD83E\uDD14";
     }
 };
+
+Viewer.prototype.renderTimeline = function() {
+    if (this.timelineEnabled === false) {
+        return;
+    }
+    if (this.gltf && this.gltf.animComponent) {
+        var ctx = this.anim_timeline_context;
+        var clip = this.gltf.animComponent.getCurrentClip();
+        var canvasWidth = ctx.canvas.width;
+        var multiplier = canvasWidth / clip.duration; // multiply with this for animKey.time to canvas "left"
+        var left = 0;
+        var top = 0;
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.lineWidth = 1;
+        for (var animcurve_id = 0; animcurve_id < clip.animCurves.length; animcurve_id++) {
+            var animCurve = clip.animCurves[animcurve_id];
+            var linecolor = this.timelineColorLines;
+            if (animCurve == this.hoveredCurve) {
+                linecolor = this.timelineColorLinesHovered;
+            }
+            var steptime = clip.duration / animCurve.animKeys.length;
+            var eg250 = canvasWidth / animCurve.animKeys.length;
+            for (var animkey_id=0; animkey_id<animCurve.animKeys.length; animkey_id++) {
+                var animKey = animCurve.animKeys[animkey_id];
+                var left = animkey_id * eg250;
+                if (left != 0) { // dont draw a marker line on left==0px
+                    ctx.beginPath();
+                    ctx.strokeStyle = linecolor;
+                    ctx.moveTo(left, top);
+                    ctx.lineTo(left, top + this.timelineCurveHeight);
+                    ctx.stroke();
+                }
+                if (animKey == this.hoveredAnimKey) {
+                    ctx.beginPath();
+                    ctx.fillStyle = this.timelineColorRectHovered;
+                    ctx.fillRect( // left, top, width, height
+                        left + 1, top + 1,
+                        eg250 - 2, this.timelineCurveHeight - 2
+                    );
+                    ctx.stroke();
+                }
+                if (animKey == this.selectedAnimKey) {
+                    ctx.beginPath();
+                    ctx.fillStyle = this.timelineColorRectSelected;
+                    ctx.fillRect( // left, top, width, height
+                        left + 1, top + 1,
+                        eg250 - 2, this.timelineCurveHeight - 2
+                    );
+                    ctx.stroke();
+                }
+            }
+            top += this.timelineCurveHeight;
+        }
+        // draw the time slider position
+        var slider_left = clip.session.curTime * multiplier;
+        ctx.strokeStyle = this.timelineColorLineSlider;
+        ctx.beginPath();
+        ctx.moveTo(slider_left, 0);
+        ctx.lineTo(slider_left, ctx.canvas.height);
+        ctx.stroke();
+    }
+}
 
 function getParameterByName(name, url) {
     if (!url) url = window.location.href;
@@ -235,6 +523,18 @@ function loadScript(src) {
     });
 }
 
+select_add_option = function(select, option_text) {
+    var option = document.createElement("option");
+    option.text = option_text;
+    select.add(option);
+    return option;
+}
+
+select_remove_options = function(select) {
+    for (var i=select.options.length-1; i>=0; i--)
+        select.remove(i);
+}
+
 function main() {
     if (true) {//typeof WebAssembly !== 'object') {
         loadScript('../draco/draco_decoder.js').then(function () {
@@ -250,7 +550,7 @@ function main() {
         });
     }
 
-    var viewer = new Viewer();
+    viewer = new Viewer();
 
     var assetUrl = getParameterByName('assetUrl');
     if (assetUrl) {
