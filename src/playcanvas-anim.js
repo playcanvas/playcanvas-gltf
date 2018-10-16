@@ -342,7 +342,7 @@ AnimationTarget.getLocalScale = function (node) {
 // *        type: how to interpolate between keys.
 // *
 // *===============================================================================================================
-var AnimationCurveType = { LINEAR: 0, STEP: 1, CUBIC: 2 };
+var AnimationCurveType = { LINEAR: 0, STEP: 1, CUBIC: 2, CUBICSPLINE_GLTF: 3};
 
 var AnimationCurve = function AnimationCurve() {
     AnimationCurve.count ++;
@@ -526,6 +526,33 @@ AnimationCurve.prototype.insertKey = function (type, time, value) {
     this.animKeys.splice(pos, 0, keyable);
 };
 
+//10/15
+AnimationCurve.prototype.insertKeyable = function (keyable) {
+    if (!keyable || this.keyableType != keyable.type)
+        return;
+
+    var time = keyable.time;
+    var pos = 0;
+    while (pos < this.animKeys.length && this.animKeys[pos].time < time)
+        pos ++;
+
+    // replace if existed at time
+    if (pos < this.animKeys.length && this.animKeys[pos].time == time) {
+        this.animKeys[pos] = keyable;
+        return;
+    }
+
+    // append at the back
+    if (pos >= this.animKeys.length) {
+        this.animKeys.push(keyable);
+        this.duration = time;
+        return;
+    }
+
+    // insert at pos
+    this.animKeys.splice(pos, 0, keyable);
+};
+
 AnimationCurve.prototype.removeKey = function (index) {
     if (index <= this.animKeys.length) {
         if (index == this.animKeys.length - 1)
@@ -664,6 +691,60 @@ AnimationCurve.prototype.evalCUBIC = function (time) {
     return null;// quaternion or combo
 };
 
+//10/16
+AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time) {
+    if (!this.animKeys || this.animKeys.length === 0)
+        return null;
+
+    // 1. find the interval [key1, key2]
+    var resKey = new AnimationKeyable();
+    var key1, key2;
+    for (var i = 0; i < this.animKeys.length; i ++) {
+        if (this.animKeys[i].time === time) {
+            resKey.copy(this.animKeys[i]);
+            return resKey;
+        }
+
+        if (this.animKeys[i].time > time) {
+            key2 = this.animKeys[i];
+            break;
+        }
+        key1 = this.animKeys[i];
+    }
+
+    // 2. only found one boundary
+    if (!key1 || !key2) {
+        resKey.copy(key1 ? key1 : key2);
+        resKey.time = time;
+        return resKey;
+    }
+
+    // 3. both found then interpolate
+    var p = (time - key1.time) / (key2.time - key1.time);
+    var g = key2.time - key1.time;
+    if (this.keyableType === AnimationKeyableType.NUM) {
+        resKey.value = AnimationCurve.cubicHermite(g*key1.outTangent, key1.value, g*key2.inTangent, key2.value, p);
+    }
+    else if (this.keyableType === AnimationKeyableType.VEC) {
+        resKey.value = new pc.Vec3();
+        resKey.value.x = AnimationCurve.cubicHermite(g*key1.outTangent.x, key1.value.x, g*key2.inTangent.x, key2.value.x, p);
+        resKey.value.y = AnimationCurve.cubicHermite(g*key1.outTangent.y, key1.value.y, g*key2.inTangent.y, key2.value.y, p);
+        resKey.value.z = AnimationCurve.cubicHermite(g*key1.outTangent.z, key1.value.z, g*key2.inTangent.z, key2.value.z, p);
+    }
+    else if (this.keyableType === AnimationKeyableType.QUAT) {
+        resKey.value = new pc.Quat();
+        resKey.value.w = AnimationCurve.cubicHermite(g*key1.outTangent.w, key1.value.w, g*key2.inTangent.w, key2.value.w, p);
+        resKey.value.x = AnimationCurve.cubicHermite(g*key1.outTangent.x, key1.value.x, g*key2.inTangent.x, key2.value.x, p);
+        resKey.value.y = AnimationCurve.cubicHermite(g*key1.outTangent.y, key1.value.y, g*key2.inTangent.y, key2.value.y, p);
+        resKey.value.z = AnimationCurve.cubicHermite(g*key1.outTangent.z, key1.value.z, g*key2.inTangent.z, key2.value.z, p);
+        resKey.normalize();
+    }
+
+    resKey.time = time;
+    return resKey;
+
+};
+
 AnimationCurve.prototype.eval = function (time) {
     if (!this.animKeys || this.animKeys.length === 0)
         return null;
@@ -675,6 +756,8 @@ AnimationCurve.prototype.eval = function (time) {
             if (this.keyableType == AnimationKeyableType.QUAT)
                 return this.evalLINEAR(time);
             return this.evalCUBIC(time);
+        case AnimationCurveType.CUBICSPLINE_GLTF://10/15, keyable contains (inTangent, value, outTangent)
+            return this.evalCUBICSPLINE_GLTF(time);
     }
     return null;
 };
@@ -1427,7 +1510,6 @@ AnimationSession.prototype.blendToTarget = function (input, p) {
             cname = curveNames[i];
             if (!cname) continue;
 
-            // 10/10, if curve is step, let's not blend
             blendUpdateNone = 0;
             if (this.playable.animCurvesMap[cname] && this.playable.animCurvesMap[cname].type === AnimationCurveType.STEP && this.fadeDir) {
                 if ((this.fadeDir == -1 && p <= 0.5) || (this.fadeDir == 1 && p > 0.5)) blendUpdateNone = 1;

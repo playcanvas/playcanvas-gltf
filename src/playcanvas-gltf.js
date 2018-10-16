@@ -159,21 +159,49 @@
                 }
                 curve = new AnimationCurve();
                 curve.keyableType = keyType;
-                curve.setTarget(entity, targetPath);
-                if (sampler.interpolation === "CUBIC")
-                    curve.type = AnimationCurveType.CUBIC;
-                else if (sampler.interpolation === "STEP")
-                    curve.type = AnimationCurveType.STEP;
+                curve.setTarget(entity, targetPath); 
 
-                for (i = 0; i < times.length; i++) {
-                    time = times[i];
-                    if ((path === 'translation') || (path === 'scale'))
-                        value = new pc.Vec3(values[3 * i + 0], values[3 * i + 1], values[3 * i + 2]);
-                    else if (path === 'rotation')
-                        value = new pc.Quat(values[4 * i + 0], values[4 * i + 1], values[4 * i + 2], values[4 * i + 3]);
-                    curve.insertKey(keyType, time, value);
-                }
-                clip.addCurve(curve);
+                if (sampler.interpolation !== "CUBICSPLINE") { 
+                    if(sampler.interpolation === "CUBIC")
+                        curve.type = AnimationCurveType.CUBIC;
+                    else if (sampler.interpolation === "STEP")
+                        curve.type = AnimationCurveType.STEP; 
+                    for (i = 0; i < times.length; i++) {
+                        time = times[i];
+                        if ((path === 'translation') || (path === 'scale'))
+                            value = new pc.Vec3(values[3 * i + 0], values[3 * i + 1], values[3 * i + 2]);
+                        else if (path === 'rotation')
+                            value = new pc.Quat(values[4 * i + 0], values[4 * i + 1], values[4 * i + 2], values[4 * i + 3]);
+                        else 
+                            value = values[i];//AnimationKeyableType.NUM
+                        curve.insertKey(keyType, time, value);
+                    }
+                    clip.addCurve(curve);
+                } else { //10/15 one key contains (in-tangent, value, out-tangent)
+                    console.log(clip.name, curve.name, path, "CUBICSPLINE")
+                    curve.type = AnimationCurveType.CUBICSPLINE_GLTF;
+                    for (i = 0; i < times.length; i++) {
+                        time = times[i];
+                        var keyable = new AnimationKeyable(keyType, time, null);
+                        if ((path === 'translation') || (path === 'scale')) {
+                            keyable.inTangent = new pc.Vec3(values[9 * i + 0], values[9 * i + 1], values[9 * i + 2]);
+                            keyable.value = new pc.Vec3(values[9 * i + 3], values[9 * i + 4], values[9 * i + 5]);
+                            keyable.outTangent = new pc.Vec3(values[9 * i + 6], values[9 * i + 7], values[9 * i + 8]); 
+                        }
+                        else if (path === 'rotation') {
+                            keyable.inTangent = new pc.Quat(values[12 * i + 0], values[12 * i + 1], values[12 * i + 2], values[12 * i + 3]);
+                            keyable.value = new pc.Quat(values[12 * i + 4], values[12 * i + 5], values[12 * i + 6], values[12 * i + 7]);
+                            keyable.outTangent = new pc.Quat(values[12 * i + 8], values[12 * i + 9], values[12 * i + 10], values[12 * i + 11]);
+                        }
+                        else {
+                            keyable.inTangent = values[3*i];
+                            keyable.value = values[3*i+1];
+                            keyable.outTangent = value[3*i+2];
+                        }
+                        curve.insertKeyable(keyable);
+                    }
+                    clip.addCurve(curve); 
+                } 
             }
         });
 
