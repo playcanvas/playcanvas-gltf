@@ -131,7 +131,7 @@
                         curve.type = AnimationCurveType.CUBIC;
                     else if (sampler.interpolation === "STEP")
                         curve.type = AnimationCurveType.STEP;
- 
+
                     for (j = 0; j < times.length; j++) {
                         time = times[j];
                         value = values[numCurves * j + i];

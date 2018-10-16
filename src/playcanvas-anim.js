@@ -814,7 +814,7 @@ AnimationCurve.cubicCardinal = function (key0, key1, key2, key3, time, tension) 
             m2 = factor * (key2.value.data[i] - key1.value.data[i]) / (key2.time - key1.time);
             if (key3)
                 m2 = 2 * factor * (key3.value.data[i] - key1.value.data[i]) / (key3.time - key1.time);
-            resKey.value.data[i] = AnimationCurve.cubicHermite(m1, key1.value.data[i], m2, key2.value.data[i], p); 
+            resKey.value.data[i] = AnimationCurve.cubicHermite(m1, key1.value.data[i], m2, key2.value.data[i], p);
         }
     }
     return resKey;
@@ -1495,7 +1495,7 @@ AnimationSession.prototype.blendToTarget = function (input, p) {
             if ((this.fadeDir == -1 && p <= 0.5) || (this.fadeDir == 1 && p > 0.5)) blendUpdateNone = 1;
             else blendUpdateNone = 2;
         }
- 
+
         for (j = 0; j < ctargets.length; j ++) {
             if (blendUpdateNone === 0) ctargets[j].blendToTarget(input.value, p);
             else if (blendUpdateNone === 1) ctargets[j].updateToTarget(input.value);
@@ -1508,9 +1508,9 @@ AnimationSession.prototype.blendToTarget = function (input, p) {
         var curveNames = Object.keys(input.curveKeyable);
         for (i = 0; i < curveNames.length; i ++) {
             cname = curveNames[i];
-            if (!cname) continue; 
+            if (!cname) continue;
 
-            blendUpdateNone = 0; 
+            blendUpdateNone = 0;
             if (this.playable.animCurvesMap[cname] && this.playable.animCurvesMap[cname].type === AnimationCurveType.STEP && this.fadeDir) {
                 if ((this.fadeDir == -1 && p <= 0.5) || (this.fadeDir == 1 && p > 0.5)) blendUpdateNone = 1;
                 else blendUpdateNone = 2;
