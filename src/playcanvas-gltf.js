@@ -1116,7 +1116,8 @@
             var ibmData = getAccessorData(gltf, gltf.accessors[inverseBindMatrices], resources.buffers);
 
             for (i = 0; i < numJoints; i++) {
-                bindMatrix = new pc.Mat4(ibmData.slice(i * 16, i * 16 + 16));
+                bindMatrix = new pc.Mat4();
+                bindMatrix.set(ibmData.slice(i * 16, i * 16 + 16));
                 ibp.push(bindMatrix);
             }
         } else {
