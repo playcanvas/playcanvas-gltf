@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>PlayCanvas glTF Viewer</title>
+        <meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no' />
+        <link rel="icon" type="image/png" href="icons/favicon.png">
+        <link rel="stylesheet" href="styles.css">
+        <script src='https://code.playcanvas.com/playcanvas-stable.js'></script>
+		<script src="https://code.playcanvas.com/ammo.751ec5f.js"></script>
+        <script src='../src/playcanvas-anim.js'></script>
+        <script src='../src/playcanvas-gltf.js'></script>
+        <script src='src/viewer.js'></script>
+        <script src='src/editor.js'></script>
+        <script>
+            main_editor = function() {
+                main(); // viewer.js
+                app = viewer.app;
+                init_editor();
+            }
+        </script>
+    </head>
+    <body onload='main_editor()'>
+        <div id="anim">
+            <select id="anim_select"></select>
+            <input  id="anim_pause"  type="button" value="||">
+            <input  id="anim_slider" type="range" min="0" max="1" value="0" step="any">
+            <span   id="anim_info"></span>
+            <input  id="anim_timeline_toggle" type="button" value="Timeline: Off">
+			<canvas id="anim_timeline" width=1000 height=200></canvas>
+        </div>
+        <div id="dropzone" class="dropzone">
+            <!--
+            <p>
+                Drag .glb files or embedded .gltf files<br>
+                For non-embedded .gltf files, drag the containing folder
+            </p>
+            -->
+        </div>
+    </body>
+</html>
