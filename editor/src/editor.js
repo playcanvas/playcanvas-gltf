@@ -64,7 +64,17 @@ Editor = function () {
                 editor.rainEntity();
             }
         }
-    }.bind(this));   
+    }.bind(this));
+    
+    // setup overlay
+    this.overlay = document.getElementById("overlay");
+    // give scripts the ability to determine if the event should be ignored
+    this.overlay.onmousedown = function(e) {
+        e.isOverlayEvent = true;
+    }.bind(this);
+    this.overlay.onmousemouse = function(e) {
+        e.isOverlayEvent = true;
+    }.bind(this);
 }
 
 Editor.prototype.cleanup = function () {
@@ -291,14 +301,13 @@ Editor.prototype.spawnPlayer = function () {
     this.player = new pc.Entity();
     this.player.addComponent("model", {
         type: "cylinder",
-        castShadows: true,
-        axis: 1
+        castShadows: true
     });
     this.player.addComponent("rigidbody", {
         type: "dynamic",
         mass: 70,
         restitution: 0.5,
-        angularFactor: new pc.Vec3(0, 1, 0)
+        angularFactor: new pc.Vec3(0, 0, 0)
     });
     this.player.addComponent("collision", {
         type: "cylinder",
@@ -313,7 +322,8 @@ Editor.prototype.spawnPlayer = function () {
     app.assets.loadFromUrl('./src/first-person-movement.js', 'script', function (err, asset) {
         this.script.create("firstPersonMovement", {
             attributes: {
-                power: 2500
+                power: 2500,
+                lookSpeed: 0.25
             }
         });
     }.bind(this.player));    
