@@ -50,21 +50,28 @@ Editor = function () {
     // ***********    Update Function   *******************
 
     // initialize variables for our update function
-    var timer = 0;
-    var count = 40;
+    this._timer = 0;
+    this.count = 10;
 
     // Set an update function on the application's update event
     app.on("update", function (dt) {
         // create a falling box every 0.2 seconds
-        if (count > 0) {
-            timer -= dt;
-            if (timer <= 0) {
-                count--;
-                timer = 0.2;
+        if (this.count > 0) {
+            this._timer -= dt;
+            if (this._timer <= 0) {
+                this.count--;
+                this._timer = 0.2;
                 editor.rainEntity();
             }
         }
-    });   
+    }.bind(this));   
+}
+
+Editor.prototype.cleanup = function () {
+    editor.rainedEntities.forEach(function (entity) {
+        entity.destroy();
+    });
+    editor.rainedEntities = [];
 }
 
 Editor.prototype.createFloor = function () {
