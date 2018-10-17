@@ -30,22 +30,22 @@ collide_static = function (entity) {
 
 
 Editor = function () {
+    // create a few materials for our objects
+    this.white  = createMaterial(new pc.Color(1, 1, 1));
+    this.red    = createMaterial(new pc.Color(1, 0, 0));
+    this.green  = createMaterial(new pc.Color(0, 1, 0));
+    this.blue   = createMaterial(new pc.Color(0, 0, 1));
+    this.yellow = createMaterial(new pc.Color(1, 1, 0));
+
     this.rainedEntities = [];
+    this.createTemplates();
     this.initScripts();
     viewer.camera.script.create("pickerRaycast");
     // Set the gravity for our rigid bodies
     app.systems.rigidbody.setGravity(0, -9.8, 0);
 
-    // create a few materials for our objects
-    this.white = createMaterial(new pc.Color(1, 1, 1));
-    this.red = createMaterial(new pc.Color(1, 0, 0));
-    this.green = createMaterial(new pc.Color(0, 1, 0));
-    this.blue = createMaterial(new pc.Color(0, 0, 1));
-    this.yellow = createMaterial(new pc.Color(1, 1, 0));
-
     this.createFloor();
     this.createLights();
-    this.createTemplates();
     
     // ***********    Update Function   *******************
 
@@ -222,6 +222,11 @@ Editor.prototype.createTemplates = function () {
     // add all the templates to an array so that
     // we can randomly spawn them
     this.templates = [boxTemplate, sphereTemplate, capsuleTemplate, cylinderTemplate];
+    
+    this.boxTemplate      = boxTemplate;
+    this.sphereTemplate   = sphereTemplate;
+    this.capsuleTemplate  = capsuleTemplate;
+    this.cylinderTemplate = cylinderTemplate;
 
     // disable the templates because we don't want them to be visible
     // we'll just use them to clone other Entities
@@ -275,4 +280,41 @@ Editor.prototype.initScripts = function () {
             this.entity.setLocalScale(e, e, e);
         }
     };
+}
+
+Editor.prototype.spawnPlayer = function () {
+    if (this.player !== undefined) {
+        viewer.anim_info.innerHTML = "respawn player";
+        this.player.rigidbody.teleport(0, 10, 0);
+        return;
+    }
+    this.player = new pc.Entity();
+    this.player.addComponent("model", {
+        type: "cylinder",
+        castShadows: true,
+        axis: 1
+    });
+    this.player.addComponent("rigidbody", {
+        type: "dynamic",
+        mass: 70,
+        restitution: 0.5,
+        angularFactor: new pc.Vec3(0, 1, 0)
+    });
+    this.player.addComponent("collision", {
+        type: "cylinder",
+        radius: 0.5,
+        height: 2
+    });
+    this.player.model.material = this.blue;
+    this.player.enabled = true;
+    this.player.rigidbody.teleport(0, 10, 0);
+    app.root.addChild(this.player);
+    this.player.addComponent("script");
+    app.assets.loadFromUrl('./src/first-person-movement.js', 'script', function (err, asset) {
+        this.script.create("firstPersonMovement", {
+            attributes: {
+                power: 2500
+            }
+        });
+    }.bind(this.player));    
 }
