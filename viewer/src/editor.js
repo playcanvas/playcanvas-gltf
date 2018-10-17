@@ -1,7 +1,3 @@
-
-
-
-
 function createMaterial (color) {
     var material = new pc.StandardMaterial();
     material.diffuse = color;
@@ -9,6 +5,29 @@ function createMaterial (color) {
     material.update()
     return material;
 }
+
+collide_dynamic = function (entity) {
+    if (entity) {
+        entity.addComponent("rigidbody", {type: "dynamic"});
+        entity.addComponent("collision", {type: "mesh", model: entity.model.model});
+        entity.addComponent("script");
+        entity.script.create("pulse");
+    } else {
+        viewer.anim_info.innerHTML = "please load a gltf/glb first";
+    }
+};
+
+collide_static = function (entity) {
+    if (entity) {
+        entity.addComponent("rigidbody", {type: "static"});
+        entity.addComponent("collision", {type: "mesh", model: entity.model.model});
+        entity.addComponent("script");
+        entity.script.create("pulse");
+    } else {
+        viewer.anim_info.innerHTML = "please load a gltf/glb first";
+    }
+};
+
 
 Editor = function() {
     this.rainedEntities = [];
