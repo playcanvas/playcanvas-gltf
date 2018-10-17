@@ -1,3 +1,7 @@
+
+
+
+
 function createMaterial (color) {
     var material = new pc.StandardMaterial();
     material.diffuse = color;
@@ -6,7 +10,62 @@ function createMaterial (color) {
     return material;
 }
 
+Editor = function() {
+    this.rainedEntities = [];
+}
+
+Editor.prototype.rainEntity = function() {
+    // Clone a random template and position it above the floor
+    var template = this.templates[Math.floor(pc.math.random(0, this.templates.length))];
+    var clone = template.clone();
+    clone.enabled = true; // enable the clone because the template is disabled
+    app.root.addChild(clone);
+    clone.rigidbody.teleport(pc.math.random(-1, 1), 10, pc.math.random(-1, 1));
+    this.rainedEntities.push(clone);
+    clone.addComponent("script");
+    clone.script.create("pulse");
+    return clone;
+}
+
+
 init_editor = function(e) {
+
+
+    var PickerRaycast = pc.createScript('pickerRaycast');
+    PickerRaycast.prototype.initialize = function() {
+        this.app.mouse.on(pc.EVENT_MOUSEDOWN, this.onSelect, this);
+    };
+    PickerRaycast.prototype.onSelect = function (e) {
+        var from = this.entity.camera.screenToWorld(e.x, e.y, this.entity.camera.nearClip);
+        var to = this.entity.camera.screenToWorld(e.x, e.y, this.entity.camera.farClip);
+
+        var result = this.app.systems.rigidbody.raycastFirst(from, to);
+        if (result) {
+            var pickedEntity = result.entity;
+            try {
+                pickedEntity.script.pulse.pulse();
+            } catch (ex) {
+                console.log("pickedEntity", pickedEntity);
+            }
+        }
+    };
+
+    var Pulse = pc.createScript("pulse");
+    Pulse.prototype.initialize = function() {
+        this.factor = 0;
+    }, Pulse.prototype.pulse = function() {
+        this.factor = 1;
+    }, Pulse.prototype.update = function(t) {
+        if (this.factor > 0) {
+            this.factor -= t;
+            var e = 1 + Math.sin(10 * this.factor) * this.factor;
+            this.entity.setLocalScale(e, e, e);
+        }
+    };
+    
+    viewer.camera.script.create("pickerRaycast");
+    
+    editor = new Editor();
 
     // Set the gravity for our rigid bodies
     app.systems.rigidbody.setGravity(0, -9.8, 0);
@@ -164,11 +223,11 @@ init_editor = function(e) {
 
     // add all the templates to an array so that
     // we can randomly spawn them
-    var templates = [boxTemplate, sphereTemplate, capsuleTemplate, cylinderTemplate];
+    editor.templates = [boxTemplate, sphereTemplate, capsuleTemplate, cylinderTemplate];
 
     // disable the templates because we don't want them to be visible
     // we'll just use them to clone other Entities
-    templates.forEach(function (template) {
+    editor.templates.forEach(function (template) {
         template.enabled = false;
     })
 
@@ -186,16 +245,7 @@ init_editor = function(e) {
             if (timer <= 0) {
                 count--;
                 timer = 0.2;
-
-                // Clone a random template and position it above the floor
-                var template = templates[Math.floor(pc.math.random(0, templates.length))];
-                var clone = template.clone();
-                // enable the clone because the template is disabled
-                clone.enabled = true;
-
-                app.root.addChild(clone);
-
-                clone.rigidbody.teleport(pc.math.random(-1, 1), 10, pc.math.random(-1, 1));
+                editor.rainEntity();
             }
         }
 
