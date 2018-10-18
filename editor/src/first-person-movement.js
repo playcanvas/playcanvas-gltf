@@ -107,7 +107,9 @@ FirstPersonMovement.prototype._createCamera = function () {
     // If user hasn't assigned a camera, create a new one
     this.camera = new pc.Entity();
     this.camera.setName("First Person Camera");
-    this.camera.addComponent("camera");
+    this.camera.addComponent("camera", {
+        fov: 100
+    });
     this.entity.addChild(this.camera);
     this.camera.translateLocal(0, 0.5, 0);
 };

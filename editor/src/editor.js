@@ -28,8 +28,9 @@ collide_static = function (entity) {
     }
 };
 
-
 Editor = function () {
+    add_infinite_ground(new pc.Vec3(0, 1, 0), new pc.Vec3(0, 0, 0));
+    
     // create a few materials for our objects
     this.white  = createMaterial(new pc.Color(1, 1, 1));
     this.red    = createMaterial(new pc.Color(1, 0, 0));
@@ -103,6 +104,7 @@ Editor.prototype.createFloor = function () {
 
     // add the floor to the hierarchy
     app.root.addChild(floor);
+    this.floor = floor;
 }
 
 Editor.prototype.createLights = function () {
