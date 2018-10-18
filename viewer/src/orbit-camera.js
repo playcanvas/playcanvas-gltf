@@ -107,7 +107,7 @@ MouseInput.prototype.pan = function(screenPoint) {
 
 
 MouseInput.prototype.onMouseDown = function (event) {
-    if (event.event.preventOrbit === true)
+    if (event.event.isOverlayEvent === true)
         return;
     switch (event.button) {
         case pc.MOUSEBUTTON_LEFT: {

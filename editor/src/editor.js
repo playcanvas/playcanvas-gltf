@@ -66,15 +66,7 @@ Editor = function () {
         }
     }.bind(this));
     
-    // setup overlay
-    this.overlay = document.getElementById("overlay");
-    // give scripts the ability to determine if the event should be ignored
-    this.overlay.onmousedown = function(e) {
-        e.isOverlayEvent = true;
-    }.bind(this);
-    this.overlay.onmousemouse = function(e) {
-        e.isOverlayEvent = true;
-    }.bind(this);
+    this.overlay = init_overlay();
 }
 
 Editor.prototype.cleanup = function () {

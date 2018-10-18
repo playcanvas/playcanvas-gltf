@@ -93,6 +93,7 @@ function Viewer() {
     this.app = app;
     this.camera = camera;
     this.playing = true; // for play/pause button
+    this.overlay = init_overlay();
     this.setupAnimControls();
     this.timelineCurveHeight = 12;
     this.timelineDisable();
@@ -294,12 +295,6 @@ Viewer.prototype = {
     },
     
     setupAnimControls: function() {
-        this.anim = document.getElementById("anim");
-        this.anim.onmousedown = function(e) {
-            // make sure that mouse actions on the <div id="anim"> don't manipulate the orbit camera
-            e.preventOrbit = true;
-        }.bind(this);
-        
         this.anim_select = document.getElementById("anim_select");
         this.anim_select.onchange = function(e) {
             var clipName = this.anim_select.value;
