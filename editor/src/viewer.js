@@ -32,7 +32,7 @@ function Viewer() {
     app.root.addChild(camera);
 
     // Make the camera interactive
-    app.assets.loadFromUrl('./src/orbit-camera.js', 'script', function (err, asset) {
+    app.assets.loadFromUrl('../viewer/src/orbit-camera.js', 'script', function (err, asset) {
         camera.script.create('orbitCamera', {
             attributes: {
                 inertiaFactor: 0,
@@ -66,7 +66,7 @@ function Viewer() {
 
     // Set a prefiltered cubemap as the skybox
     var cubemapAsset = new pc.Asset('helipad', 'cubemap', {
-        url: "./assets/cubemap/6079289/Helipad.dds"
+        url: "../viewer/assets/cubemap/6079289/Helipad.dds"
     }, {
         "textures": [
             "./assets/cubemap/6079292/Helipad_posx.png",
@@ -93,7 +93,6 @@ function Viewer() {
     this.app = app;
     this.camera = camera;
     this.playing = true; // for play/pause button
-    this.overlay = init_overlay();
     this.setupAnimControls();
     this.timelineCurveHeight = 12;
     this.timelineDisable();
@@ -295,6 +294,12 @@ Viewer.prototype = {
     },
     
     setupAnimControls: function() {
+        this.anim = document.getElementById("anim");
+        this.anim.onmousedown = function(e) {
+            // make sure that mouse actions on the <div id="anim"> don't manipulate the orbit camera
+            e.preventOrbit = true;
+        }.bind(this);
+        
         this.anim_select = document.getElementById("anim_select");
         this.anim_select.onchange = function(e) {
             var clipName = this.anim_select.value;
