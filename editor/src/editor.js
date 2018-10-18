@@ -294,20 +294,21 @@ Editor.prototype.spawnPlayer = function () {
     }
     this.player = new pc.Entity();
     this.player.addComponent("model", {
-        type: "cylinder",
+        type: "capsule",
         castShadows: true
     });
     this.player.addComponent("rigidbody", {
         type: "dynamic",
         mass: 60,
-        restitution: 0,
+        restitution: 0.5,
         angularFactor: new pc.Vec3(0, 0, 0),
         linearDamping: 0.2,
         angularDamping: 0,
-        friction: 3
+        //friction: 3.0 // feels somewhat more real, but cant walk on any slopes at all then
+        friction: 0.2 // way too much friction, but at least i can walk up some slopes
     });
     this.player.addComponent("collision", {
-        type: "cylinder",
+        type: "capsule",
         radius: 0.5,
         height: 2
     });
