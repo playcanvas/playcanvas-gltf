@@ -315,10 +315,7 @@ Editor.prototype.spawnPlayer = function () {
     this.player.addComponent("script");
     app.assets.loadFromUrl('./src/first-person-movement.js', 'script', function (err, asset) {
         this.script.create("firstPersonMovement", {
-            attributes: {
-                power: 2500,
-                lookSpeed: 0.25
-            }
+            attributes: {}
         });
     }.bind(this.player));    
 }

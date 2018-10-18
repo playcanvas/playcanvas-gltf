@@ -1,4 +1,4 @@
-var FirstPersonMovement = pc.createScript('firstPersonMovement');
+FirstPersonMovement = pc.createScript('firstPersonMovement');
 
 // optional, assign a camera entity, otherwise one is created
 FirstPersonMovement.attributes.add('camera', {
@@ -6,11 +6,13 @@ FirstPersonMovement.attributes.add('camera', {
 });
 
 FirstPersonMovement.attributes.add('power', {
-    type: 'number'
+    type: 'number',
+    default: 2500
 });
 
 FirstPersonMovement.attributes.add('lookSpeed', {
-    type: 'number'
+    type: 'number',
+    default: 360 / screen.width // move cursor from left to right on your screen == 1 rotation ingame
 });
 
 // initialize code called once per entity
@@ -39,15 +41,15 @@ FirstPersonMovement.prototype.initialize = function() {
     if (!this.entity.rigidbody || this.entity.rigidbody.type !== pc.BODYTYPE_DYNAMIC) {
         console.error("First Person Movement script needs to have a DYNAMIC 'rigidbody' component");
     }
+    
+    // If a camera isn't assigned from the Editor, create one
+    if ( ! this.camera) {
+        this._createCamera();
+    }
 };
 
 // update code called every frame
 FirstPersonMovement.prototype.update = function(dt) {
-    // If a camera isn't assigned from the Editor, create one
-    if (!this.camera) {
-        this._createCamera();
-    }
-    
     var force = this.force;
     var app = this.app;
 
