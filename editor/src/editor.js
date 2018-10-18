@@ -28,8 +28,9 @@ collide_static = function (entity) {
     }
 };
 
-
 Editor = function () {
+    this.infinite_ground = add_infinite_ground(pc.Vec3.UP, pc.Vec3.ZERO, pc.Quat.IDENTITY);
+    
     // create a few materials for our objects
     this.white  = createMaterial(new pc.Color(1, 1, 1));
     this.red    = createMaterial(new pc.Color(1, 0, 0));
@@ -103,6 +104,7 @@ Editor.prototype.createFloor = function () {
 
     // add the floor to the hierarchy
     app.root.addChild(floor);
+    this.floor = floor;
 }
 
 Editor.prototype.createLights = function () {
@@ -292,17 +294,21 @@ Editor.prototype.spawnPlayer = function () {
     }
     this.player = new pc.Entity();
     this.player.addComponent("model", {
-        type: "cylinder",
+        type: "capsule",
         castShadows: true
     });
     this.player.addComponent("rigidbody", {
         type: "dynamic",
-        mass: 70,
+        mass: 60,
         restitution: 0.5,
-        angularFactor: new pc.Vec3(0, 0, 0)
+        angularFactor: new pc.Vec3(0, 0, 0),
+        linearDamping: 0.2,
+        angularDamping: 0,
+        //friction: 3.0 // feels somewhat more real, but cant walk on any slopes at all then
+        friction: 0.2 // way too much friction, but at least i can walk up some slopes
     });
     this.player.addComponent("collision", {
-        type: "cylinder",
+        type: "capsule",
         radius: 0.5,
         height: 2
     });
@@ -313,10 +319,7 @@ Editor.prototype.spawnPlayer = function () {
     this.player.addComponent("script");
     app.assets.loadFromUrl('./src/first-person-movement.js', 'script', function (err, asset) {
         this.script.create("firstPersonMovement", {
-            attributes: {
-                power: 2500,
-                lookSpeed: 0.25
-            }
+            attributes: {}
         });
     }.bind(this.player));    
 }
