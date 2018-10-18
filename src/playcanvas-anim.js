@@ -235,8 +235,8 @@ AnimationTarget.prototype.blendToTarget = function (value, p) {
         }
 
         // execute update target
-        if (typeof this.targetNode._dirtify === 'function') {
-            this.targetNode._dirtify(true);
+        if (typeof this.targetNode._dirtifyLocal === 'function') {
+            this.targetNode._dirtifyLocal();
         }
     }
 
@@ -285,8 +285,8 @@ AnimationTarget.prototype.updateToTarget = function (value) {
         }
 
         // execute update target
-        if (typeof this.targetNode._dirtify === 'function') {
-            this.targetNode._dirtify(true);
+        if (typeof this.targetNode._dirtifyLocal === 'function') {
+            this.targetNode._dirtifyLocal();
         }
     }
 
