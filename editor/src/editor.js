@@ -29,7 +29,7 @@ collide_static = function (entity) {
 };
 
 Editor = function () {
-    this.infinite_ground = add_infinite_ground(new pc.Vec3(0, 1, 0), new pc.Vec3(0, 0, 0));
+    this.infinite_ground = add_infinite_ground(new pc.Vec3(0, 1, 0), new pc.Vec3(0, 0, 0), pc.Quat.IDENTITY);
     
     // create a few materials for our objects
     this.white  = createMaterial(new pc.Color(1, 1, 1));

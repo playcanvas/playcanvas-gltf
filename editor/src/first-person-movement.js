@@ -100,7 +100,7 @@ FirstPersonMovement.prototype.update = function(dt) {
     var forward = this.camera.forward;
     var right = this.camera.right;
        
-    viewer.anim_info.innerHTML = pc.now() - this.lastGroundCollision + "ms";
+    //viewer.anim_info.innerHTML = pc.now() - this.lastGroundCollision + "ms";
        
     // allow jump if touched a ground in last 100ms
     if (pc.now() - this.lastGroundCollision < 100) {
