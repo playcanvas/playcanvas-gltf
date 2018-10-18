@@ -104,9 +104,6 @@ function Viewer() {
     
     // Press 'D' to delete the currently loaded model
     app.on('update', function () {
-        if (this.app.keyboard.wasPressed(pc.KEY_D)) {
-            this.destroyScene();
-        }
         if (this.gltf && this.gltf.animComponent) {
             // mirror the playback time of the playing clip into the html range slider
             var curTime = this.gltf.animComponent.getCurrentClip().session.curTime;

@@ -24,6 +24,8 @@ add_infinite_ground = function (normal_, origin_) {
     var motionState   = new Ammo.btDefaultMotionState(transform);
     var rigidBodyInfo = new Ammo.btRigidBodyConstructionInfo(0, motionState, shape, localInertia);
     var body          = new Ammo.btRigidBody(rigidBodyInfo);
+    body.entity       = new pc.Entity("dummy entity for add_infinite_ground");
     app.systems.rigidbody.dynamicsWorld.addRigidBody(body);
+    return body;
 }
 

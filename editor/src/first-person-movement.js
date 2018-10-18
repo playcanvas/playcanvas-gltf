@@ -17,12 +17,14 @@ FirstPersonMovement.attributes.add('lookSpeed', {
 
 // initialize code called once per entity
 FirstPersonMovement.prototype.initialize = function() {
-    this.force = new pc.Vec3();
-    this.camera = null;
-    this.eulers = new pc.Vec3();
-    
+    this.camera     = null;
+    this.isGrounded = false;
+    this.force      = new pc.Vec3();
+    this.eulers     = new pc.Vec3();
+    this.groundRay  = new pc.Vec3();
+
     var app = this.app;
-    
+
     // Listen for mouse move events
     app.mouse.on("mousemove", this._onMouseMove, this);
 
@@ -86,10 +88,29 @@ FirstPersonMovement.prototype.update = function(dt) {
 
     // use direction from keypresses to apply a force to the character
     if (x !== 0 && z !== 0) {
-        force.set(x, 0, z).normalize().scale(this.power);
-        this.entity.rigidbody.applyForce(force);
+        force.set(x, 0, z).normalize();
+        force.scale(this.power);
+        var speed = this.entity.rigidbody.linearVelocity.length();
+        //viewer.anim_info.innerHTML = speed;
+        if (speed < 10)
+            this.entity.rigidbody.applyForce(force);
+        //this.entity.rigidbody.applyImpulse(force);
+        //this.entity.rigidbody.linearVelocity = force;
     }
 
+    // todo: figure out a sane system, like collision callbacks or box tracing
+    var pos = this.entity.getPosition();
+    this.groundRay.copy(pos);
+    this.groundRay.y -= 1.0;
+    this.isGrounded = false;
+    pc.app.systems.rigidbody.raycastFirst(pos, this.groundRay, function (result) {
+        this.isGrounded = true;
+    }.bind(this));
+    if (this.isGrounded && app.keyboard.isPressed(pc.KEY_SPACE)) {
+        force.set(0, 400, 0);
+        this.entity.rigidbody.applyImpulse(force);
+    }
+    
     // update camera angle from mouse events
     this.camera.setLocalEulerAngles(this.eulers.y, this.eulers.x, 0);
 };
@@ -102,6 +123,7 @@ FirstPersonMovement.prototype._onMouseMove = function (e) {
     if (pc.Mouse.isPointerLocked() || e.buttons[0]) {
         this.eulers.x -= this.lookSpeed * e.dx;
         this.eulers.y -= this.lookSpeed * e.dy;
+        this.eulers.y = pc.math.clamp(this.eulers.y, -90, 90);
     }            
 };
 

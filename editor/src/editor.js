@@ -29,7 +29,7 @@ collide_static = function (entity) {
 };
 
 Editor = function () {
-    add_infinite_ground(new pc.Vec3(0, 1, 0), new pc.Vec3(0, 0, 0));
+    this.infinite_ground = add_infinite_ground(new pc.Vec3(0, 1, 0), new pc.Vec3(0, 0, 0));
     
     // create a few materials for our objects
     this.white  = createMaterial(new pc.Color(1, 1, 1));
@@ -299,9 +299,12 @@ Editor.prototype.spawnPlayer = function () {
     });
     this.player.addComponent("rigidbody", {
         type: "dynamic",
-        mass: 70,
-        restitution: 0.5,
-        angularFactor: new pc.Vec3(0, 0, 0)
+        mass: 60,
+        restitution: 0,
+        angularFactor: new pc.Vec3(0, 0, 0),
+        linearDamping: 0.2,
+        angularDamping: 0,
+        friction: 3
     });
     this.player.addComponent("collision", {
         type: "cylinder",
