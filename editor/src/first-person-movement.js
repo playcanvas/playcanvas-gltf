@@ -1,4 +1,4 @@
-FirstPersonMovement = pc.createScript('firstPersonMovement');
+var FirstPersonMovement = pc.createScript('firstPersonMovement');
 
 // optional, assign a camera entity, otherwise one is created
 FirstPersonMovement.attributes.add('camera', {
@@ -17,12 +17,12 @@ FirstPersonMovement.attributes.add('lookSpeed', {
 
 // initialize code called once per entity
 FirstPersonMovement.prototype.initialize = function() {
-    this.camera     = null;
-    this.isGrounded = false;
-    this.force      = new pc.Vec3();
-    this.eulers     = new pc.Vec3();
-    this.groundRay  = new pc.Vec3();
-
+    this.camera       = null;
+    this.force        = new pc.Vec3();
+    this.eulers       = new pc.Vec3();
+    this.groundRay    = new pc.Vec3();
+    this.lastGroundCollision = 0;
+    this.newJumpAllowedAt    = 0;
     var app = this.app;
 
     // Listen for mouse move events
@@ -48,7 +48,48 @@ FirstPersonMovement.prototype.initialize = function() {
     if ( ! this.camera) {
         this._createCamera();
     }
+    
+    this.entity.collision.on("contact", this.onContact, this);
 };
+
+/*
+Example result for standing on rigidbody floor:
+    contactResult.contacts[0]
+    [ContactPoint]
+    localPoint     : Vec3 {x: -0.002215355634689331    , y: -0.9999810457229614, z:  0.0017574280500411987   }
+    localPointOther: Vec3 {x:  0.16426098346710205     , y:  0.5               , z: -0.125589519739151       }
+    normal         : Vec3 {x: -0.0000018488642581360182, y: -1                 , z:  0.0000068243434725445695}
+    point          : Vec3 {x:  0.16426098346710205     , y:  0.500004768371582 , z: -0.125589519739151       }
+    pointOther     : Vec3 {x:  0.16426098346710205     , y:  0.5               , z: -0.125589519739151       }
+*/
+
+FirstPersonMovement.prototype.onContact = function(contactResult) {
+    var contacts = contactResult.contacts;
+    var n = contacts.length;
+    var foundGroundCollision = false;
+    for (var i = 0; i < n; i++) {
+        var contact = contacts[i];
+        // special case for the infinite plane
+        // the contact.normal will be [0,1,0]
+        // however, standing on the ridigbody floor will be [0,-1,0]'ish
+        // and to make it even more complex, a gltf physics model "floor" is [0,1,0]'ish
+        // trying to allow a certain slope only for jumping is kinda hard with these conditions...
+        // so currently i just do: if there is a contact, allow jumping
+        if (contact.normal.equals(pc.Vec3.UP)) {
+            foundGroundCollision = true;
+            break;
+        }
+        //viewer.anim_info.innerHTML = contact.normal.dot( pc.Vec3.DOWN );
+        //viewer.anim_info.innerHTML = contact.normal;
+        // always true for `n > 0`
+        // until the collision normals are fixed for a dot()>slope check
+        foundGroundCollision = true;
+    }
+    if (foundGroundCollision) {
+        this.lastGroundCollision = pc.now();
+    }
+    //console.log(arguments);
+}
 
 // update code called every frame
 FirstPersonMovement.prototype.update = function(dt) {
@@ -59,7 +100,15 @@ FirstPersonMovement.prototype.update = function(dt) {
     var forward = this.camera.forward;
     var right = this.camera.right;
        
-
+    viewer.anim_info.innerHTML = pc.now() - this.lastGroundCollision + "ms";
+       
+    // allow jump if touched a ground in last 100ms
+    if (pc.now() - this.lastGroundCollision < 100) {
+        this.isGrounded = true;
+    } else {
+        this.isGrounded = false;
+    }
+    
     // movement
     var x = 0;
     var z = 0;
@@ -98,15 +147,12 @@ FirstPersonMovement.prototype.update = function(dt) {
         //this.entity.rigidbody.linearVelocity = force;
     }
 
-    // todo: figure out a sane system, like collision callbacks or box tracing
-    var pos = this.entity.getPosition();
-    this.groundRay.copy(pos);
-    this.groundRay.y -= 1.0;
-    this.isGrounded = false;
-    pc.app.systems.rigidbody.raycastFirst(pos, this.groundRay, function (result) {
-        this.isGrounded = true;
-    }.bind(this));
-    if (this.isGrounded && app.keyboard.isPressed(pc.KEY_SPACE)) {
+    // max 1 jump per 500ms
+    var canJump = pc.now() - this.newJumpAllowedAt > 500;
+    
+    if (canJump && this.isGrounded && app.keyboard.isPressed(pc.KEY_SPACE)) {
+        this.lastGroundCollision = 0; // reset timer
+        this.newJumpAllowedAt = pc.now() + 500;
         force.set(0, 400, 0);
         this.entity.rigidbody.applyImpulse(force);
     }
