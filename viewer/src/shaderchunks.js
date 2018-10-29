@@ -6,6 +6,11 @@ ShaderChunks = function() {
         this.toggle();
     }.bind(this);    
     
+    this.shaderchunks_regen = document.getElementById("shaderchunks_regen");
+    this.shaderchunks_regen.onclick = function(e) {
+        this.regenerateShaders();
+    }.bind(this);    
+    
     this.textareas = {};
     for (var name in pc.shaderChunks) {
         var shaderChunk = pc.shaderChunks[name];
@@ -17,12 +22,13 @@ ShaderChunks = function() {
         this.shaderchunks.appendChild(text);
         // add textarea
         var textarea = document.createElement("textarea");
+        textarea.spellcheck = false;
         textarea.value = shaderChunk;
         textarea_fit_text(textarea);
         textarea_enable_tab_indent(textarea);
         textarea.shaderChunkName = name;
         textarea.originalShaderChunk = shaderChunk;
-        textarea.oninput = function(e) {
+        textarea.oninput = function (e) {
             // immediately mirror textarea edits into pc.shaderChunks
             pc.shaderChunks[this.shaderChunkName] = this.value;
             //console.log(this.shaderChunkName, this.value);
@@ -40,12 +46,14 @@ ShaderChunks = function() {
 
 ShaderChunks.prototype.enable = function() {
     this.shaderchunks.style.display = "";
+    this.shaderchunks_regen.style.display = "";
     this.shaderchunks_toggle.value = "Hide ShaderChunks";
     this.enabled = true;
 }
 
 ShaderChunks.prototype.disable = function() {
     this.shaderchunks.style.display = "none";
+    this.shaderchunks_regen.style.display = "none";
     this.shaderchunks_toggle.value = "Show ShaderChunks";
     this.enabled = false;
 }
@@ -60,4 +68,20 @@ ShaderChunks.prototype.toggle = function() {
 ShaderChunks.prototype.resize = function() {
     this.shaderchunks.style.width = window.innerWidth + "px";
     this.shaderchunks.style.height = (window.innerHeight - 40) + "px";
+}
+
+ShaderChunks.prototype.regenerateShaders = function() {
+    if (viewer.gltf == undefined) {
+        viewer.log("please load a model first");
+        return;
+    }
+    viewer.log("not working 100% yet, please drag&drop again");
+    var n = viewer.gltf.model.meshInstances.length;
+    for (var i=0; i<n; i++) {
+        var meshInstance = viewer.gltf.model.meshInstances[i];
+        var shader = meshInstance.material.shader;
+        pc.app.graphicsDevice.programLib.removeFromCache(shader);
+        meshInstance.material.update();
+    }
+
 }

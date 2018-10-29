@@ -22,4 +22,6 @@ body {
 
 #overlay textarea {
     width: 96%;
+    background: #2c2d2fc4;
+    color: #ffed00;
 }
