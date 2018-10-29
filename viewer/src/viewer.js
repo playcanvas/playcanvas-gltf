@@ -101,7 +101,7 @@ function Viewer() {
     
     // Press 'D' to delete the currently loaded model
     app.on('update', function () {
-        if (this.app.keyboard.wasPressed(pc.KEY_D)) {
+        if (viewer.shaderChunks.enabled == false && this.app.keyboard.wasPressed(pc.KEY_D)) {
             this.destroyScene();
         }
         if (this.gltf && this.gltf.animComponent) {
