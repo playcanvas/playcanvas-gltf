@@ -1,21 +1,26 @@
 ShaderChunks = function() {
     this.shaderchunks = document.getElementById("shaderchunks");
-    this.htmlShaderChunks = {};
+    this.textareas = {};
     for (var name in pc.shaderChunks) {
         var shaderChunk = pc.shaderChunks[name];
         if (typeof shaderChunk !== "string") // there are a few functions
             continue;
+        // add text
         var text = document.createElement("div");
-        var textarea = document.createElement("textarea");
         text.innerHTML = name;
-        var numNewlines = 1;
-        for (var i=0; i<shaderChunk.length; i++)
-            if (shaderChunk[i] == "\n")
-                numNewlines++;
-        textarea.value = shaderChunk;
-        textarea.style.height = (numNewlines * 16) + "px";
-        this.htmlShaderChunks[name] = textarea;
         this.shaderchunks.appendChild(text);
+        // add textarea
+        var textarea = document.createElement("textarea");
+        textarea.value = shaderChunk;
+        textarea_fit_text(textarea);
+        textarea.shaderChunkName = name;
+        textarea.originalShaderChunk = shaderChunk;
+        textarea.oninput = function(e) {
+            // immediately mirror textarea edits into pc.shaderChunks
+            pc.shaderChunks[this.shaderChunkName] = this.value;
+            //console.log(this.shaderChunkName, this.value);
+        }
+        this.textareas[name] = textarea;
         this.shaderchunks.appendChild(textarea);
     }
     this.shaderchunks.style.position = "absolute";

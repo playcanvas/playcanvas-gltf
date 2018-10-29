@@ -342,18 +342,6 @@ function loadScript(src) {
     });
 }
 
-select_add_option = function(select, option_text) {
-    var option = document.createElement("option");
-    option.text = option_text;
-    select.add(option);
-    return option;
-}
-
-select_remove_options = function(select) {
-    for (var i=select.options.length-1; i>=0; i--)
-        select.remove(i);
-}
-
 function main() {
     if (true) {//typeof WebAssembly !== 'object') {
         loadScript('../draco/draco_decoder.js').then(function () {

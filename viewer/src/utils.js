@@ -10,6 +10,27 @@ init_overlay = function () {
     return overlay;
 }
 
+textarea_fit_text = function(textarea) {    
+    var numNewlines = 1;
+    var str = textarea.value;
+    for (var i=0; i<str.length; i++)
+        if (str[i] == "\n")
+            numNewlines++;
+    textarea.style.height = (numNewlines * 16) + "px";
+}
+
+select_add_option = function(select, option_text) {
+    var option = document.createElement("option");
+    option.text = option_text;
+    select.add(option);
+    return option;
+}
+
+select_remove_options = function(select) {
+    for (var i=select.options.length-1; i>=0; i--)
+        select.remove(i);
+}
+
 // add_infinite_ground(new pc.Vec3(0, 1, 0), new pc.Vec3(0, 0, 0), pc.Quat.IDENTITY);
 add_infinite_ground = function (normal_, position_, rotation_) {
     // there isn't any infinite plane in PlayCanvas (yet)
