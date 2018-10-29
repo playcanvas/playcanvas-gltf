@@ -1,6 +1,9 @@
 init_overlay = function () {
     var overlay = document.getElementById("overlay");
     // give scripts the ability to determine if the event should be ignored
+    overlay.onkeydown = function(event) {
+        event.isOverlayEvent = true;
+    };
     overlay.onmousedown = function(event) {
         event.isOverlayEvent = true;
     };
