@@ -75,13 +75,10 @@ ShaderChunks.prototype.regenerateShaders = function() {
         viewer.log("please load a model first");
         return;
     }
-    viewer.log("not working 100% yet, please drag&drop again");
+    pc.app.graphicsDevice.programLib._cache = {};
     var n = viewer.gltf.model.meshInstances.length;
     for (var i=0; i<n; i++) {
         var meshInstance = viewer.gltf.model.meshInstances[i];
-        var shader = meshInstance.material.shader;
-        pc.app.graphicsDevice.programLib.removeFromCache(shader);
-        meshInstance.material.update();
+        meshInstance.material.clearVariants();
     }
-
 }
