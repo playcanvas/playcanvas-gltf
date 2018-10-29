@@ -13,6 +13,7 @@ ShaderChunks = function() {
         var textarea = document.createElement("textarea");
         textarea.value = shaderChunk;
         textarea_fit_text(textarea);
+        textarea_enable_tab_indent(textarea);
         textarea.shaderChunkName = name;
         textarea.originalShaderChunk = shaderChunk;
         textarea.oninput = function(e) {
