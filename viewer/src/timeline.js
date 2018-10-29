@@ -36,6 +36,7 @@ Timeline = function() {
         this.hoveredCurve = undefined;
         this.hoveredAnimKey = undefined;
     }.bind(this);
+    this.disable();
 }
 
 Timeline.prototype.resize = function() {
@@ -60,7 +61,7 @@ Timeline.prototype.resize = function() {
 Timeline.prototype.enable = function() {
     this.anim_timeline.style.display = "";
     this.enabled = true;
-    this.anim_timeline_toggle.value = "Disable Timeline";
+    this.anim_timeline_toggle.value = "Hide Timeline";
     this.resize();
     if ( (viewer.gltf && viewer.gltf.animComponent) === undefined) {
         viewer.log("please load a gltf/glb with animation data to see the timeline \uD83C\uDF4B");
@@ -70,7 +71,7 @@ Timeline.prototype.enable = function() {
 Timeline.prototype.disable = function() {
     this.anim_timeline.style.display = "none";
     this.enabled = false;
-    this.anim_timeline_toggle.value = "Enable Timeline";
+    this.anim_timeline_toggle.value = "Show Timeline";
     this.resize();
 },
 

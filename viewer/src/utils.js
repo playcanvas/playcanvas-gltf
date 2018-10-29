@@ -13,7 +13,7 @@ init_overlay = function () {
     return overlay;
 }
 
-textarea_fit_text = function(textarea) {    
+textarea_fit_text = function (textarea) {    
     var numNewlines = 1;
     var str = textarea.value;
     for (var i=0; i<str.length; i++)
@@ -22,7 +22,7 @@ textarea_fit_text = function(textarea) {
     textarea.style.height = (numNewlines * 16) + "px";
 }
 
-textarea_enable_tab_indent = function(textarea) {    
+textarea_enable_tab_indent = function (textarea) {    
     textarea.onkeydown = function(e) {
         if (e.keyCode == 9 || e.which == 9){
             e.preventDefault();
@@ -36,14 +36,14 @@ textarea_enable_tab_indent = function(textarea) {
     }
 }
 
-select_add_option = function(select, option_text) {
+select_add_option = function (select, option_text) {
     var option = document.createElement("option");
     option.text = option_text;
     select.add(option);
     return option;
 }
 
-select_remove_options = function(select) {
+select_remove_options = function (select) {
     for (var i=select.options.length-1; i>=0; i--)
         select.remove(i);
 }

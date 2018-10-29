@@ -1,5 +1,11 @@
 ShaderChunks = function() {
     this.shaderchunks = document.getElementById("shaderchunks");
+    
+    this.shaderchunks_toggle = document.getElementById("shaderchunks_toggle");
+    this.shaderchunks_toggle.onclick = function(e) {
+        this.toggle();
+    }.bind(this);    
+    
     this.textareas = {};
     for (var name in pc.shaderChunks) {
         var shaderChunk = pc.shaderChunks[name];
@@ -29,6 +35,26 @@ ShaderChunks = function() {
     this.shaderchunks.style.top = "40px";
     this.shaderchunks.style.overflow = "scroll";
     this.resize();
+    this.disable();
+}
+
+ShaderChunks.prototype.enable = function() {
+    this.shaderchunks.style.display = "";
+    this.shaderchunks_toggle.value = "Hide ShaderChunks";
+    this.enabled = true;
+}
+
+ShaderChunks.prototype.disable = function() {
+    this.shaderchunks.style.display = "none";
+    this.shaderchunks_toggle.value = "Show ShaderChunks";
+    this.enabled = false;
+}
+
+ShaderChunks.prototype.toggle = function() {
+    if (this.enabled)
+        this.disable();
+    else
+        this.enable();
 }
 
 ShaderChunks.prototype.resize = function() {
