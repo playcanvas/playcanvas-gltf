@@ -33,7 +33,7 @@ ShaderChunks = function() {
     this.shaderchunks.style.position = "absolute";
     this.shaderchunks.style.left = "0px";
     this.shaderchunks.style.top = "40px";
-    this.shaderchunks.style.overflow = "scroll";
+    this.shaderchunks.style.overflowY = "scroll";
     this.resize();
     this.disable();
 }

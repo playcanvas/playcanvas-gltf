@@ -11,6 +11,8 @@
         <script src="../src/playcanvas-anim.js"></script>
         <script src="../src/playcanvas-gltf.js"></script>
         <script src="../viewer/src/utils.js"></script>
+        <script src="../viewer/src/timeline.js"></script>
+        <script src="../viewer/src/shaderchunks.js"></script>
         <script src="src/viewer.js"></script>
         <script src="src/editor.js"></script>
         <script>
@@ -27,10 +29,12 @@
                 <select id="anim_select"></select>
                 <input  id="anim_pause"  type="button" value="||">
                 <input  id="anim_slider" type="range" min="0" max="1" value="0" step="any">
+                <input  id="anim_timeline_toggle" type="button" value="Show Timeline">
+                <input  id="shaderchunks_toggle"  type="button" value="Show ShaderChunks">
                 <span   id="anim_info"></span>
-                <input  id="anim_timeline_toggle" type="button" value="Timeline: Off">
                 <canvas id="anim_timeline" width=1000 height=200></canvas>
             </div>
+			<div id="shaderchunks"></div>
             <div id="editor">
                 <input type="button" onclick="collide_dynamic(viewer.gltf)" value="collide_dynamic(viewer.gltf)">
                 <input type="button" onclick="collide_static(viewer.gltf)"  value="collide_static(viewer.gltf)">
