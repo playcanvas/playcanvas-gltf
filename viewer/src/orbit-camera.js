@@ -151,6 +151,8 @@ MouseInput.prototype.onMouseMove = function (event) {
 
 
 MouseInput.prototype.onMouseWheel = function (event) {
+    if (event.event.isOverlayEvent === true)
+        return;
     this.orbitCamera.distance -= event.wheel * this.distanceSensitivity * (this.orbitCamera.distance * 0.1);
     event.event.preventDefault();
 };

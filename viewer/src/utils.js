@@ -7,6 +7,9 @@ init_overlay = function () {
     overlay.onmousemove = function(event) {
         event.isOverlayEvent = true;
     };
+    overlay.onmousewheel = function(event) {
+        event.isOverlayEvent = true;
+    };
     return overlay;
 }
 
