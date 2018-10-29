@@ -102,6 +102,7 @@ function Viewer() {
     this.timelineColorRectHovered  = "rgba(0,0,255, 0.1)"; // blueish transparent
     this.timelineColorRectSelected = "rgba(0,255,0, 0.1)"; // greenish transparent
     this.timelineColorLineSlider   = "white";
+    this.shaderChunks = new ShaderChunks();
     
     // Press 'D' to delete the currently loaded model
     app.on('update', function () {
@@ -348,6 +349,7 @@ Viewer.prototype = {
         
         window.onresize = function () {
             this.timelineResize();
+            this.shaderChunks.resize();
         }.bind(this);
     },
     
