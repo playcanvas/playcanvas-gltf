@@ -11,6 +11,8 @@
         <script src='../src/playcanvas-gltf.js'></script>
         <script src='src/utils.js'></script>
         <script src='src/viewer.js'></script>
+        <script src='src/shaderchunks.js'></script>
+        <script src='src/timeline.js'></script>
     </head>
     <body onload='main()'>
         <div id="overlay">
@@ -22,6 +24,7 @@
                 <input  id="anim_timeline_toggle" type="button" value="Timeline: Off">
                 <canvas id="anim_timeline" width=1000 height=200></canvas>
             </div>
+			<div id="shaderchunks"></div>
         </div>
         <div id="dropzone" class="dropzone">
             <!--
