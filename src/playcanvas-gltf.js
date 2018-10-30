@@ -915,10 +915,14 @@
                 for (i = 0; i < numVertices; i++) {
                     dstIndex = dstOffset + i * dstStride;
                     srcIndex = accessor.type === 'VEC4' ? i * 4 : i * 3;
-                    vertexDataU8[dstIndex]     = colors[srcIndex] * 255;
-                    vertexDataU8[dstIndex + 1] = colors[srcIndex + 1] * 255;
-                    vertexDataU8[dstIndex + 2] = colors[srcIndex + 2] * 255;
-                    vertexDataU8[dstIndex + 3] = accessor.type === 'VEC4' ? colors[srcIndex + 3] * 255 : 255;
+                    var r = colors[srcIndex];
+                    var g = colors[srcIndex + 1];
+                    var b = colors[srcIndex + 2];
+                    var a = colors[srcIndex + 3];
+                    vertexDataU8[dstIndex]     = Math.round(pc.math.clamp(r, 0, 1) * 255);
+                    vertexDataU8[dstIndex + 1] = Math.round(pc.math.clamp(g, 0, 1) * 255);
+                    vertexDataU8[dstIndex + 2] = Math.round(pc.math.clamp(b, 0, 1) * 255);
+                    vertexDataU8[dstIndex + 3] = accessor.type === 'VEC4' ? Math.round(pc.math.clamp(a, 0, 1) * 255) : 255;
                 }
             }
 
@@ -1112,7 +1116,8 @@
             var ibmData = getAccessorData(gltf, gltf.accessors[inverseBindMatrices], resources.buffers);
 
             for (i = 0; i < numJoints; i++) {
-                bindMatrix = new pc.Mat4(ibmData.slice(i * 16, i * 16 + 16));
+                bindMatrix = new pc.Mat4();
+                bindMatrix.set(ibmData.slice(i * 16, i * 16 + 16));
                 ibp.push(bindMatrix);
             }
         } else {
@@ -1316,9 +1321,8 @@
                         // HACK: need to force calculation of the morph's AABB due to a bug
                         // in the engine. This is a private function and will be removed!
                         morphInstance.updateBounds(meshInstance.mesh);
-                        var weights = gltf.meshes[i].weights;
-                        if (weights) {
-                            weights.forEach(function (weight, weightIndex) {
+                        if (mesh.weights) {
+                            mesh.weights.forEach(function (weight, weightIndex) {
                                 morphInstance.setWeight(weightIndex, weight);
                             });
                         }
