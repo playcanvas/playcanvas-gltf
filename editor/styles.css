@@ -25,3 +25,9 @@ body {
     border-top: 1px solid rgba(0, 0, 0, 0.1);
     left: 0px;
 }
+
+#overlay textarea {
+    width: 96%;
+    background: #2c2d2fc4;
+    color: #ffed00;
+}

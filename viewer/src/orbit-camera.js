@@ -3,6 +3,7 @@ var KeyboardInput = pc.createScript('keyboardInput');
 // initialize code called once per entity
 KeyboardInput.prototype.initialize = function() {
     this.orbitCamera = this.entity.script.orbitCamera;
+    this.app.keyboard.on(pc.EVENT_KEYDOWN, this.onKeyDown, this);
 };
 
 
@@ -16,14 +17,18 @@ KeyboardInput.prototype.postInitialize = function() {
 };
 
 // update code called every frame
-KeyboardInput.prototype.update = function(dt) {
+KeyboardInput.prototype.update = function(dt) {};
+
+KeyboardInput.prototype.onKeyDown = function(event) {
+    if (event.event.isOverlayEvent === true)
+        return;
     if (this.orbitCamera) {
-        if (this.app.keyboard.wasPressed(pc.KEY_SPACE)) {
+        if (event.key == pc.KEY_SPACE) {
             this.orbitCamera.reset(this.startYaw, this.startPitch, this.startDistance);
             this.orbitCamera.pivotPoint = this.startPivotPosition;
         }
     }
-};
+}
 
 
 var MouseInput = pc.createScript('mouseInput');
@@ -151,6 +156,8 @@ MouseInput.prototype.onMouseMove = function (event) {
 
 
 MouseInput.prototype.onMouseWheel = function (event) {
+    if (event.event.isOverlayEvent === true)
+        return;
     this.orbitCamera.distance -= event.wheel * this.distanceSensitivity * (this.orbitCamera.distance * 0.1);
     event.event.preventDefault();
 };
