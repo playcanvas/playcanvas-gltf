@@ -872,6 +872,36 @@ AnimationClipSnapshot.linearBlend = function (shot1, shot2, p) {
     return resShot;
 };
 
+// static function: linear blending except for step curve
+AnimationClipSnapshot.linearBlendExceptStep = function (shot1, shot2, p, animCurveMap) {
+    if (!shot1 || !shot2)
+        return null;
+
+    if (p === 0) return shot1;
+    if (p === 1) return shot2;
+
+    var resShot = new AnimationClipSnapshot();
+    resShot.copy(shot1);
+    var curveNames = Object.keys(shot2.curveKeyable);
+    for (var i = 0; i < curveNames.length; i ++) {
+        var cname = curveNames[i];
+        if (shot1.curveKeyable[cname] && shot2.curveKeyable[cname]) {
+            if (animCurveMap[cname] && animCurveMap[cname].type === AnimationCurveType.STEP) {
+                if (p > 0.5) resShot.curveKeyable[cname] = shot2.curveKeyable[cname];
+                else resShot.curveKeyable[cname] = shot1.curveKeyable[cname];
+            }
+            else { 
+                var resKey = AnimationKeyable.linearBlend(shot1.curveKeyable[cname], shot2.curveKeyable[cname], p);
+                resShot.curveKeyable[cname] = resKey;
+            }
+        } else if (shot1.curveKeyable[cname])
+            resShot.curveKeyable[cname] = shot1.curveKeyable[cname];
+        else if (shot2.curveKeyable[cname])
+            resShot.curveKeyable[cname] = shot2.curveKeyable[cname];
+    }
+    return resShot;
+};
+
 // *===============================================================================================================
 // * class AnimationClip:
 // * member
@@ -1473,6 +1503,7 @@ AnimationSession.prototype.invokeByTime = function (time) {
 AnimationSession.prototype.blendToTarget = function (input, p) {
     var i, j;
     var cname, ctargets, blendUpdateNone;
+    var eBlendType = { PARTIAL_BLEND: 0, FULL_UPDATE: 1, NONE: 2 };
 
     if (!input || p > 1 || p <= 0)// p===0 remain prev
         return;
@@ -1490,15 +1521,15 @@ AnimationSession.prototype.blendToTarget = function (input, p) {
             return;
 
         // 10/10, if curve is step, let's not blend
-        blendUpdateNone = 0;
+        blendUpdateNone = eBlendType.PARTIAL_BLEND;
         if (this.playable.type === AnimationCurveType.STEP && this.fadeDir) {
-            if ((this.fadeDir == -1 && p <= 0.5) || (this.fadeDir == 1 && p > 0.5)) blendUpdateNone = 1;
-            else blendUpdateNone = 2;
+            if ((this.fadeDir == -1 && p <= 0.5) || (this.fadeDir == 1 && p > 0.5)) blendUpdateNone = eBlendType.FULL_UPDATE;
+            else blendUpdateNone = eBlendType.NONE;
         }
 
         for (j = 0; j < ctargets.length; j ++) {
-            if (blendUpdateNone === 0) ctargets[j].blendToTarget(input.value, p);
-            else if (blendUpdateNone === 1) ctargets[j].updateToTarget(input.value);
+            if (blendUpdateNone === eBlendType.PARTIAL_BLEND) ctargets[j].blendToTarget(input.value, p);
+            else if (blendUpdateNone === eBlendType.FULL_UPDATE) ctargets[j].updateToTarget(input.value);
         }
         return;
     }
@@ -1510,18 +1541,18 @@ AnimationSession.prototype.blendToTarget = function (input, p) {
             cname = curveNames[i];
             if (!cname) continue;
 
-            blendUpdateNone = 0;
+            blendUpdateNone = eBlendType.PARTIAL_BLEND;
             if (this.playable.animCurvesMap[cname] && this.playable.animCurvesMap[cname].type === AnimationCurveType.STEP && this.fadeDir) {
-                if ((this.fadeDir == -1 && p <= 0.5) || (this.fadeDir == 1 && p > 0.5)) blendUpdateNone = 1;
-                else blendUpdateNone = 2;
+                if ((this.fadeDir == -1 && p <= 0.5) || (this.fadeDir == 1 && p > 0.5)) blendUpdateNone = eBlendType.FULL_UPDATE;
+                else blendUpdateNone = eBlendType.NONE;
             }
 
             ctargets = this.animTargets[cname];
             if (!ctargets) continue;
 
             for (j = 0; j < ctargets.length; j ++) {
-                if (blendUpdateNone === 0) ctargets[j].blendToTarget(input.curveKeyable[cname].value, p);
-                else if (blendUpdateNone === 1) ctargets[j].updateToTarget(input.value);
+                if (blendUpdateNone === eBlendType.PARTIAL_BLEND) ctargets[j].blendToTarget(input.curveKeyable[cname].value, p);
+                else if (blendUpdateNone === eBlendType.FULL_UPDATE) ctargets[j].updateToTarget(input.value);
             }
         }
     }
@@ -1576,7 +1607,7 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
         var blendClip = this.blendables[bname];
         if (blendClip && (blendClip instanceof AnimationClip) && (typeof p === "number")) {
             var blendInput = blendClip.eval(this.accTime % blendClip.duration);
-            input = AnimationClipSnapshot.linearBlend(input, blendInput, p);
+            input = AnimationClipSnapshot.linearBlendExceptStep(input, blendInput, p, this.playable.animCurvesMap);
         }
     }
     // blend custom bone second
