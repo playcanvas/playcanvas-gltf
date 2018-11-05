@@ -991,6 +991,10 @@
             );
             mesh.aabb = aabb;
 
+            if (data.hasOwnProperty('weights')) {
+                mesh.weights = data.weights;
+            }
+
             if (primitive.hasOwnProperty('targets')) {
                 var targets = [];
 
