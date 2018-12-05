@@ -1408,6 +1408,19 @@
         });
     }
 
+    function decodeBinaryUtf8(array) {
+        if (typeof TextDecoder !== 'undefined') {
+            return new TextDecoder().decode(array);
+        }
+
+        var str = "";
+        for (var i = 0, len = array.length; i < len; i++) {
+            str += String.fromCharCode(array[i]);
+        }
+
+        return decodeURIComponent(escape(str));
+    }
+
     function loadGlb(glb, device, success, options) {
         var dataView = new DataView(glb);
 
@@ -1432,9 +1445,7 @@
             return null;
         }
         var jsonData = new Uint8Array(glb, 20, chunkLength);
-        var decoder = new TextDecoder('utf-8');
-        var json = decoder.decode(jsonData);
-        json = JSON.parse(json);
+        var gltf = JSON.parse(decodeBinaryUtf8(jsonData));
 
         // Read the binary buffers
         var buffers = [];
@@ -1455,7 +1466,7 @@
 
         options = options || {};
         options.buffers = buffers;
-        loadGltf(json, device, success, options);
+        loadGltf(gltf, device, success, options);
     }
 
     window.loadGltf = loadGltf;
