@@ -342,7 +342,7 @@ AnimationTarget.getLocalScale = function (node) {
 // *        type: how to interpolate between keys.
 // *
 // *===============================================================================================================
-var AnimationCurveType = { LINEAR: 0, STEP: 1, CUBIC: 2, CUBICSPLINE_GLTF: 3};
+var AnimationCurveType = { LINEAR: 0, STEP: 1, CUBIC: 2, CUBICSPLINE_GLTF: 3 };
 
 var AnimationCurve = function AnimationCurve() {
     AnimationCurve.count ++;
@@ -526,7 +526,7 @@ AnimationCurve.prototype.insertKey = function (type, time, value) {
     this.animKeys.splice(pos, 0, keyable);
 };
 
-//10/15
+// 10/15
 AnimationCurve.prototype.insertKeyable = function (keyable) {
     if (!keyable || this.keyableType != keyable.type)
         return;
@@ -691,7 +691,7 @@ AnimationCurve.prototype.evalCUBIC = function (time) {
     return null;// quaternion or combo
 };
 
-//10/16
+// 10/16
 AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time) {
     if (!this.animKeys || this.animKeys.length === 0)
         return null;
@@ -723,20 +723,18 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time) {
     var p = (time - key1.time) / (key2.time - key1.time);
     var g = key2.time - key1.time;
     if (this.keyableType === AnimationKeyableType.NUM) {
-        resKey.value = AnimationCurve.cubicHermite(g*key1.outTangent, key1.value, g*key2.inTangent, key2.value, p);
-    }
-    else if (this.keyableType === AnimationKeyableType.VEC) {
+        resKey.value = AnimationCurve.cubicHermite(g * key1.outTangent, key1.value, g * key2.inTangent, key2.value, p);
+    } else if (this.keyableType === AnimationKeyableType.VEC) {
         resKey.value = new pc.Vec3();
-        resKey.value.x = AnimationCurve.cubicHermite(g*key1.outTangent.x, key1.value.x, g*key2.inTangent.x, key2.value.x, p);
-        resKey.value.y = AnimationCurve.cubicHermite(g*key1.outTangent.y, key1.value.y, g*key2.inTangent.y, key2.value.y, p);
-        resKey.value.z = AnimationCurve.cubicHermite(g*key1.outTangent.z, key1.value.z, g*key2.inTangent.z, key2.value.z, p);
-    }
-    else if (this.keyableType === AnimationKeyableType.QUAT) {
+        resKey.value.x = AnimationCurve.cubicHermite(g * key1.outTangent.x, key1.value.x, g * key2.inTangent.x, key2.value.x, p);
+        resKey.value.y = AnimationCurve.cubicHermite(g * key1.outTangent.y, key1.value.y, g * key2.inTangent.y, key2.value.y, p);
+        resKey.value.z = AnimationCurve.cubicHermite(g * key1.outTangent.z, key1.value.z, g * key2.inTangent.z, key2.value.z, p);
+    } else if (this.keyableType === AnimationKeyableType.QUAT) {
         resKey.value = new pc.Quat();
-        resKey.value.w = AnimationCurve.cubicHermite(g*key1.outTangent.w, key1.value.w, g*key2.inTangent.w, key2.value.w, p);
-        resKey.value.x = AnimationCurve.cubicHermite(g*key1.outTangent.x, key1.value.x, g*key2.inTangent.x, key2.value.x, p);
-        resKey.value.y = AnimationCurve.cubicHermite(g*key1.outTangent.y, key1.value.y, g*key2.inTangent.y, key2.value.y, p);
-        resKey.value.z = AnimationCurve.cubicHermite(g*key1.outTangent.z, key1.value.z, g*key2.inTangent.z, key2.value.z, p);
+        resKey.value.w = AnimationCurve.cubicHermite(g * key1.outTangent.w, key1.value.w, g * key2.inTangent.w, key2.value.w, p);
+        resKey.value.x = AnimationCurve.cubicHermite(g * key1.outTangent.x, key1.value.x, g * key2.inTangent.x, key2.value.x, p);
+        resKey.value.y = AnimationCurve.cubicHermite(g * key1.outTangent.y, key1.value.y, g * key2.inTangent.y, key2.value.y, p);
+        resKey.value.z = AnimationCurve.cubicHermite(g * key1.outTangent.z, key1.value.z, g * key2.inTangent.z, key2.value.z, p);
         resKey.normalize();
     }
 
@@ -756,7 +754,7 @@ AnimationCurve.prototype.eval = function (time) {
             if (this.keyableType == AnimationKeyableType.QUAT)
                 return this.evalLINEAR(time);
             return this.evalCUBIC(time);
-        case AnimationCurveType.CUBICSPLINE_GLTF://10/15, keyable contains (inTangent, value, outTangent)
+        case AnimationCurveType.CUBICSPLINE_GLTF:// 10/15, keyable contains (inTangent, value, outTangent)
             return this.evalCUBICSPLINE_GLTF(time);
     }
     return null;
@@ -889,8 +887,7 @@ AnimationClipSnapshot.linearBlendExceptStep = function (shot1, shot2, p, animCur
             if (animCurveMap[cname] && animCurveMap[cname].type === AnimationCurveType.STEP) {
                 if (p > 0.5) resShot.curveKeyable[cname] = shot2.curveKeyable[cname];
                 else resShot.curveKeyable[cname] = shot1.curveKeyable[cname];
-            }
-            else { 
+            } else {
                 var resKey = AnimationKeyable.linearBlend(shot1.curveKeyable[cname], shot2.curveKeyable[cname], p);
                 resShot.curveKeyable[cname] = resKey;
             }
