@@ -1111,17 +1111,21 @@
     function translateSkin(data, resources) {
         var gltf = resources.gltf;
 
-        var i, bindMatrix;
+        var i, j, bindMatrix;
         var joints = data.joints;
         var numJoints = joints.length;
         var ibp = [];
         if (data.hasOwnProperty('inverseBindMatrices')) {
             var inverseBindMatrices = data.inverseBindMatrices;
             var ibmData = getAccessorData(gltf, gltf.accessors[inverseBindMatrices], resources.buffers);
+            var ibmValues = [];
 
             for (i = 0; i < numJoints; i++) {
+                for (j = 0; j < 16; j++) {
+                    ibmValues[j] = ibmData[i * 16 + j];
+                }
                 bindMatrix = new pc.Mat4();
-                bindMatrix.set(ibmData.slice(i * 16, i * 16 + 16));
+                bindMatrix.set(ibmValues);
                 ibp.push(bindMatrix);
             }
         } else {
