@@ -829,9 +829,13 @@
             var vertexDataU8  = new Uint8Array(vertexData);
 
             var getAttribute = function (semantic) {
-                return vertexFormat.elements.find(function (element) {
-                    return element.name === semantic;
-                });
+                var elements = vertexFormat.elements;
+                for (i = 0; i < elements.length; i++) {
+                    if (elements[i].name === semantic) {
+                        return elements[i];
+                    }
+                }
+                return null;
             };
 
             var dstIndex, srcIndex;
