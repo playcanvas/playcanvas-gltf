@@ -1342,7 +1342,7 @@ AnimationClip.prototype.eval = function (time, cacheKeyIdx, cacheValue) {//1215
         var result = curve.eval(time, ki, snapshot.curveKeyable[curve.name]);//1215
         var keyable = result[0];
         if (cacheKeyIdx) cacheKeyIdx[curve.name] = result[1]
-        snapshot.curveKeyable[curve.name] = keyable; 
+        snapshot.curveKeyable[curve.name] = keyable;
     }
     return [snapshot, cacheKeyIdx];
 };
