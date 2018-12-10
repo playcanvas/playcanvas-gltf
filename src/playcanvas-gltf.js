@@ -1,5 +1,5 @@
 (function () {
-
+ 
     // Math utility functions
     function nearestPow2(n) {
         return Math.pow(2, Math.round(Math.log(n) / Math.log(2)));
@@ -100,8 +100,8 @@
     //   https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#animation
     function translateAnimation(data, resources) {
         var clip = new AnimationClip();
-        clip.loop = true;
-        if (data.hasOwnProperty('name'))
+        clip.loop = true; 
+        if (data.hasOwnProperty('name')) 
             clip.name = data.name;
 
         var gltf = resources.gltf;
