@@ -1569,7 +1569,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
 
     this.animEvents = [];
 
-    // blend related==========================================================
+    // blend related========================================================== 
     this.blendables = {};
     this.blendWeights = {};
 
@@ -1918,7 +1918,7 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
     for (var cname in this.blendables) {
         if (!this.blendables.hasOwnProperty(cname)) continue;
         p = this.blendWeights[cname];
-        var blendkey = this.blendables[cname];
+        var blendkey = this.blendables[cname];ƒ
         if (!blendkey || !input.curveKeyable[cname] || (blendkey instanceof AnimationClip))
             continue;
         var resKey = AnimationKeyable.linearBlend(input.curveKeyable[cname], blendkey, p);
