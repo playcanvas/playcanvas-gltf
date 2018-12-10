@@ -1301,7 +1301,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
 
     this.animEvents = [];
 
-    // blend related==========================================================
+    // blend related========================================================== 
     this.blendables = {};
     this.blendWeights = {};
 
@@ -1598,10 +1598,9 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
     var i, p;
     var input = this.playable.eval(time);
     // blend related==========================================================
-    // blend animations first
-    var blendableNames = Object.keys(this.blendables);
-    for (i = 0; i < blendableNames.length; i ++) {
-        var bname = blendableNames[i];
+    // blend animations first 
+    for (var bname in this.blendables) {
+        if (!this.blendables.hasOwnProperty(bname)) continue;
         p = this.blendWeights[bname];
         var blendClip = this.blendables[bname];
         if (blendClip && (blendClip instanceof AnimationClip) && (typeof p === "number")) {
@@ -1609,11 +1608,11 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
             input = AnimationClipSnapshot.linearBlendExceptStep(input, blendInput, p, this.playable.animCurvesMap);
         }
     }
-    // blend custom bone second
-    for (i = 0; i < blendableNames.length; i ++) {
-        var cname = blendableNames[i];
+    // blend custom bone second 
+    for (var cname in this.blendables) {
+        if (!this.blendables.hasOwnProperty(cname)) continue;
         p = this.blendWeights[cname];
-        var blendkey = this.blendables[cname];
+        var blendkey = this.blendables[cname];ƒ
         if (!blendkey || !input.curveKeyable[cname] || (blendkey instanceof AnimationClip))
             continue;
         var resKey = AnimationKeyable.linearBlend(input.curveKeyable[cname], blendkey, p);
