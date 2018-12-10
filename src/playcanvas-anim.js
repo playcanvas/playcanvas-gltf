@@ -1378,7 +1378,7 @@ AnimationClip.prototype.eval = function (time) {
         var curve = this.animCurves[i];
         var keyable = curve.eval(time);
         snapshot.curveKeyable[curve.name] = keyable;
-        snapshot.curveNames.push(curve.name);//1226
+        snapshot.curveNames.push(curve.name);//1226 
     }
     return snapshot;
 };
