@@ -1864,7 +1864,7 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
     for (var cname in this.blendables) {
         if (!this.blendables.hasOwnProperty(cname)) continue;
         p = this.blendWeights[cname];
-        var blendkey = this.blendables[cname];ƒ
+        var blendkey = this.blendables[cname];
         if (!blendkey || !input.curveKeyable[cname] || (blendkey instanceof AnimationClip))
             continue;
         var resKey = AnimationKeyable.linearBlend(input.curveKeyable[cname], blendkey, p);
