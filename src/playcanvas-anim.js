@@ -1302,7 +1302,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
     this.blendWeights = {};
 
     // ontimer function for playback
-    var self = this;
+    var self = this; 
     this.onTimer = function (dt) {
         self.curTime += (self.bySpeed * dt);
         self.accTime += (self.bySpeed * dt);
@@ -1323,7 +1323,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
             for (var i = 0; i < self.animEvents.length; i ++)
                 self.animEvents[i].triggered = false;
         }
-        if (self.curTime < self.begTime)
+        if (self.curTime < self.begTime) 
             self.curTime += duration;
 
         if (self.fadeDir) {
@@ -1333,8 +1333,8 @@ var AnimationSession = function AnimationSession(playable, targets) {
                     self.fadeDir = 0;
                     self.fadeBegTime = -1;
                     self.fadeEndTime = -1;
-                    self.fadeTime = -1;
-                } else if (self.fadeDir === -1) { // fadeout completed
+                    self.fadeTime = -1; 
+                } else if (self.fadeDir === -1) { // fadeout completed 
                     self.stop();
                     return;
                 }
@@ -1345,7 +1345,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
         self.invokeByTime(self.curTime);
     };
 };
-
+ 
 AnimationSession.app = null;
 
 AnimationSession.prototype.clone = function () {
@@ -1435,7 +1435,7 @@ AnimationSession.prototype.unsetBlend = function (curveName) {
         delete this.blendables[curveName];
         delete this.blendWeights[curveName];
     }
-};
+}; 
 
 // events related
 AnimationSession.prototype.on = function (name, time, fnCallback, context, parameter) {
@@ -1592,7 +1592,7 @@ AnimationSession.prototype.updateToTarget = function (input) {
     }
 };
 
-AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTime, fadeTime) {
+AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTime, fadeTime) { 
     var i, p;
     var input = this.playable.eval(time);
     // blend related==========================================================
@@ -1618,7 +1618,7 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
         input.curveKeyable[cname] = resKey;
     }
 
-    if (fadeDir === 0 || fadeTime < fadeBegTime || fadeTime > fadeEndTime)
+    if (fadeDir === 0 || fadeTime < fadeBegTime || fadeTime > fadeEndTime) 
         this.updateToTarget(input);
     else {
         p = (fadeTime - fadeBegTime) / (fadeEndTime - fadeBegTime);
@@ -1631,7 +1631,7 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
 
         this.blendToTarget(input, p);
     }
-};
+};  
 
 AnimationSession.prototype.play = function (playable, animTargets) {
     var i;
@@ -1701,7 +1701,7 @@ AnimationSession.prototype.resume = function () {
     }
 };
 
-AnimationSession.prototype.fadeOut = function (duration) {
+AnimationSession.prototype.fadeOut = function (duration) { 
     if (this.fadeDir === 0) // fade out from normal playing session
         this.fadeSpeed = 1;
     else if (this.fadeDir === 1) // fade out from session in the middle of fading In
@@ -1712,7 +1712,7 @@ AnimationSession.prototype.fadeOut = function (duration) {
     if (typeof duration !== "number")
         duration = 0;
 
-    this.fadeBegTime = this.curTime;
+    this.fadeBegTime = this.curTime; 
     this.fadeTime = this.fadeBegTime;
     this.fadeEndTime = this.fadeBegTime + duration;
     this.fadeDir = -1;
@@ -1820,7 +1820,7 @@ AnimationComponent.prototype.stopClip = function () {
     }
 };
 
-AnimationComponent.prototype.crossFadeToClip = function (name, duration) {
+AnimationComponent.prototype.crossFadeToClip = function (name, duration) { 
     var fromClip = this.animClipsMap[this.curClip];
     var toClip = this.animClipsMap[name];
 
@@ -1879,7 +1879,7 @@ AnimationComponent.prototype.crossFadeToSession = function (name, duration) {
 
     if (fromSession && this.animSessions[name]) {
         fromSession.fadeOut(duration);
-        toSession.fadeIn(duration);
+        toSession.fadeIn(duration); 
         this.curClip = name;
     } else if (fromSession) {
         fromSession.fadeOut(duration);
