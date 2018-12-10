@@ -2129,7 +2129,7 @@ AnimationSession.prototype.fadeOut = function (duration) {
     if (typeof duration !== "number")
         duration = 0;
 
-    this.fadeBegTime = this.curTime; 
+    this.fadeBegTime = this.curTime;
     this.fadeTime = this.fadeBegTime;
     this.fadeEndTime = this.fadeBegTime + duration;
     this.fadeDir = -1;
