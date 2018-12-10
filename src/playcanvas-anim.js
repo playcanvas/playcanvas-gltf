@@ -827,6 +827,7 @@ AnimationCurve.cubicCardinal = function (key0, key1, key2, key3, time, tension) 
 // *===============================================================================================================
 var AnimationClipSnapshot = function AnimationClipSnapshot() {
     this.curveKeyable = {};// curveKeyable[curveName]=keyable
+    this.curveNames = [];
 };
 
 AnimationClipSnapshot.prototype.copy = function (shot) {
@@ -834,10 +835,11 @@ AnimationClipSnapshot.prototype.copy = function (shot) {
         return this;
 
     this.curveKeyable = {};
-    var curveNames = Object.keys(shot.curveKeyable);
-    for (var i = 0; i < curveNames.length; i ++) {
-        var cname = curveNames[i];
+    this.curveNames = [];
+    for (var i = 0; i < shot.curveNames.length; i ++) {
+        var cname = shot.curveNames[i];
         this.curveKeyable[cname] = new AnimationKeyable().copy(shot.curveKeyable[cname]);
+        this.curveNames.push(cname);
     }
     return this;
 };
@@ -855,10 +857,9 @@ AnimationClipSnapshot.linearBlend = function (shot1, shot2, p) {
     if (p === 1) return shot2;
 
     var resShot = new AnimationClipSnapshot();
-    resShot.copy(shot1);
-    var curveNames = Object.keys(shot2.curveKeyable);
-    for (var i = 0; i < curveNames.length; i ++) {
-        var cname = curveNames[i];
+    resShot.copy(shot1); 
+    for (var i = 0; i < shot2.curveNames.length; i ++) {
+        var cname = shot2.curveNames[i];
         if (shot1.curveKeyable[cname] && shot2.curveKeyable[cname]) {
             var resKey = AnimationKeyable.linearBlend(shot1.curveKeyable[cname], shot2.curveKeyable[cname], p);
             resShot.curveKeyable[cname] = resKey;
@@ -880,9 +881,8 @@ AnimationClipSnapshot.linearBlendExceptStep = function (shot1, shot2, p, animCur
 
     var resShot = new AnimationClipSnapshot();
     resShot.copy(shot1);
-    var curveNames = Object.keys(shot2.curveKeyable);
-    for (var i = 0; i < curveNames.length; i ++) {
-        var cname = curveNames[i];
+    for (var i = 0; i < shot2.curveNames.length; i ++) {
+        var cname = shot2.curveNames[i];
         if (shot1.curveKeyable[cname] && shot2.curveKeyable[cname]) {
             if (animCurveMap[cname] && animCurveMap[cname].type === AnimationCurveType.STEP) {
                 if (p > 0.5) resShot.curveKeyable[cname] = shot2.curveKeyable[cname];
@@ -1115,6 +1115,7 @@ AnimationClip.prototype.eval = function (time) {
         var curve = this.animCurves[i];
         var keyable = curve.eval(time);
         snapshot.curveKeyable[curve.name] = keyable;
+        snapshot.curveNames.push(curve.name);
     }
     return snapshot;
 };
@@ -1533,9 +1534,8 @@ AnimationSession.prototype.blendToTarget = function (input, p) {
 
     // playable is a clip, input is a AnimationClipSnapshot, animTargets is an object {curvename1:[]targets, curvename2:[]targets, curvename3:[]targets}
     if (this.playable instanceof AnimationClip && input instanceof AnimationClipSnapshot) {
-        var curveNames = Object.keys(input.curveKeyable);
-        for (i = 0; i < curveNames.length; i ++) {
-            cname = curveNames[i];
+        for (i = 0; i < input.curveNames.length; i ++) {
+            cname = input.curveNames[i];
             if (!cname) continue;
 
             blendUpdateNone = eBlendType.PARTIAL_BLEND;
@@ -1575,10 +1575,9 @@ AnimationSession.prototype.updateToTarget = function (input) {
     }
 
     // playable is a clip, input is a AnimationClipSnapshot
-    if (this.playable instanceof AnimationClip && input instanceof AnimationClipSnapshot) {
-        var curveNames = Object.keys(input.curveKeyable);
-        for (i = 0; i < curveNames.length; i ++) {
-            cname = curveNames[i];
+    if (this.playable instanceof AnimationClip && input instanceof AnimationClipSnapshot) { 
+        for (i = 0; i < input.curveNames.length; i ++) {
+            cname = input.curveNames[i];
             if (!cname) continue;
             ctargets = this.animTargets[cname];
             if (!ctargets) continue;
