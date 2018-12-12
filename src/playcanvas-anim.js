@@ -1597,6 +1597,7 @@ AnimationSession.prototype.clone = function () {
     cloned.fadeSpeed = this.fadeSpeed;
 
     cloned.playable = this.playable;
+    cloned._keyIdx = this._keyIdx;
 
     // targets
     cloned.animTargets = {};
