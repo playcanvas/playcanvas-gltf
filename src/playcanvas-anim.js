@@ -606,7 +606,7 @@ AnimationCurve.prototype.getSubCurve = function (tmBeg, tmEnd) {
     return subCurve;
 };
 
-AnimationCurve.prototype.evalLINEAR = function (time) {
+AnimationCurve.prototype.evalLINEAR_seq = function (time) {
     if (!this.animKeys || this.animKeys.length === 0)
         return null;
 
@@ -687,7 +687,7 @@ AnimationCurve.prototype.evalLINEAR_cache = function (time, cacheKeyIdx, cacheVa
     }
 
     // 3. both found then interpolate
-    var p = (time - key1.time) / (key2.time - key1.time);
+    var p = (time - key1.time) / (key2.time - key1.time); 
     resKey = AnimationKeyable.linearBlend(key1, key2, p, resKey);
     resKey.time = time;
     return [resKey, i];
@@ -1453,7 +1453,7 @@ AnimationClip.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {/
 
         var result = curve.eval_cache(time, ki, kv);//1215
         var keyable = result[0];
-        if (cacheKeyIdx) cacheKeyIdx[curve.name] = result[1]
+        if (cacheKeyIdx) cacheKeyIdx[curve.name] = result[1];
         snapshot.curveKeyable[curve.name] = keyable;
     }
     return [snapshot, cacheKeyIdx];
@@ -1667,7 +1667,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
     this.playable = null;
     this.animTargets = {};
     if (playable) {
-        this.playable = playable;// curve or clip
+        this.playable = playable;// curve or clip 
         this.allocateCache();
         if (!targets)
             this.animTargets = playable.getAnimTargets();
