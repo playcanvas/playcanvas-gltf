@@ -606,7 +606,7 @@ AnimationCurve.prototype.getSubCurve = function (tmBeg, tmEnd) {
     return subCurve;
 };
 
-AnimationCurve.prototype.evalLINEAR = function (time) {
+AnimationCurve.prototype.evalLINEAR_seq = function (time) {
     if (!this.animKeys || this.animKeys.length === 0)
         return null;
 
@@ -687,7 +687,7 @@ AnimationCurve.prototype.evalLINEAR_cache = function (time, cacheKeyIdx, cacheVa
     }
 
     // 3. both found then interpolate
-    var p = (time - key1.time) / (key2.time - key1.time);
+    var p = (time - key1.time) / (key2.time - key1.time); 
     resKey = AnimationKeyable.linearBlend(key1, key2, p, resKey);
     resKey.time = time;
     return [resKey, i];
@@ -742,7 +742,6 @@ AnimationCurve.prototype.evalSTEP_cache = function (time, cacheKeyIdx, cacheValu
     resKey.time = time;
     return [resKey, i];
 };
-
 
 AnimationCurve.prototype.evalCUBIC = function (time) {
     if (!this.animKeys || this.animKeys.length === 0)
@@ -1333,18 +1332,18 @@ AnimationClip.prototype.getSubClip = function (tmBeg, tmEnd) {
     return subClip;
 };
 
-// take a snapshot of clip at this moment
+// take a snapshot of clip at this moment 
 AnimationClip.prototype.eval = function (time, cacheKeyIdx, cacheValue) {//1215
     var snapshot = cacheValue; //new AnimationClipSnapshot();
     snapshot.time = time;
 
     for (var i = 0, len = this.animCurves.length; i < len; i++) {
         var curve = this.animCurves[i];
-        var ki;
+        var ki; 
         if (cacheKeyIdx) ki = cacheKeyIdx[curve.name]; 
         var result = curve.eval(time, ki, snapshot.curveKeyable[curve.name]);//1215
         var keyable = result[0];
-        if (cacheKeyIdx) cacheKeyIdx[curve.name] = result[1]
+        if (cacheKeyIdx) cacheKeyIdx[curve.name] = result[1];
         snapshot.curveKeyable[curve.name] = keyable;
     }
     return [snapshot, cacheKeyIdx];
@@ -1522,7 +1521,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
     this.playable = null;
     this.animTargets = {};
     if (playable) {
-        this.playable = playable;// curve or clip
+        this.playable = playable;// curve or clip 
         this.allocateCache();
         if (!targets)
             this.animTargets = playable.getAnimTargets();
