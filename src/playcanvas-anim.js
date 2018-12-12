@@ -600,7 +600,7 @@ AnimationCurve.prototype.getSubCurve = function (tmBeg, tmEnd) {
     return subCurve;
 };
 
-AnimationCurve.prototype.evalLINEAR_seq = function (time) {
+AnimationCurve.prototype.evalLINEAR = function (time) {
     if (!this.animKeys || this.animKeys.length === 0)
         return null;
 
