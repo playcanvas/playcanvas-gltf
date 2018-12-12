@@ -1,6 +1,3 @@
-// 1. remove object.keys
-// 2. remove new
-// 3. 
 // *===============================================================================================================
 // * class AnimationKeyable
 // *
@@ -710,7 +707,7 @@ AnimationCurve.prototype.evalSTEP = function (time) {
     return resKey;
 };
 
-AnimationCurve.prototype.evalSTEP_cache = function (time, cacheKeyIdx, cacheValue) { //1215
+AnimationCurve.prototype.evalSTEP_cache = function (time, cacheKeyIdx, cacheValue) { //1215 
     if (!this.animKeys || this.animKeys.length === 0)
         return [null, cacheKeyIdx];
 
