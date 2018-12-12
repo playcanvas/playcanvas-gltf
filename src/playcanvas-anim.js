@@ -1,6 +1,3 @@
-// 1. remove object.keys
-// 2. remove new
-// 3. 
 // *===============================================================================================================
 // * class AnimationKeyable
 // *
@@ -996,7 +993,7 @@ AnimationCurve.prototype.eval = function (time) {
     // 1. find the interval [key1, key2]
     var resKey = new AnimationKeyable();
     var key1, key2; 
-    for (var c = 0; c < this.animKeys.length; c ++) { //1210
+    for (var c = 0; c < this.animKeys.length; c ++) {
         i = (begIdx + c) % this.animKeys.length; 
 
         if (this.animKeys[i].time === time) {
@@ -1055,13 +1052,13 @@ AnimationCurve.prototype.eval = function (time) {
     return [resKey, i]; 
 };
 
-AnimationCurve.prototype.eval = function (time, keyIdx) { //1210
+AnimationCurve.prototype.eval = function (time, keyIdx) {
     if (!this.animKeys || this.animKeys.length === 0)
         return [null, keyIdx];
 
     switch (this.type) {
-        case AnimationCurveType.LINEAR: return this.evalLINEAR(time, keyIdx);
-        case AnimationCurveType.STEP: return this.evalSTEP(time, keyIdx);
+        case AnimationCurveType.LINEAR: return this.evalLINEAR_cache(time, keyIdx);
+        case AnimationCurveType.STEP: return this.evalSTEP_cache(time, keyIdx);
         case AnimationCurveType.CUBIC:
             if (this.keyableType == AnimationKeyableType.QUAT)
                 return this.evalLINEAR(time);
