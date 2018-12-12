@@ -1,6 +1,3 @@
-// 1. remove object.keys
-// 2. remove new
-// 3. 
 // *===============================================================================================================
 // * class AnimationKeyable
 // *
@@ -637,8 +634,7 @@ AnimationCurve.prototype.evalLINEAR_seq = function (time) {
     return resKey;
 };
 
-
-AnimationCurve.prototype.evalLINEAR = function (time, keyIdx) {
+AnimationCurve.prototype.evalLINEAR_cache = function (time, keyIdx) {
     if (!this.animKeys || this.animKeys.length === 0)
         return [null, keyIdx];
 
@@ -691,7 +687,7 @@ AnimationCurve.prototype.evalLINEAR = function (time, keyIdx) {
     return [resKey, i];
 };
 
-AnimationCurve.prototype.evalSTEP_seq = function (time) {
+AnimationCurve.prototype.evalSTEP = function (time) {
     if (!this.animKeys || this.animKeys.length === 0)
         return null;
 
@@ -708,7 +704,7 @@ AnimationCurve.prototype.evalSTEP_seq = function (time) {
     return resKey;
 };
 
-AnimationCurve.prototype.evalSTEP = function (time, keyIdx) {
+AnimationCurve.prototype.evalSTEP_cache = function (time, keyIdx) {
     if (!this.animKeys || this.animKeys.length === 0)
         return [null, keyIdx];
 
@@ -742,7 +738,7 @@ AnimationCurve.prototype.evalSTEP = function (time, keyIdx) {
 };
 
 
-AnimationCurve.prototype.evalCUBIC_seq = function (time) {
+AnimationCurve.prototype.evalCUBIC = function (time) {
     if (!this.animKeys || this.animKeys.length === 0)
         return null;
 
@@ -782,7 +778,7 @@ AnimationCurve.prototype.evalCUBIC_seq = function (time) {
     return null;// quaternion or combo
 };
 
-AnimationCurve.prototype.evalCUBIC = function (time, keyIdx) { //1210
+AnimationCurve.prototype.evalCUBIC_cache = function (time, keyIdx) {
     if (!this.animKeys || this.animKeys.length === 0)
         return [null, keyIdx];
 
@@ -846,7 +842,7 @@ AnimationCurve.prototype.evalCUBIC = function (time, keyIdx) { //1210
     return [null, keyIdx];// quaternion or combo
 };
 
-AnimationCurve.prototype.evalCUBICSPLINE_GLTF_seq = function (time) {
+AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time) {
     if (!this.animKeys || this.animKeys.length === 0)
         return null;
 
@@ -897,7 +893,7 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF_seq = function (time) {
 
 };
 
-AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time, keyIdx) {
+AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, keyIdx) {
     if (!this.animKeys || this.animKeys.length === 0)
         return [null, keyIdx];
 
@@ -908,7 +904,7 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time, keyIdx) {
     // 1. find the interval [key1, key2]
     var resKey = new AnimationKeyable();
     var key1, key2; 
-    for (var c = 0; c < this.animKeys.length; c ++) { //1210
+    for (var c = 0; c < this.animKeys.length; c ++) {
         i = (begIdx + c) % this.animKeys.length; 
 
         if (this.animKeys[i].time === time) {
@@ -967,19 +963,19 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time, keyIdx) {
     return [resKey, i]; 
 };
 
-AnimationCurve.prototype.eval = function (time, keyIdx) { //1210
+AnimationCurve.prototype.eval = function (time, keyIdx) {
     if (!this.animKeys || this.animKeys.length === 0)
         return [null, keyIdx];
 
     switch (this.type) {
-        case AnimationCurveType.LINEAR: return this.evalLINEAR(time, keyIdx);
-        case AnimationCurveType.STEP: return this.evalSTEP(time, keyIdx);
+        case AnimationCurveType.LINEAR: return this.evalLINEAR_cache(time, keyIdx);
+        case AnimationCurveType.STEP: return this.evalSTEP_cache(time, keyIdx);
         case AnimationCurveType.CUBIC:
             if (this.keyableType == AnimationKeyableType.QUAT)
-                return this.evalLINEAR(time, keyIdx);
-            return this.evalCUBIC(time, keyIdx);
+                return this.evalLINEAR_cache(time, keyIdx);
+            return this.evalCUBIC_cache(time, keyIdx);
         case AnimationCurveType.CUBICSPLINE_GLTF:// 10/15, keyable contains (inTangent, value, outTangent)
-            return this.evalCUBICSPLINE_GLTF(time, keyIdx);
+            return this.evalCUBICSPLINE_GLTF_cache(time, keyIdx);
     }
     return [null, keyIdx];
 };
@@ -1331,7 +1327,7 @@ AnimationClip.prototype.getSubClip = function (tmBeg, tmEnd) {
 };
 
 // take a snapshot of clip at this moment
-AnimationClip.prototype.eval = function (time, keyIdx) { //1210
+AnimationClip.prototype.eval = function (time, keyIdx) {
     var snapshot = new AnimationClipSnapshot();
     snapshot.time = time;
 
@@ -1495,7 +1491,7 @@ AnimationEvent.prototype.invoke = function () {
 //                           one clip can be played by multiple AnimationSession simultaneously
 // *===============================================================================================================
 var AnimationSession = function AnimationSession(playable, targets) {
-    this._keyIdx;//1210, integer if playable is curve, object {} is playable is clip
+    this._keyIdx;//integer if playable is curve, object {} is playable is clip
 
     this.begTime = -1;
     this.endTime = -1;
@@ -1825,7 +1821,7 @@ AnimationSession.prototype.updateToTarget = function (input) {
 
 AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTime, fadeTime) {
     var i, p;
-    var ret = this.playable.eval(time, this._keyIdx);//1210
+    var ret = this.playable.eval(time, this._keyIdx);
     var input = ret[0];
     this._keyIdx = ret[1];
     // blend related==========================================================
