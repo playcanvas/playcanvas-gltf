@@ -984,14 +984,14 @@ AnimationCurve.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {
 
 AnimationCurve.prototype.eval = function (time) {
     if (!this.animKeys || this.animKeys.length === 0)
-        return [null, keyIdx];
+        return [null, cacheKeyIdx];
 
     var begIdx = 0;
-    if (keyIdx) begIdx = keyIdx;
+    if (cacheKeyIdx) begIdx = cacheKeyIdx;
     var i = begIdx;
 
     // 1. find the interval [key1, key2]
-    var resKey = new AnimationKeyable();
+    var resKey = cacheValue;//new AnimationKeyable(); 1215
     var key1, key2; 
     for (var c = 0; c < this.animKeys.length; c ++) {
         i = (begIdx + c) % this.animKeys.length; 
@@ -1052,13 +1052,13 @@ AnimationCurve.prototype.eval = function (time) {
     return [resKey, i]; 
 };
 
-AnimationCurve.prototype.eval = function (time, keyIdx) {
+AnimationCurve.prototype.eval = function (time, cacheKeyIdx, cacheValue) { //1215
     if (!this.animKeys || this.animKeys.length === 0)
-        return [null, keyIdx];
+        return [null, cacheKeyIdx];
 
     switch (this.type) {
-        case AnimationCurveType.LINEAR: return this.evalLINEAR_cache(time, keyIdx);
-        case AnimationCurveType.STEP: return this.evalSTEP_cache(time, keyIdx);
+        case AnimationCurveType.LINEAR: return this.evalLINEAR_cache(time, cacheKeyIdx, cacheValue);
+        case AnimationCurveType.STEP: return this.evalSTEP_cache(time, cacheKeyIdx, cacheValue);
         case AnimationCurveType.CUBIC:
             if (this.keyableType == AnimationKeyableType.QUAT)
                 return this.evalLINEAR(time);
@@ -1066,7 +1066,7 @@ AnimationCurve.prototype.eval = function (time, keyIdx) {
         case AnimationCurveType.CUBICSPLINE_GLTF://10/15, keyable contains (inTangent, value, outTangent)
             return this.evalCUBICSPLINE_GLTF(time);
     }
-    return [null, keyIdx];
+    return [null, cacheKeyIdx];
 };
 
 // static method: tangent 1, value 1, tangent 2, value 2, proportion
@@ -1441,20 +1441,19 @@ AnimationClip.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {/
 
 // take a snapshot of clip at this moment 
 AnimationClip.prototype.eval = function (time) {
-    var snapshot = new AnimationClipSnapshot();
     snapshot.time = time;
 
     for (var i = 0, len = this.animCurves.length; i < len; i++) {
         var curve = this.animCurves[i];
         var ki;
-        if (keyIdx) ki = keyIdx[curve.name]; 
-        var result = curve.eval(time, ki);
+        if (cacheKeyIdx) ki = cacheKeyIdx[curve.name]; 
+        var result = curve.eval(time, ki, snapshot.curveKeyable[curve.name]);//1215
         var keyable = result[0];
         if (keyIdx) keyIdx[curve.name] = result[1]
         snapshot.curveKeyable[curve.name] = keyable;
-        snapshot.curveNames.push(curve.name);//1226 
+        snapshot.curveNames.push(curve.name);//1226
     }
-    return [snapshot, keyIdx];
+    return [snapshot, cacheKeyIdx];
 };
 
 AnimationClip.prototype.constructFromRoot = function (root) {
@@ -1630,7 +1629,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
     this.playable = null;
     this.animTargets = {};
     if (playable) {
-        this.playable = playable;// curve or clip 
+        this.playable = playable;// curve or clip
         this.allocateCache();
         if (!targets)
             this.animTargets = playable.getAnimTargets();
