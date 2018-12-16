@@ -684,7 +684,7 @@ AnimationCurve.prototype.evalLINEAR_cache = function (time, cacheKeyIdx, cacheVa
     }
 
     // 3. both found then interpolate
-    var p = (time - key1.time) / (key2.time - key1.time); 
+    var p = (time - key1.time) / (key2.time - key1.time);
     resKey = AnimationKeyable.linearBlend(key1, key2, p, resKey);
     resKey.time = time;
     return [resKey, i];
@@ -707,7 +707,7 @@ AnimationCurve.prototype.evalSTEP = function (time) {
     return resKey;
 };
 
-AnimationCurve.prototype.evalSTEP_cache = function (time, cacheKeyIdx, cacheValue) { //1215 
+AnimationCurve.prototype.evalSTEP_cache = function (time, cacheKeyIdx, cacheValue) { //1215
     if (!this.animKeys || this.animKeys.length === 0)
         return [null, cacheKeyIdx];
 
@@ -1664,7 +1664,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
     this.playable = null;
     this.animTargets = {};
     if (playable) {
-        this.playable = playable;// curve or clip 
+        this.playable = playable;// curve or clip
         this.allocateCache();
         if (!targets)
             this.animTargets = playable.getAnimTargets();
