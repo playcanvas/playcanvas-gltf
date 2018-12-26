@@ -965,26 +965,6 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyId
     return [resKey, i]; 
 };
 
-<<<<<<< HEAD
-=======
-AnimationCurve.prototype.eval = function (time) {
-    if (!this.animKeys || this.animKeys.length === 0)
-        return null;
-
-    switch (this.type) {
-        case AnimationCurveType.LINEAR: return this.evalLINEAR(time);
-        case AnimationCurveType.STEP: return this.evalSTEP(time);
-        case AnimationCurveType.CUBIC:
-            if (this.keyableType == AnimationKeyableType.QUAT)
-                return this.evalLINEAR(time);
-            return this.evalCUBIC(time);
-        case AnimationCurveType.CUBICSPLINE_GLTF://10/15, keyable contains (inTangent, value, outTangent)
-            return this.evalCUBICSPLINE_GLTF(time);
-    }
-    return null;
-};
-
->>>>>>> blendable cache
 AnimationCurve.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) { //1215
     if (!this.animKeys || this.animKeys.length === 0)
         return [null, cacheKeyIdx];
@@ -1511,6 +1491,20 @@ AnimationClip.prototype.eval = function (time) {
     return snapshot;
 };
 
+// take a snapshot of clip at this moment 
+AnimationClip.prototype.eval = function (time) {
+    var snapshot = new AnimationClipSnapshot();
+    snapshot.time = time;
+
+    for (var i = 0, len = this.animCurves.length; i < len; i++) {
+        var curve = this.animCurves[i];
+        var keyable = curve.eval(time);
+        snapshot.curveKeyable[curve.name] = keyable;
+        snapshot.curveNames.push(curve.name);//1226
+    }
+    return snapshot;
+};
+
 AnimationClip.prototype.constructFromRoot = function (root) {
     if (!root)
         return;
@@ -1762,7 +1756,6 @@ AnimationSession._allocatePlayableCache = function(playable) {
         return snapshot;
     }
     return null;
-<<<<<<< HEAD
 };
 
 AnimationSession.prototype.allocateCache = function() { //1215
@@ -1775,20 +1768,6 @@ AnimationSession.prototype.allocateCache = function() { //1215
     this._cacheValue = AnimationSession._allocatePlayableCache(this.playable);
 };
 
-=======
-};
-
-AnimationSession.prototype.allocateCache = function() { //1215
-    if (!this.playable)
-        return; 
-    
-    if (this.playable instanceof AnimationCurve) this._cacheKeyIdx = 0;  
-    else if (this.playable instanceof AnimationClip) this._cacheKeyIdx = {};
-
-    this._cacheValue = AnimationSession._allocatePlayableCache(this.playable);
-};
-
->>>>>>> blendable cache
 AnimationSession.prototype.clone = function () {
     var i, key;
     var cloned = new AnimationSession();
