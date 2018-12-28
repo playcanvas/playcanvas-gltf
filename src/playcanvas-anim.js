@@ -740,7 +740,6 @@ AnimationCurve.prototype.evalSTEP_cache = function (time, cacheKeyIdx, cacheValu
     return [resKey, i];
 };
 
-
 AnimationCurve.prototype.evalCUBIC = function (time) {
     if (!this.animKeys || this.animKeys.length === 0)
         return null;
@@ -966,7 +965,7 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyId
     return [resKey, i]; 
 };
 
-AnimationCurve.prototype.eval = function (time, cacheKeyIdx, cacheValue) { //1215
+AnimationCurve.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) { //1215
     if (!this.animKeys || this.animKeys.length === 0)
         return [null, cacheKeyIdx];
 
@@ -981,6 +980,23 @@ AnimationCurve.prototype.eval = function (time, cacheKeyIdx, cacheValue) { //121
             return this.evalCUBICSPLINE_GLTF_cache(time, cacheKeyIdx, cacheValue);
     }
     return [null, cacheKeyIdx];
+};
+
+AnimationCurve.prototype.eval = function (time) {
+    if (!this.animKeys || this.animKeys.length === 0)
+        return null;
+
+    switch (this.type) {
+        case AnimationCurveType.LINEAR: return this.evalLINEAR(time);
+        case AnimationCurveType.STEP: return this.evalSTEP(time);
+        case AnimationCurveType.CUBIC:
+            if (this.keyableType == AnimationKeyableType.QUAT)
+                return this.evalLINEAR(time);
+            return this.evalCUBIC(time);
+        case AnimationCurveType.CUBICSPLINE_GLTF://10/15, keyable contains (inTangent, value, outTangent)
+            return this.evalCUBICSPLINE_GLTF(time);
+    }
+    return null;
 };
 
 // static method: tangent 1, value 1, tangent 2, value 2, proportion
@@ -1330,21 +1346,41 @@ AnimationClip.prototype.getSubClip = function (tmBeg, tmEnd) {
     return subClip;
 };
 
-// take a snapshot of clip at this moment
-AnimationClip.prototype.eval = function (time, cacheKeyIdx, cacheValue) {//1215
-    var snapshot = cacheValue; //new AnimationClipSnapshot();
+AnimationClip.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {//1226
+    if (!cacheValue)
+        return [this.eval(), cacheKeyIdx];
+
+    var snapshot = cacheValue;
     snapshot.time = time;
 
     for (var i = 0, len = this.animCurves.length; i < len; i++) {
         var curve = this.animCurves[i];
         var ki;
-        if (cacheKeyIdx) ki = cacheKeyIdx[curve.name]; 
-        var result = curve.eval(time, ki, snapshot.curveKeyable[curve.name]);//1215
+        if (cacheKeyIdx) ki = cacheKeyIdx[curve.name];
+        var kv;
+        if (cacheValue) kv = cacheValue.curveKeyable[curve.name];
+        else kv = new AnimationKeyable(curve.keyableType);
+
+        var result = curve.eval_cache(time, ki, kv);//1215
         var keyable = result[0];
         if (cacheKeyIdx) cacheKeyIdx[curve.name] = result[1]
-        snapshot.curveKeyable[curve.name] = keyable; 
+        snapshot.curveKeyable[curve.name] = keyable;
     }
     return [snapshot, cacheKeyIdx];
+};
+
+// take a snapshot of clip at this moment 
+AnimationClip.prototype.eval = function (time) {
+    var snapshot = new AnimationClipSnapshot();
+    snapshot.time = time;
+
+    for (var i = 0, len = this.animCurves.length; i < len; i++) {
+        var curve = this.animCurves[i];
+        var keyable = curve.eval(time);
+        snapshot.curveKeyable[curve.name] = keyable;
+        snapshot.curveNames.push(curve.name);//1226
+    }
+    return snapshot;
 };
 
 AnimationClip.prototype.constructFromRoot = function (root) {
@@ -1496,6 +1532,7 @@ AnimationEvent.prototype.invoke = function () {
 var AnimationSession = function AnimationSession(playable, targets) {
     this._cacheKeyIdx;//integer if playable is curve, object {} if playable is clip
     this._cacheValue;//1215, keyable if playable is curve, snapshot if playable is clip, all pre allocated
+    this._cacheBlendValues = {};//1226
 
     this.begTime = -1;
     this.endTime = -1;
@@ -1580,24 +1617,35 @@ var AnimationSession = function AnimationSession(playable, targets) {
 
 AnimationSession.app = null;
 
+AnimationSession._allocatePlayableCache = function(playable) {
+    if (!playable)
+        return null;
+
+    if (playable instanceof AnimationCurve) {
+        return new AnimationKeyable(playable.keyableType); 
+    }
+    else if (playable instanceof AnimationClip) {
+        var snapshot = new AnimationClipSnapshot(); 
+        for (var i = 0, len = playable.animCurves.length; i < len; i++) {
+            var cname = playable.animCurves[i].name;
+            snapshot.curveKeyable[cname] = new AnimationKeyable(playable.animCurves[i].keyableType);
+            snapshot.curveNames.push(cname);
+        } 
+        return snapshot;
+    }
+    return null;
+};
+
 AnimationSession.prototype.allocateCache = function() { //1215
     if (!this.playable)
-        return;
+        return; 
+    
+    if (this.playable instanceof AnimationCurve) this._cacheKeyIdx = 0;  
+    else if (this.playable instanceof AnimationClip) this._cacheKeyIdx = {};
 
-    if (this.playable instanceof AnimationCurve) {
-        this._cacheKeyIdx = 0;
-        this._cacheValue = new AnimationKeyable(); 
-    }
-    else if (this.playable instanceof AnimationClip) {
-        this._cacheKeyIdx = {};
-        this._cacheValue = new AnimationClipSnapshot(); 
-        for (var i = 0, len = this.playable.animCurves.length; i < len; i++) {
-            var cname = this.playable.animCurves[i].name;
-            this._cacheValue.curveKeyable[cname] = new AnimationKeyable(this.playable.animCurves[i].keyableType);
-            this._cacheValue.curveNames.push(cname);
-        } 
-    }
+    this._cacheValue = AnimationSession._allocatePlayableCache(this.playable);
 };
+
 AnimationSession.prototype.clone = function () {
     var i, key;
     var cloned = new AnimationSession();
@@ -1639,9 +1687,12 @@ AnimationSession.prototype.clone = function () {
 
     // blending
     cloned.blendables = {};
-    for (key in this.blendables)
-        if (this.blendables.hasOwnProperty(key))
+    for (key in this.blendables) {
+        if (this.blendables.hasOwnProperty(key)) {
             cloned.blendables[key] = this.blendables[key];
+            cloned._cacheBlendValues[key] = AnimationSession._allocatePlayableCache(this.blendables[key]);//1226, only animationclip has a snapshot cache, otherwise null
+        }
+    }
 
     cloned.blendWeights = {};
     for (key in this.blendWeights)
@@ -1657,6 +1708,7 @@ AnimationSession.prototype.setBlend = function (blendValue, weight, curveName){
         if (!curveName || curveName === "")
             curveName = "__default__";
         this.blendables[curveName] = blendValue;
+        this._cacheBlendValues[curveName] = AnimationSession._allocatePlayableCache(blendValue);//1226
         this.blendWeights[curveName] = weight;
         return;
     }
@@ -1675,6 +1727,7 @@ AnimationSession.prototype.setBlend = function (blendValue, weight, curveName){
 
     this.blendWeights[curveName] = weight;
     this.blendables[curveName] = new AnimationKeyable(keyType, 0, blendValue);
+    this._cacheBlendValues[curveName] = null;//1226, null if blendable is not animationclip
 };
 
 AnimationSession.prototype.unsetBlend = function (curveName) {
@@ -1684,6 +1737,7 @@ AnimationSession.prototype.unsetBlend = function (curveName) {
     // unset blendvalue
     if (this.blendables[curveName]) {
         delete this.blendables[curveName];
+        delete this._cacheBlendValues[curveName]; //1226
         delete this.blendWeights[curveName];
     }
 };
@@ -1843,7 +1897,7 @@ AnimationSession.prototype.updateToTarget = function (input) {
 
 AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTime, fadeTime) {
     var i, p;
-    var ret = this.playable.eval(time, this._cacheKeyIdx, this._cacheValue); //1215
+    var ret = this.playable.eval_cache(time, this._cacheKeyIdx, this._cacheValue); //1215
     var input = ret[0];
     this._cacheKeyIdx = ret[1];
     // blend related==========================================================
@@ -1853,7 +1907,7 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
         p = this.blendWeights[bname];
         var blendClip = this.blendables[bname];
         if (blendClip && (blendClip instanceof AnimationClip) && (typeof p === "number")) {
-            var blendInput = blendClip.eval(this.accTime % blendClip.duration)[0];
+            var blendInput = blendClip.eval_cache(this.accTime % blendClip.duration, null, this._cacheBlendValues[bname])[0];//1226
             input = AnimationClipSnapshot.linearBlendExceptStep(input, blendInput, p, this.playable.animCurvesMap);
         }
     }
