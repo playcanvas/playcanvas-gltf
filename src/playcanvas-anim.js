@@ -7,8 +7,8 @@ var AnimationKeyableType = { NUM: 0, VEC: 1, QUAT: 2 };
 /**
  * @constructor
  * @param {idk} type 
- * @param {idk} time 
- * @param {idk} value 
+ * @param {idk} [time]
+ * @param {idk} [value]
  */
 
 var AnimationKeyable = function (type, time, value) {
@@ -1865,7 +1865,7 @@ AnimationClip.prototype.setInterpolationType = function (type) {
  * @param {idk} parameter 
  */
 
-var AnimationEvent = function (name, time, fnCallback, context, parameter) {
+var AnimationEvent_ = function (name, time, fnCallback, context, parameter) {
     this.name = name;
     this.triggerTime = time;
     this.fnCallback = fnCallback;
@@ -1875,7 +1875,7 @@ var AnimationEvent = function (name, time, fnCallback, context, parameter) {
     this.triggered = false;
 };
 
-AnimationEvent.prototype.invoke = function () {
+AnimationEvent_.prototype.invoke = function () {
     if (this.fnCallback) {
         this.fnCallback.call(this.context, this.parameter);
         this.triggered = true;
@@ -1891,8 +1891,8 @@ AnimationEvent.prototype.invoke = function () {
 
 /**
  * @constructor
- * @param {Playable} playable 
- * @param {AnimationTargetsMap} targets
+ * @param {Playable} [playable]
+ * @param {AnimationTargetsMap} [targets]
  */
 
 var AnimationSession = function (playable, targets) {
@@ -1984,7 +1984,7 @@ var AnimationSession = function (playable, targets) {
 AnimationSession.app = null;
 
 /**
- * @param {idk} playable
+ * @param {Playable} playable
  */
 
 AnimationSession._allocatePlayableCache = function(playable) {
@@ -2031,7 +2031,7 @@ AnimationSession.prototype.clone = function () {
     // fading
     cloned.fadeBegTime = this.fadeBegTime;
     cloned.fadeEndTime = this.fadeEndTime;
-    cloned.fadtTime = this.fadeTime;
+    cloned.fadeTime = this.fadeTime;
     cloned.fadeDir = this.fadeDir;// 1 is in, -1 is out
     cloned.fadeSpeed = this.fadeSpeed;
 
@@ -2075,9 +2075,9 @@ AnimationSession.prototype.clone = function () {
 // blend related==========================================================
 
 /**
- * @param {idk} blendValue
- * @param {idk} weight
- * @param {idk} curveName
+ * @param {BlendValue} blendValue
+ * @param {number} weight
+ * @param {string} curveName
  */
 
 AnimationSession.prototype.setBlend = function (blendValue, weight, curveName){
@@ -2137,7 +2137,7 @@ AnimationSession.prototype.on = function (name, time, fnCallback, context, param
     if (!name || !fnCallback)
         return;
 
-    var event = new AnimationEvent(name, time, fnCallback, context, parameter);
+    var event = new AnimationEvent_(name, time, fnCallback, context, parameter);
     var pos = 0;
     for (; pos < this.animEvents.length; pos ++) {
         if (this.animEvents[pos].triggerTime > time)
@@ -2511,7 +2511,12 @@ AnimationSession.prototype.fadeToSelf = function (duration) {
 // *       animClips: dictionary type, query animation clips animClips[clipName]
 // *
 // *===============================================================================================================
-var AnimationComponent = function AnimationComponent() {
+
+/**
+ * @constructor
+ */
+
+var AnimationComponent = function () {
     this.name = "";
     this.animClipsMap = {}; // make it a map, easy to query clip by name
     this.animClips = [];
@@ -2525,12 +2530,16 @@ AnimationComponent.prototype.clipCount = function () {
     return this.animClips.length;
 };
 
+/**
+ * @returns {AnimationClip}
+ */
+
 AnimationComponent.prototype.getCurrentClip = function () {
     return this.animClipsMap[this.curClip];
 };
 
 /**
- * @param {idk} index
+ * @param {number} index
  */
 
 AnimationComponent.prototype.clipAt = function (index) {
@@ -2540,7 +2549,7 @@ AnimationComponent.prototype.clipAt = function (index) {
 };
 
 /**
- * @param {idk} clip
+ * @param {AnimationClip} clip
  */
 
 AnimationComponent.prototype.addClip = function (clip) {
@@ -2551,7 +2560,7 @@ AnimationComponent.prototype.addClip = function (clip) {
 };
 
 /**
- * @param {idk} name
+ * @param {string} name
  */
 
 AnimationComponent.prototype.removeClip = function (name) {
@@ -2569,7 +2578,7 @@ AnimationComponent.prototype.removeClip = function (name) {
 };
 
 /**
- * @param {idk} name
+ * @param {string} name
  */
 
 AnimationComponent.prototype.playClip = function (name) {
@@ -2589,7 +2598,7 @@ AnimationComponent.prototype.stopClip = function () {
 };
 
 /**
- * @param {idk} name
+ * @param {string} name
  * @param {idk} duration
  */
 
@@ -2642,7 +2651,7 @@ AnimationComponent.prototype.getCurrentSession = function () {
 };
 
 /**
- * @param {idk} name
+ * @param {string} name
  */
 
 AnimationComponent.prototype.playSession = function (name) {
@@ -2662,8 +2671,8 @@ AnimationComponent.prototype.stopSession = function () {
 };
 
 /**
- * @param {idk} name
- * @param {idk} duration
+ * @param {string} name
+ * @param {number} duration
  */
 
 AnimationComponent.prototype.crossFadeToSession = function (name, duration) {
