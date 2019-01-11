@@ -1891,8 +1891,8 @@ AnimationEvent.prototype.invoke = function () {
 
 /**
  * @constructor
- * @param {idk} playable 
- * @param {AnimationTarget[]} targets
+ * @param {Playable} playable 
+ * @param {AnimationTargetsMap} targets
  */
 
 var AnimationSession = function (playable, targets) {
