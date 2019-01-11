@@ -1,10 +1,12 @@
-declare class AnimationKeyable {
+declare interface AnimationKeyable {
 	value: any;
+	outTangent: SingleDOF;
+	inTangent: SingleDOF;
 	normalize(): any;
 }
 
-declare class AnimationTarget {
-
+declare interface AnimationTarget {
+	vScale?: pc.Vec3 | number[];
 }
 
 type idk = any; // not figured out yet / todo
@@ -12,7 +14,20 @@ type SingleDOF = number | pc.Vec2 | pc.Vec3 | pc.Vec4 | pc.Quat;
 type BlendValue = SingleDOF | Playable;
 type AnimationInput = AnimationCurve | AnimationKeyable | AnimationClip | AnimationClipSnapshot;
 
-declare class AnimationCurve extends Playable {
+declare interface Playable {
+	animCurvesMap: any;
+	session: AnimationSession;
+	bySpeed: any;
+	loop: any;
+	getAnimTargets(): AnimationTargetsMap;
+	eval_cache(time: number, cacheKeyIdx: any, cacheValue: any): any;
+}
+
+declare class AnimationCurve implements Playable {
+	name: string;
+	type: AnimationCurveType;
+	tension: number;
+	duration: number;
 	keyableType: any;
 	animTargets: AnimationTarget[];
 	animKeys: AnimationKeyable[];
@@ -28,19 +43,24 @@ declare class AnimationClipSnapshot {
 	time: number;
 }
 
-declare class AnimationClip extends Playable {
+// AnimationEvent is a CSS class, so I added an underscore
+declare interface AnimationEvent_ {
+	name: string;
+	triggerTime: number;
+	fnCallback: any;
+}
+
+declare class AnimationClip implements Playable {
 	duration: number;
 	animCurves: any;
 	session: AnimationSession;
 	animCurvesMap: any;
+	root: any;
+	getAnimTargets(): AnimationTargetsMap;
 }
 
-// AnimationEvent is a CSS class, so I added an underscore
-declare interface AnimationEvent_ {
 
-}
-
-declare class AnimationSession {
+declare interface AnimationSession {
 	animTargets: AnimationTargetsMap;
 	_cacheKeyIdx: number | object;
 	speed: any;
@@ -48,6 +68,7 @@ declare class AnimationSession {
 	_cacheBlendValues: any;
 	blendWeights: any;
 	animEvents: AnimationEvent_[];
+	onTimer: any;
 	_allocatePlayableCache(): any;
 }
 
@@ -57,14 +78,6 @@ declare interface AnimationComponent {
 	animSessions: any;
 }
 
-declare interface Playable {
-	animCurvesMap: any;
-	session: AnimationSession;
-	bySpeed: any;
-	loop: any;
-	getAnimTargets(): AnimationTargetsMap;
-	eval_cache(time: number, cacheKeyIdx: any, cacheValue: any): any;
-}
 
 declare interface AnimationTargetsMap {
 	[name: string]: AnimationTarget[];

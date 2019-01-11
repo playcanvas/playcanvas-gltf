@@ -426,6 +426,11 @@ AnimationTarget.getLocalScale = function (node) {
 // *        type: how to interpolate between keys.
 // *
 // *===============================================================================================================
+
+/**
+ * @enum {number}
+ */
+
 var AnimationCurveType = { LINEAR: 0, STEP: 1, CUBIC: 2, CUBICSPLINE_GLTF: 3 };
 
 /**
@@ -472,7 +477,7 @@ Object.defineProperty(AnimationCurve.prototype, 'bySpeed', {
 });
 
 /**
- * @param {idk} curve
+ * @param {AnimationCurve} curve
  */
 
 AnimationCurve.prototype.copy = function (curve) {
@@ -515,7 +520,7 @@ AnimationCurve.prototype.addTarget = function (targetNode, targetPath, targetPro
 /**
  * @param {idk} targetNode
  * @param {idk} targetPath
- * @param {idk} targetProp
+ * @param {idk} [targetProp]
  */
 
 AnimationCurve.prototype.setTarget = function (targetNode, targetPath, targetProp) {
@@ -539,8 +544,8 @@ AnimationCurve.prototype.resetSession = function () {
 };
 
 /**
- * @param {idk} keyable
- * @param {idk} p
+ * @param {AnimationKeyable} keyable
+ * @param {number} p
  */
 
 AnimationCurve.prototype.blendToTarget = function (keyable, p) {
@@ -548,7 +553,7 @@ AnimationCurve.prototype.blendToTarget = function (keyable, p) {
 };
 
 /**
- * @param {idk} keyable
+ * @param {AnimationKeyable} keyable
  */
 
 AnimationCurve.prototype.updateToTarget = function (keyable) {
@@ -556,7 +561,11 @@ AnimationCurve.prototype.updateToTarget = function (keyable) {
 };
 
 // this.animTargets wrapped in object, with curve name
+/**
+ * @returns {AnimationTargetsMap}
+ */
 AnimationCurve.prototype.getAnimTargets = function () {
+    /** @type {AnimationTargetsMap} */
     var result = {};
     result[this.name] = this.animTargets;// an array []
     return result;
@@ -1516,7 +1525,11 @@ AnimationClip.prototype.updateToTarget = function (snapshot) {
 };
 
 // a dictionary: retrieve animTargets with curve name
+/**
+ * @returns {AnimationTargetsMap}
+ */
 AnimationClip.prototype.getAnimTargets = function () {
+    /** @type {AnimationTargetsMap} */
     var animTargets = {};
     for (var i = 0, len = this.animCurves.length; i < len; i++) {
         var curve = this.animCurves[i];
@@ -1855,17 +1868,13 @@ AnimationClip.prototype.setInterpolationType = function (type) {
     }
 };
 
-// *===============================================================================================================
-// * class AnimationEvent:
-// *===============================================================================================================
-
 /**
  * @constructor
- * @param {string} name 
- * @param {number} time 
- * @param {idk} fnCallback 
- * @param {idk} context 
- * @param {idk} parameter 
+ * @param {string} name
+ * @param {number} time
+ * @param {idk} fnCallback
+ * @param {idk} context
+ * @param {idk} parameter
  */
 
 var AnimationEvent_ = function (name, time, fnCallback, context, parameter) {
@@ -1885,8 +1894,10 @@ AnimationEvent_.prototype.invoke = function () {
     }
 };
 
-AnimationEvent_.prototype.clone = function () {
-    return new AnimationEvent_(
+/*
+// note: used in line 2083, but undefined... never used so far
+pcAnimationEvent.prototype.clone = function () {
+    return new pcAnimationEvent(
         this.name,
         this.triggerTime,
         this.fnCallback,
@@ -1894,6 +1905,7 @@ AnimationEvent_.prototype.clone = function () {
         this.parameter
     );
 }
+*/
 
 // *===============================================================================================================
 // * class AnimationSession: playback/runtime related thing
