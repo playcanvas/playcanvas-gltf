@@ -2,13 +2,16 @@
 // * class AnimationKeyable
 // *
 // *===============================================================================================================
+/**
+ * @enum {number}
+ */
 var AnimationKeyableType = { NUM: 0, VEC: 1, QUAT: 2 };
 
 /**
  * @constructor
- * @param {idk} type 
- * @param {idk} [time]
- * @param {idk} [value]
+ * @param {AnimationKeyableType} [type]
+ * @param {number} [time]
+ * @param {SingleDOF} [value]
  */
 
 var AnimationKeyable = function (type, time, value) {
@@ -16,9 +19,9 @@ var AnimationKeyable = function (type, time, value) {
 };
 
 /**
- * @param {idk} type
- * @param {idk} time
- * @param {idk} value
+ * @param {AnimationKeyableType} [type]
+ * @param {number} [time]
+ * @param {SingleDOF} [value]
  */
 
 AnimationKeyable.prototype.init = function (type, time, value) {
@@ -37,7 +40,7 @@ AnimationKeyable.prototype.init = function (type, time, value) {
 };
 
 /**
- * @param {idk} keyable
+ * @param {AnimationKeyable} keyable
  */
 
 AnimationKeyable.prototype.copy = function (keyable) {
@@ -61,8 +64,8 @@ AnimationKeyable.prototype.clone = function () {
 };
 
 /**
- * @param {idk} keyable1
- * @param {idk} keyable2
+ * @param {AnimationKeyable} keyable1
+ * @param {AnimationKeyable} keyable2
  * @summary
  * static function for lack of overloaded operator
  * return keyable1 + keyable2
@@ -86,8 +89,8 @@ AnimationKeyable.sum = function (keyable1, keyable2) {
 };
 
 /**
- * @param {idk} keyable1
- * @param {idk} keyable2
+ * @param {AnimationKeyable} keyable1
+ * @param {AnimationKeyable} keyable2
  * @summary return keyable1 - keyable2
  */
 
@@ -109,8 +112,8 @@ AnimationKeyable.minus = function (keyable1, keyable2) {
 };
 
 /**
- * @param {idk} keyable
- * @param {idk} coeff
+ * @param {AnimationKeyable} keyable
+ * @param {number} coeff
  * @summary return keyable * coeff
  */
 
@@ -133,8 +136,8 @@ AnimationKeyable.mul = function (keyable, coeff) {
 };
 
 /**
- * @param {idk} keyable
- * @param {idk} coeff
+ * @param {AnimationKeyable} keyable
+ * @param {number} coeff
  */
 // return keyable / coeff
 AnimationKeyable.div = function (keyable, coeff) {
@@ -145,10 +148,10 @@ AnimationKeyable.div = function (keyable, coeff) {
 };
 
 /**
- * @param {idk} keyable1
- * @param {idk} keyable2
- * @param {idk} p
- * @param {idk} cacheValue
+ * @param {AnimationKeyable} keyable1
+ * @param {AnimationKeyable} keyable2
+ * @param {number} p
+ * @param {AnimationKeyable} [cacheValue]
  */
 
 AnimationKeyable.linearBlend = function (keyable1, keyable2, p, cacheValue) {
@@ -181,9 +184,9 @@ AnimationKeyable.linearBlend = function (keyable1, keyable2, p, cacheValue) {
 };
 
 /**
- * @param {idk} value1
- * @param {idk} value2
- * @param {idk} p
+ * @param {SingleDOF} value1
+ * @param {SingleDOF} value2
+ * @param {number} p
  */
 
 AnimationKeyable.linearBlendValue = function (value1, value2, p) {
@@ -217,8 +220,8 @@ AnimationKeyable.linearBlendValue = function (value1, value2, p) {
 /**
  * @constructor
  * @param {idk} targetNode
- * @param {idk} targetPath
- * @param {idk} targetProp
+ * @param {idk} [targetPath]
+ * @param {idk} [targetProp]
  */
 var AnimationTarget = function (targetNode, targetPath, targetProp) {
     this.targetNode = targetNode;
@@ -725,7 +728,7 @@ AnimationCurve.prototype.removeAllKeys = function () {
 };
 
 /**
- * @param {idk} time
+ * @param {number} time
  */
 
 AnimationCurve.prototype.shiftKeyTime = function (time) {
@@ -734,8 +737,8 @@ AnimationCurve.prototype.shiftKeyTime = function (time) {
 };
 
 /**
- * @param {idk} tmBeg
- * @param {idk} tmEnd
+ * @param {number} tmBeg
+ * @param {number} tmEnd
  */
 
 AnimationCurve.prototype.getSubCurve = function (tmBeg, tmEnd) {
@@ -768,7 +771,7 @@ AnimationCurve.prototype.getSubCurve = function (tmBeg, tmEnd) {
 };
 
 /**
- * @param {idk} time
+ * @param {number} time
  */
 
 AnimationCurve.prototype.evalLINEAR = function (time) {
@@ -806,9 +809,9 @@ AnimationCurve.prototype.evalLINEAR = function (time) {
 };
 
 /**
- * @param {idk} time
- * @param {idk} cacheKeyIdx
- * @param {idk} cacheValue
+ * @param {number} time
+ * @param {number} cacheKeyIdx
+ * @param {AnimationKeyable} cacheValue
  */
 
 AnimationCurve.prototype.evalLINEAR_cache = function (time, cacheKeyIdx, cacheValue) { //1215
@@ -865,7 +868,7 @@ AnimationCurve.prototype.evalLINEAR_cache = function (time, cacheKeyIdx, cacheVa
 };
 
 /**
- * @param {idk} time
+ * @param {number} time
  */
 
 AnimationCurve.prototype.evalSTEP = function (time) {
@@ -886,9 +889,9 @@ AnimationCurve.prototype.evalSTEP = function (time) {
 };
 
 /**
- * @param {idk} time
- * @param {idk} cacheKeyIdx
- * @param {idk} cacheValue
+ * @param {number} time
+ * @param {number} cacheKeyIdx
+ * @param {AnimationKeyable} cacheValue
  */
 
 AnimationCurve.prototype.evalSTEP_cache = function (time, cacheKeyIdx, cacheValue) { //1215
@@ -925,7 +928,7 @@ AnimationCurve.prototype.evalSTEP_cache = function (time, cacheKeyIdx, cacheValu
 };
 
 /**
- * @param {idk} time
+ * @param {number} time
  */
 
 AnimationCurve.prototype.evalCUBIC = function (time) {
@@ -969,9 +972,9 @@ AnimationCurve.prototype.evalCUBIC = function (time) {
 };
 
 /**
- * @param {idk} time
- * @param {idk} cacheKeyIdx
- * @param {idk} cacheValue
+ * @param {number} time
+ * @param {number} cacheKeyIdx
+ * @param {AnimationKeyable} cacheValue
  */
 
 AnimationCurve.prototype.evalCUBIC_cache = function (time, cacheKeyIdx, cacheValue) {//1215
@@ -1039,7 +1042,7 @@ AnimationCurve.prototype.evalCUBIC_cache = function (time, cacheKeyIdx, cacheVal
 };
 
 /**
- * @param {idk} time
+ * @param {number} time
  */
 
 AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time) {
@@ -1094,9 +1097,9 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time) {
 };
 
 /**
- * @param {idk} time
- * @param {idk} cacheKeyIdx
- * @param {idk} cacheValue
+ * @param {number} time
+ * @param {number} cacheKeyIdx
+ * @param {AnimationKeyable} cacheValue
  */
 
 AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyIdx, cacheValue) {//1215
@@ -1170,9 +1173,9 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyId
 };
 
 /**
- * @param {idk} time
- * @param {idk} cacheKeyIdx
- * @param {idk} cacheValue
+ * @param {number} time
+ * @param {number} cacheKeyIdx
+ * @param {AnimationKeyable} cacheValue
  */
 
 AnimationCurve.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) { //1215
@@ -1193,7 +1196,7 @@ AnimationCurve.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {
 };
 
 /**
- * @param {idk} time
+ * @param {number} time
  */
 
 AnimationCurve.prototype.eval = function (time) {
@@ -1214,11 +1217,11 @@ AnimationCurve.prototype.eval = function (time) {
 };
 
 /**
- * @param {idk} t1
- * @param {idk} v1
- * @param {idk} t2
- * @param {idk} v2
- * @param {idk} p
+ * @param {number} t1
+ * @param {number} v1
+ * @param {number} t2
+ * @param {number} v2
+ * @param {number} p
  * @summary static method: tangent 1, value 1, tangent 2, value 2, proportion
  */
 
@@ -1236,13 +1239,13 @@ AnimationCurve.cubicHermite = function (t1, v1, t2, v2, p) {
 };
 
 /**
- * @param {idk} key0
- * @param {idk} key1
- * @param {idk} key2
- * @param {idk} key3
- * @param {idk} time
- * @param {idk} tension
- * @param {idk} cacheValue
+ * @param {AnimationKeyable} key0
+ * @param {AnimationKeyable} key1
+ * @param {AnimationKeyable} key2
+ * @param {AnimationKeyable} key3
+ * @param {number} time
+ * @param {number} tension
+ * @param {AnimationKeyable} [cacheValue]
  * @summary static: only for num or vec
  */
 
@@ -1308,7 +1311,7 @@ var AnimationClipSnapshot = function () {
 };
 
 /**
- * @param {idk} shot
+ * @param {AnimationClipSnapshot} shot
  */
 
 AnimationClipSnapshot.prototype.copy = function (shot) {
@@ -1331,9 +1334,9 @@ AnimationClipSnapshot.prototype.clone = function () {
 };
 
 /**
- * @param {idk} shot1
- * @param {idk} shot2
- * @param {idk} p
+ * @param {AnimationClipSnapshot} shot1
+ * @param {AnimationClipSnapshot} shot2
+ * @param {number} p
  * @summary static function: linear blending
  */
 
@@ -1360,9 +1363,9 @@ AnimationClipSnapshot.linearBlend = function (shot1, shot2, p) {
 };
 
 /**
- * @param {idk} shot1
- * @param {idk} shot2
- * @param {idk} p
+ * @param {AnimationClipSnapshot} shot1
+ * @param {AnimationClipSnapshot} shot2
+ * @param {number} p
  * @param {idk} animCurveMap
  * @summary static function: linear blending except for step curve
  */
@@ -1406,7 +1409,7 @@ AnimationClipSnapshot.linearBlendExceptStep = function (shot1, shot2, p, animCur
 
 /**
  * @constructor
- * @param {idk} root
+ * @param {idk} [root]
  */
 
 var AnimationClip = function (root) {
@@ -1653,8 +1656,8 @@ AnimationClip.prototype.removeAllEvents = function () {
 // clip related
 
 /**
- * @param {idk} tmBeg
- * @param {idk} tmEnd
+ * @param {number} tmBeg
+ * @param {number} tmEnd
  */
 
 AnimationClip.prototype.getSubClip = function (tmBeg, tmEnd) {
@@ -1672,9 +1675,9 @@ AnimationClip.prototype.getSubClip = function (tmBeg, tmEnd) {
 };
 
 /**
- * @param {idk} time
+ * @param {number} time
  * @param {idk} cacheKeyIdx
- * @param {idk} cacheValue
+ * @param {AnimationClipSnapshot} cacheValue
  */
 
 AnimationClip.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {//1226
@@ -1703,7 +1706,7 @@ AnimationClip.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {/
 // take a snapshot of clip at this moment
 
 /**
- * @param {idk} time
+ * @param {number} [time]
  */
 
 AnimationClip.prototype.eval = function (time) {
@@ -1858,8 +1861,8 @@ AnimationClip.prototype.setInterpolationType = function (type) {
 
 /**
  * @constructor
- * @param {idk} name 
- * @param {idk} time 
+ * @param {string} name 
+ * @param {number} time 
  * @param {idk} fnCallback 
  * @param {idk} context 
  * @param {idk} parameter 
@@ -1881,6 +1884,16 @@ AnimationEvent_.prototype.invoke = function () {
         this.triggered = true;
     }
 };
+
+AnimationEvent_.prototype.clone = function () {
+    return new AnimationEvent_(
+        this.name,
+        this.triggerTime,
+        this.fnCallback,
+        this.context,
+        this.parameter
+    );
+}
 
 // *===============================================================================================================
 // * class AnimationSession: playback/runtime related thing
@@ -2108,7 +2121,7 @@ AnimationSession.prototype.setBlend = function (blendValue, weight, curveName){
 };
 
 /**
- * @param {idk} curveName
+ * @param {string} curveName
  */
 
 AnimationSession.prototype.unsetBlend = function (curveName) {
@@ -2151,8 +2164,8 @@ AnimationSession.prototype.on = function (name, time, fnCallback, context, param
 };
 
 /**
- * @param {idk} name
- * @param {idk} time
+ * @param {string} name
+ * @param {number} time
  * @param {idk} fnCallback
  */
 
@@ -2177,7 +2190,7 @@ AnimationSession.prototype.removeAllEvents = function () {
 };
 
 /**
- * @param {idk} name
+ * @param {string} name
  */
 
 AnimationSession.prototype.invokeByName = function (name) {
@@ -2189,7 +2202,7 @@ AnimationSession.prototype.invokeByName = function (name) {
 };
 
 /**
- * @param {idk} time
+ * @param {number} time
  */
 
 AnimationSession.prototype.invokeByTime = function (time) {
@@ -2207,8 +2220,8 @@ AnimationSession.prototype.invokeByTime = function (time) {
 };
 
 /**
- * @param {idk} input
- * @param {idk} p
+ * @param {AnimationInput} input
+ * @param {number} p
  */
 
 AnimationSession.prototype.blendToTarget = function (input, p) {
@@ -2269,7 +2282,7 @@ AnimationSession.prototype.blendToTarget = function (input, p) {
 };
 
 /**
- * @param {idk} input
+ * @param {AnimationInput} input
  */
 
 AnimationSession.prototype.updateToTarget = function (input) {
@@ -2359,8 +2372,8 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
 };
 
 /**
- * @param {idk} playable
- * @param {idk} animTargets
+ * @param {Playable} playable
+ * @param {AnimationTargetsMap} [animTargets]
  */
 
 AnimationSession.prototype.play = function (playable, animTargets) {
@@ -2456,7 +2469,7 @@ AnimationSession.prototype.fadeOut = function (duration) {
 
 /**
  * @param {idk} duration
- * @param {idk} playable
+ * @param {Playable} [playable]
  */
 
 AnimationSession.prototype.fadeIn = function (duration, playable) {
