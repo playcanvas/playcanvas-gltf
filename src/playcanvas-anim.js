@@ -45,7 +45,7 @@ AnimationKeyable.prototype.clone = function () {
 // static function for lack of overloaded operator
 // return keyable1 + keyable2
 AnimationKeyable.sum = function (keyable1, keyable2) {
-    if (!keyable1 || !keyable2 || keyable1.type != keyable2)
+    if (!keyable1 || !keyable2 || keyable1.type != keyable2.type)
         return null;
 
     var resKeyable = new AnimationKeyable(keyable1.type);
@@ -63,7 +63,7 @@ AnimationKeyable.sum = function (keyable1, keyable2) {
 
 // return keyable1 - keyable2
 AnimationKeyable.minus = function (keyable1, keyable2) {
-    if (!keyable1 || !keyable2 || keyable1.type != keyable2)
+    if (!keyable1 || !keyable2 || keyable1.type != keyable2.type)
         return null;
 
     var resKeyable = new AnimationKeyable(keyable1.type);
@@ -1661,7 +1661,7 @@ AnimationSession.prototype.clone = function () {
     // fading
     cloned.fadeBegTime = this.fadeBegTime;
     cloned.fadeEndTime = this.fadeEndTime;
-    cloned.fadtTime = this.fadeTime;
+    cloned.fadeTime = this.fadeTime;
     cloned.fadeDir = this.fadeDir;// 1 is in, -1 is out
     cloned.fadeSpeed = this.fadeSpeed;
 
