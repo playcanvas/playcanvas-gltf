@@ -17,7 +17,7 @@ declare interface AnimationKeyable {
 	normalize(): any;
 }
 
-interface AnimationEventCallback {
+declare interface AnimationEventCallback {
 	(context: any, parameter: any): void
 }
 
@@ -29,28 +29,24 @@ declare interface AnimationTarget {
 	
 }
 
-type SingleDOF = number | pc.Vec2 | pc.Vec3 | pc.Vec4 | pc.Quat;
-type BlendValue = SingleDOF | Playable;
-type AnimationInput = AnimationCurve | AnimationKeyable | AnimationClip | AnimationClipSnapshot;
+declare type SingleDOF = number | pc.Vec2 | pc.Vec3 | pc.Vec4 | pc.Quat;
+declare type BlendValue = SingleDOF | Playable;
+declare type AnimationInput = AnimationCurve | AnimationKeyable | AnimationClip | AnimationClipSnapshot;
 
-/*
+// looks like: {
+// 	...
+// 	curve13: 106,
+// 	curve14: 106,
+// 	curve15: 106,
+// 	curve16: 66,
+// 	curve17: 105,
+// 	curve18: 106,
+// 	...
+// }
+declare type MapStringToNumber = {[curvenum: string]: number};
 
-the object subtype looks like:
-
-{	
-	...
-	curve13: 106,
-	curve14: 106,
-	curve15: 106,
-	curve16: 66,
-	curve17: 105,
-	curve18: 106,
-	...
-}
-
-*/
-
-type AnimationCacheKey = /*number |*/ {[curvenum: string]: number};
+declare type Tuple_AnimationKeyable_number = [AnimationKeyable, number];
+declare type Tuple_AnimationClipSnapshot_MapStringToNumber = [AnimationClipSnapshot, MapStringToNumber];
 
 declare interface Playable {
 	animCurvesMap: any;
@@ -111,9 +107,9 @@ declare interface AnimationSession {
 }
 
 declare interface AnimationComponent {
-	animClips: any;
-	animClipsMap: any;
-	animSessions: any;
+	animClips: AnimationClip[];
+	animClipsMap: {[clipname: string]: AnimationClip};
+	animSessions: {[sessionname: string]: AnimationSession};
 }
 
 declare interface AnimationTargetsMap {

@@ -22,6 +22,7 @@ var AnimationKeyable = function (type, time, value) {
  * @param {AnimationKeyableType} [type]
  * @param {number} [time]
  * @param {BlendValue} [value]
+ * @returns {AnimationKeyable}
  */
 
 AnimationKeyable.prototype.init = function (type, time, value) {
@@ -41,6 +42,7 @@ AnimationKeyable.prototype.init = function (type, time, value) {
 
 /**
  * @param {AnimationKeyable} keyable
+ * @returns {AnimationKeyable}
  */
 
 AnimationKeyable.prototype.copy = function (keyable) {
@@ -66,6 +68,7 @@ AnimationKeyable.prototype.clone = function () {
 /**
  * @param {AnimationKeyable} keyable1
  * @param {AnimationKeyable} keyable2
+ * @returns {AnimationKeyable}
  * @summary
  * static function for lack of overloaded operator
  * return keyable1 + keyable2
@@ -91,6 +94,7 @@ AnimationKeyable.sum = function (keyable1, keyable2) {
 /**
  * @param {AnimationKeyable} keyable1
  * @param {AnimationKeyable} keyable2
+ * @returns {AnimationKeyable}
  * @summary return keyable1 - keyable2
  */
 
@@ -114,6 +118,7 @@ AnimationKeyable.minus = function (keyable1, keyable2) {
 /**
  * @param {AnimationKeyable} keyable
  * @param {number} coeff
+ * @returns {AnimationKeyable}
  * @summary return keyable * coeff
  */
 
@@ -138,6 +143,7 @@ AnimationKeyable.mul = function (keyable, coeff) {
 /**
  * @param {AnimationKeyable} keyable
  * @param {number} coeff
+ * @returns {AnimationKeyable}
  */
 // return keyable / coeff
 AnimationKeyable.div = function (keyable, coeff) {
@@ -152,6 +158,7 @@ AnimationKeyable.div = function (keyable, coeff) {
  * @param {AnimationKeyable} keyable2
  * @param {number} p
  * @param {AnimationKeyable} [cacheValue]
+ * @returns {AnimationKeyable}
  */
 
 AnimationKeyable.linearBlend = function (keyable1, keyable2, p, cacheValue) {
@@ -379,9 +386,9 @@ AnimationTarget.prototype.updateToTarget = function (value) {
 
 // static function
 /**
- * @param {idk} root
- * @param {idk} vec3Scale
- * @param {idk} output
+ * @param {pc.GraphNode} root
+ * @param {pc.Vec3} vec3Scale
+ * @param {object} output
  */
 AnimationTarget.constructTargetNodes = function (root, vec3Scale, output) {
     if (!root)
@@ -401,6 +408,7 @@ AnimationTarget.constructTargetNodes = function (root, vec3Scale, output) {
 // static function
 /**
  * @param {pc.GraphNode} node
+ * @returns {pc.Vec3}
  */
 AnimationTarget.getLocalScale = function (node) {
     if (!node)
@@ -598,6 +606,10 @@ AnimationCurve.prototype.off = function (name, time, fnCallback) {
     return this;
 };
 
+/**
+ * @returns {AnimationCurve}
+ */
+
 AnimationCurve.prototype.removeAllEvents = function () {
     if (this.session)
         this.session.removeAllEvents();
@@ -781,6 +793,7 @@ AnimationCurve.prototype.getSubCurve = function (tmBeg, tmEnd) {
 
 /**
  * @param {number} time
+ * @returns {AnimationKeyable}
  */
 
 AnimationCurve.prototype.evalLINEAR = function (time) {
@@ -821,6 +834,7 @@ AnimationCurve.prototype.evalLINEAR = function (time) {
  * @param {number} time
  * @param {number} cacheKeyIdx
  * @param {AnimationKeyable} cacheValue
+ * @returns {Tuple_AnimationKeyable_number}
  */
 
 AnimationCurve.prototype.evalLINEAR_cache = function (time, cacheKeyIdx, cacheValue) { //1215
@@ -878,6 +892,7 @@ AnimationCurve.prototype.evalLINEAR_cache = function (time, cacheKeyIdx, cacheVa
 
 /**
  * @param {number} time
+ * @returns {AnimationKeyable}
  */
 
 AnimationCurve.prototype.evalSTEP = function (time) {
@@ -901,6 +916,7 @@ AnimationCurve.prototype.evalSTEP = function (time) {
  * @param {number} time
  * @param {number} cacheKeyIdx
  * @param {AnimationKeyable} cacheValue
+ * @returns {Tuple_AnimationKeyable_number}
  */
 
 AnimationCurve.prototype.evalSTEP_cache = function (time, cacheKeyIdx, cacheValue) { //1215
@@ -938,6 +954,7 @@ AnimationCurve.prototype.evalSTEP_cache = function (time, cacheKeyIdx, cacheValu
 
 /**
  * @param {number} time
+ * @returns {AnimationKeyable}
  */
 
 AnimationCurve.prototype.evalCUBIC = function (time) {
@@ -984,6 +1001,7 @@ AnimationCurve.prototype.evalCUBIC = function (time) {
  * @param {number} time
  * @param {number} cacheKeyIdx
  * @param {AnimationKeyable} cacheValue
+ * @returns {Tuple_AnimationKeyable_number}
  */
 
 AnimationCurve.prototype.evalCUBIC_cache = function (time, cacheKeyIdx, cacheValue) {//1215
@@ -1052,6 +1070,7 @@ AnimationCurve.prototype.evalCUBIC_cache = function (time, cacheKeyIdx, cacheVal
 
 /**
  * @param {number} time
+ * @returns {AnimationKeyable}
  */
 
 AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time) {
@@ -1109,6 +1128,7 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time) {
  * @param {number} time
  * @param {number} cacheKeyIdx
  * @param {AnimationKeyable} cacheValue
+ * @returns {Tuple_AnimationKeyable_number}
  */
 
 AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyIdx, cacheValue) {//1215
@@ -1185,6 +1205,7 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyId
  * @param {number} time
  * @param {number} cacheKeyIdx
  * @param {AnimationKeyable} cacheValue
+ * @returns {Tuple_AnimationKeyable_number}
  */
 
 AnimationCurve.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) { //1215
@@ -1206,6 +1227,7 @@ AnimationCurve.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {
 
 /**
  * @param {number} time
+ * @returns {AnimationKeyable}
  */
 
 AnimationCurve.prototype.eval = function (time) {
@@ -1231,6 +1253,7 @@ AnimationCurve.prototype.eval = function (time) {
  * @param {number} t2
  * @param {number} v2
  * @param {number} p
+ * @returns {number}
  * @summary static method: tangent 1, value 1, tangent 2, value 2, proportion
  */
 
@@ -1255,6 +1278,7 @@ AnimationCurve.cubicHermite = function (t1, v1, t2, v2, p) {
  * @param {number} time
  * @param {number} tension
  * @param {AnimationKeyable} [cacheValue]
+ * @returns {AnimationKeyable}
  * @summary static: only for num or vec
  */
 
@@ -1346,6 +1370,7 @@ AnimationClipSnapshot.prototype.clone = function () {
  * @param {AnimationClipSnapshot} shot1
  * @param {AnimationClipSnapshot} shot2
  * @param {number} p
+ * @returns {AnimationClipSnapshot}
  * @summary static function: linear blending
  */
 
@@ -1376,6 +1401,7 @@ AnimationClipSnapshot.linearBlend = function (shot1, shot2, p) {
  * @param {AnimationClipSnapshot} shot2
  * @param {number} p
  * @param {AnimationCurveMap} animCurveMap
+ * @returns {AnimationClipSnapshot}
  * @summary static function: linear blending except for step curve
  */
 
@@ -1465,6 +1491,7 @@ Object.defineProperty(AnimationClip.prototype, 'bySpeed', {
 
 /**
  * @param {AnimationClip} clip
+ * @returns {AnimationClip}
  */
 
 AnimationClip.prototype.copy = function (clip) {
@@ -1671,6 +1698,7 @@ AnimationClip.prototype.removeAllEvents = function () {
 /**
  * @param {number} tmBeg
  * @param {number} tmEnd
+ * @returns {AnimationClip}
  */
 
 AnimationClip.prototype.getSubClip = function (tmBeg, tmEnd) {
@@ -1689,8 +1717,9 @@ AnimationClip.prototype.getSubClip = function (tmBeg, tmEnd) {
 
 /**
  * @param {number} time
- * @param {AnimationCacheKey} cacheKeyIdx
+ * @param {MapStringToNumber} cacheKeyIdx
  * @param {AnimationClipSnapshot} cacheValue
+ * @returns {Tuple_AnimationClipSnapshot_MapStringToNumber}
  */
 
 AnimationClip.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {//1226
@@ -1720,6 +1749,7 @@ AnimationClip.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {/
 
 /**
  * @param {number} [time]
+ * @returns {AnimationClipSnapshot}
  */
 
 AnimationClip.prototype.eval = function (time) {
@@ -2010,6 +2040,7 @@ AnimationSession.app = null;
 
 /**
  * @param {Playable} playable
+ * @returns {AnimationKeyable | AnimationClipSnapshot}
  */
 
 AnimationSession._allocatePlayableCache = function(playable) {
@@ -2384,8 +2415,9 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
 };
 
 /**
- * @param {Playable} playable
+ * @param {Playable} [playable]
  * @param {AnimationTargetsMap} [animTargets]
+ * @returns {AnimationSession}
  */
 
 AnimationSession.prototype.play = function (playable, animTargets) {
@@ -2551,6 +2583,10 @@ var AnimationComponent = function () {
     this.animSessions = {};
 };
 
+/**
+ * @returns {number}
+ */
+
 AnimationComponent.prototype.clipCount = function () {
     return this.animClips.length;
 };
@@ -2565,6 +2601,7 @@ AnimationComponent.prototype.getCurrentClip = function () {
 
 /**
  * @param {number} index
+ * @returns {AnimationClip}
  */
 
 AnimationComponent.prototype.clipAt = function (index) {
