@@ -1,3 +1,15 @@
+
+// extend playcanvas-typings
+declare namespace pc {
+	interface Vec3 {
+		[prop: string]: any;
+	}
+	interface GraphNode {
+        name: string;
+		[prop: string]: any;
+	}
+}
+
 declare interface AnimationKeyable {
 	value: any;
 	outTangent: SingleDOF;
@@ -5,14 +17,40 @@ declare interface AnimationKeyable {
 	normalize(): any;
 }
 
-declare interface AnimationTarget {
-	vScale?: pc.Vec3 | number[];
+interface AnimationEventCallback {
+	(context: any, parameter: any): void
 }
 
-type idk = any; // not figured out yet / todo
+declare interface AnimationTarget {
+	vScale?: pc.Vec3 | number[];
+	targetNode: pc.GraphNode;
+	targetPath: string;
+	targetProp: string;
+	
+}
+
 type SingleDOF = number | pc.Vec2 | pc.Vec3 | pc.Vec4 | pc.Quat;
 type BlendValue = SingleDOF | Playable;
 type AnimationInput = AnimationCurve | AnimationKeyable | AnimationClip | AnimationClipSnapshot;
+
+/*
+
+the object subtype looks like:
+
+{	
+	...
+	curve13: 106,
+	curve14: 106,
+	curve15: 106,
+	curve16: 66,
+	curve17: 105,
+	curve18: 106,
+	...
+}
+
+*/
+
+type AnimationCacheKey = /*number |*/ {[curvenum: string]: number};
 
 declare interface Playable {
 	animCurvesMap: any;
@@ -47,18 +85,18 @@ declare class AnimationClipSnapshot {
 declare interface AnimationEvent_ {
 	name: string;
 	triggerTime: number;
-	fnCallback: any;
+	fnCallback: AnimationEventCallback;
 }
 
 declare class AnimationClip implements Playable {
+	name: string;
 	duration: number;
-	animCurves: any;
+	animCurves: AnimationCurve[];
 	session: AnimationSession;
-	animCurvesMap: any;
-	root: any;
+	animCurvesMap: AnimationCurveMap;
+	root: pc.GraphNode;
 	getAnimTargets(): AnimationTargetsMap;
 }
-
 
 declare interface AnimationSession {
 	animTargets: AnimationTargetsMap;
@@ -68,7 +106,7 @@ declare interface AnimationSession {
 	_cacheBlendValues: any;
 	blendWeights: any;
 	animEvents: AnimationEvent_[];
-	onTimer: any;
+	onTimer: (dt: number) => void;
 	_allocatePlayableCache(): any;
 }
 
@@ -78,7 +116,10 @@ declare interface AnimationComponent {
 	animSessions: any;
 }
 
-
 declare interface AnimationTargetsMap {
 	[name: string]: AnimationTarget[];
+}
+
+declare interface AnimationCurveMap {
+	[name: string]: AnimationCurve;
 }

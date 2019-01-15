@@ -11,7 +11,7 @@ var AnimationKeyableType = { NUM: 0, VEC: 1, QUAT: 2 };
  * @constructor
  * @param {AnimationKeyableType} [type]
  * @param {number} [time]
- * @param {SingleDOF} [value]
+ * @param {BlendValue} [value]
  */
 
 var AnimationKeyable = function (type, time, value) {
@@ -21,7 +21,7 @@ var AnimationKeyable = function (type, time, value) {
 /**
  * @param {AnimationKeyableType} [type]
  * @param {number} [time]
- * @param {SingleDOF} [value]
+ * @param {BlendValue} [value]
  */
 
 AnimationKeyable.prototype.init = function (type, time, value) {
@@ -72,7 +72,7 @@ AnimationKeyable.prototype.clone = function () {
  */
 
 AnimationKeyable.sum = function (keyable1, keyable2) {
-    if (!keyable1 || !keyable2 || keyable1.type != keyable2)
+    if (!keyable1 || !keyable2 || keyable1.type != keyable2.type)
         return null;
 
     var resKeyable = new AnimationKeyable(keyable1.type);
@@ -95,7 +95,7 @@ AnimationKeyable.sum = function (keyable1, keyable2) {
  */
 
 AnimationKeyable.minus = function (keyable1, keyable2) {
-    if (!keyable1 || !keyable2 || keyable1.type != keyable2)
+    if (!keyable1 || !keyable2 || keyable1.type != keyable2.type)
         return null;
 
     var resKeyable = new AnimationKeyable(keyable1.type);
@@ -219,9 +219,9 @@ AnimationKeyable.linearBlendValue = function (value1, value2, p) {
 // *===============================================================================================================
 /**
  * @constructor
- * @param {idk} targetNode
- * @param {idk} [targetPath]
- * @param {idk} [targetProp]
+ * @param {pc.GraphNode} targetNode
+ * @param {string} [targetPath]
+ * @param {string} [targetProp]
  */
 var AnimationTarget = function (targetNode, targetPath, targetProp) {
     this.targetNode = targetNode;
@@ -260,8 +260,8 @@ AnimationTarget.prototype.clone = function () {
 };
 
 /**
- * @param {idk} value
- * @param {idk} p
+ * @param {pc.Vec3 | number} value
+ * @param {number} p
  * @summary based on current target[path]'s value, blend in value by p
  */
 
@@ -326,7 +326,7 @@ AnimationTarget.prototype.blendToTarget = function (value, p) {
 };
 
 /**
- * @param {idk} value
+ * @param {pc.Vec3 | number} value
  */
 
 AnimationTarget.prototype.updateToTarget = function (value) {
@@ -400,7 +400,7 @@ AnimationTarget.constructTargetNodes = function (root, vec3Scale, output) {
 
 // static function
 /**
- * @param {idk} node
+ * @param {pc.GraphNode} node
  */
 AnimationTarget.getLocalScale = function (node) {
     if (!node)
@@ -507,9 +507,9 @@ AnimationCurve.prototype.clone = function () {
 };
 
 /**
- * @param {idk} targetNode
- * @param {idk} targetPath
- * @param {idk} targetProp
+ * @param {pc.GraphNode} targetNode
+ * @param {string} targetPath
+ * @param {string} targetProp
  */
 
 AnimationCurve.prototype.addTarget = function (targetNode, targetPath, targetProp) {
@@ -518,9 +518,9 @@ AnimationCurve.prototype.addTarget = function (targetNode, targetPath, targetPro
 };
 
 /**
- * @param {idk} targetNode
- * @param {idk} targetPath
- * @param {idk} [targetProp]
+ * @param {pc.GraphNode} targetNode
+ * @param {string} targetPath
+ * @param {string} [targetProp]
  */
 
 AnimationCurve.prototype.setTarget = function (targetNode, targetPath, targetProp) {
@@ -573,11 +573,11 @@ AnimationCurve.prototype.getAnimTargets = function () {
 
 // events related
 /**
- * @param {idk} name
- * @param {idk} time
- * @param {idk} fnCallback
- * @param {idk} context
- * @param {idk} parameter
+ * @param {string} name
+ * @param {number} time
+ * @param {AnimationEventCallback} fnCallback
+ * @param {any} context
+ * @param {any} parameter
  */
 
 AnimationCurve.prototype.on = function (name, time, fnCallback, context, parameter) {
@@ -587,9 +587,9 @@ AnimationCurve.prototype.on = function (name, time, fnCallback, context, paramet
 };
 
 /**
- * @param {idk} name
- * @param {idk} time
- * @param {idk} fnCallback
+ * @param {string} name
+ * @param {number} time
+ * @param {AnimationEventCallback} fnCallback
  */
 
 AnimationCurve.prototype.off = function (name, time, fnCallback) {
@@ -605,7 +605,7 @@ AnimationCurve.prototype.removeAllEvents = function () {
 };
 
 /**
- * @param {idk} duration
+ * @param {number} duration
  */
 
 AnimationCurve.prototype.fadeIn = function (duration) {
@@ -613,7 +613,7 @@ AnimationCurve.prototype.fadeIn = function (duration) {
 };
 
 /**
- * @param {idk} duration
+ * @param {number} duration
  */
 
 AnimationCurve.prototype.fadeOut = function (duration) {
@@ -637,11 +637,11 @@ AnimationCurve.prototype.pause = function () {
 };
 
 /**
- * @param {idk} time
- * @param {idk} fadeDir
- * @param {idk} fadeBegTime
- * @param {idk} fadeEndTime
- * @param {idk} fadeTime
+ * @param {number} time
+ * @param {number} fadeDir
+ * @param {number} fadeBegTime
+ * @param {number} fadeEndTime
+ * @param {number} fadeTime
  */
 
 AnimationCurve.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTime, fadeTime) {
@@ -649,7 +649,7 @@ AnimationCurve.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndT
 };
 
 /**
- * @param {idk} animKeys
+ * @param {AnimationKeyable[]} animKeys
  */
 
 AnimationCurve.prototype.setAnimKeys = function (animKeys) {
@@ -657,9 +657,9 @@ AnimationCurve.prototype.setAnimKeys = function (animKeys) {
 };
 
 /**
- * @param {idk} type
- * @param {idk} time
- * @param {idk} value
+ * @param {AnimationCurveType} type
+ * @param {number} time
+ * @param {SingleDOF} value
  */
 
 AnimationCurve.prototype.insertKey = function (type, time, value) {
@@ -691,7 +691,7 @@ AnimationCurve.prototype.insertKey = function (type, time, value) {
 
 // 10/15
 /**
- * @param {idk} keyable
+ * @param {AnimationKeyable} keyable
  */
 AnimationCurve.prototype.insertKeyable = function (keyable) {
     if (!keyable || this.keyableType != keyable.type)
@@ -720,7 +720,7 @@ AnimationCurve.prototype.insertKeyable = function (keyable) {
 };
 
 /**
- * @param {idk} index
+ * @param {number} index
  */
 
 AnimationCurve.prototype.removeKey = function (index) {
@@ -1375,7 +1375,7 @@ AnimationClipSnapshot.linearBlend = function (shot1, shot2, p) {
  * @param {AnimationClipSnapshot} shot1
  * @param {AnimationClipSnapshot} shot2
  * @param {number} p
- * @param {idk} animCurveMap
+ * @param {AnimationCurveMap} animCurveMap
  * @summary static function: linear blending except for step curve
  */
 
@@ -1418,7 +1418,7 @@ AnimationClipSnapshot.linearBlendExceptStep = function (shot1, shot2, p, animCur
 
 /**
  * @constructor
- * @param {idk} [root]
+ * @param {pc.GraphNode} [root]
  */
 
 var AnimationClip = function (root) {
@@ -1464,7 +1464,7 @@ Object.defineProperty(AnimationClip.prototype, 'bySpeed', {
 });
 
 /**
- * @param {idk} clip
+ * @param {AnimationClip} clip
  */
 
 AnimationClip.prototype.copy = function (clip) {
@@ -1496,11 +1496,11 @@ AnimationClip.prototype.updateDuration = function () {
 };
 
 /**
- * @param {idk} time
- * @param {idk} fadeDir
- * @param {idk} fadeBegTime
- * @param {idk} fadeEndTime
- * @param {idk} fadeTime
+ * @param {number} time
+ * @param {number} fadeDir
+ * @param {number} fadeBegTime
+ * @param {number} fadeEndTime
+ * @param {number} fadeTime
  */
 
 AnimationClip.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTime, fadeTime) {
@@ -1508,8 +1508,8 @@ AnimationClip.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTi
 };
 
 /**
- * @param {idk} snapshot
- * @param {idk} p
+ * @param {AnimationClipSnapshot} snapshot
+ * @param {number} p
  */
 
 AnimationClip.prototype.blendToTarget = function (snapshot, p) {
@@ -1517,7 +1517,7 @@ AnimationClip.prototype.blendToTarget = function (snapshot, p) {
 };
 
 /**
- * @param {idk} snapshot
+ * @param {AnimationClipSnapshot} snapshot
  */
 
 AnimationClip.prototype.updateToTarget = function (snapshot) {
@@ -1567,7 +1567,7 @@ AnimationClip.prototype.resume = function () {
 };
 
 /**
- * @param {idk} duration
+ * @param {number} duration
  */
 
 AnimationClip.prototype.fadeIn = function (duration) {
@@ -1575,7 +1575,7 @@ AnimationClip.prototype.fadeIn = function (duration) {
 };
 
 /**
- * @param {idk} duration
+ * @param {number} duration
  */
 
 AnimationClip.prototype.fadeOut = function (duration) {
@@ -1583,8 +1583,8 @@ AnimationClip.prototype.fadeOut = function (duration) {
 };
 
 /**
- * @param {idk} toClip
- * @param {idk} duration
+ * @param {AnimationClip} toClip
+ * @param {number} duration
  */
 
 AnimationClip.prototype.fadeTo = function (toClip, duration) {
@@ -1594,7 +1594,7 @@ AnimationClip.prototype.fadeTo = function (toClip, duration) {
 // curve related
 
 /**
- * @param {idk} curve
+ * @param {AnimationCurve} curve
  */
 
 AnimationClip.prototype.addCurve = function (curve) {
@@ -1607,7 +1607,7 @@ AnimationClip.prototype.addCurve = function (curve) {
 };
 
 /**
- * @param {idk} name
+ * @param {string} name
  */
 
 AnimationClip.prototype.removeCurve = function (name) {
@@ -1635,11 +1635,11 @@ AnimationClip.prototype.removeAllCurves = function () {
 // events related
 
 /**
- * @param {idk} name
- * @param {idk} time
- * @param {idk} fnCallback
- * @param {idk} context
- * @param {idk} parameter
+ * @param {string} name
+ * @param {number} time
+ * @param {AnimationEventCallback} fnCallback
+ * @param {any} context
+ * @param {any} parameter
  */
 
 AnimationClip.prototype.on = function (name, time, fnCallback, context, parameter) {
@@ -1649,9 +1649,9 @@ AnimationClip.prototype.on = function (name, time, fnCallback, context, paramete
 };
 
 /**
- * @param {idk} name
- * @param {idk} time
- * @param {idk} fnCallback
+ * @param {string} name
+ * @param {number} time
+ * @param {AnimationEventCallback} fnCallback
  */
 
 AnimationClip.prototype.off = function (name, time, fnCallback) {
@@ -1689,7 +1689,7 @@ AnimationClip.prototype.getSubClip = function (tmBeg, tmEnd) {
 
 /**
  * @param {number} time
- * @param {idk} cacheKeyIdx
+ * @param {AnimationCacheKey} cacheKeyIdx
  * @param {AnimationClipSnapshot} cacheValue
  */
 
@@ -1736,7 +1736,7 @@ AnimationClip.prototype.eval = function (time) {
 };
 
 /**
- * @param {idk} root
+ * @param {pc.GraphNode} root
  */
 
 AnimationClip.prototype.constructFromRoot = function (root) {
@@ -1799,7 +1799,7 @@ AnimationClip.prototype.constructFromRoot = function (root) {
 */
 
 /**
- * @param {idk} root
+ * @param {pc.GraphNode} root
  */
 
 AnimationClip.prototype.transferToRoot = function (root) {
@@ -1856,7 +1856,7 @@ AnimationClip.prototype.removeEmptyCurves = function () {
 };
 
 /**
- * @param {idk} type
+ * @param {AnimationCurveType} type
  */
 
 AnimationClip.prototype.setInterpolationType = function (type) {
@@ -1872,9 +1872,9 @@ AnimationClip.prototype.setInterpolationType = function (type) {
  * @constructor
  * @param {string} name
  * @param {number} time
- * @param {idk} fnCallback
- * @param {idk} context
- * @param {idk} parameter
+ * @param {AnimationEventCallback} fnCallback
+ * @param {any} context
+ * @param {any} parameter
  */
 
 var AnimationEvent_ = function (name, time, fnCallback, context, parameter) {
@@ -1963,7 +1963,7 @@ var AnimationSession = function (playable, targets) {
 
     // ontimer function for playback
     var self = this;
-    this.onTimer = function (dt) {
+    this.onTimer = function (/**@type {number} */dt) {
         self.curTime += (self.bySpeed * dt);
         self.accTime += (self.bySpeed * dt);
 
@@ -2151,11 +2151,11 @@ AnimationSession.prototype.unsetBlend = function (curveName) {
 // events related
 
 /**
- * @param {idk} name
- * @param {idk} time
- * @param {idk} fnCallback
- * @param {idk} context
- * @param {idk} parameter
+ * @param {string} name
+ * @param {number} time
+ * @param {AnimationEventCallback} fnCallback
+ * @param {any} context
+ * @param {any} parameter
  */
 
 AnimationSession.prototype.on = function (name, time, fnCallback, context, parameter) {
@@ -2178,7 +2178,7 @@ AnimationSession.prototype.on = function (name, time, fnCallback, context, param
 /**
  * @param {string} name
  * @param {number} time
- * @param {idk} fnCallback
+ * @param {AnimationEventCallback} fnCallback
  */
 
 AnimationSession.prototype.off = function (name, time, fnCallback) {
@@ -2334,11 +2334,11 @@ AnimationSession.prototype.updateToTarget = function (input) {
 };
 
 /**
- * @param {idk} time
- * @param {idk} fadeDir
- * @param {idk} fadeBegTime
- * @param {idk} fadeEndTime
- * @param {idk} fadeTime
+ * @param {number} time
+ * @param {number} fadeDir
+ * @param {number} fadeBegTime
+ * @param {number} fadeEndTime
+ * @param {number} fadeTime
  */
 
 AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTime, fadeTime) {
@@ -2459,7 +2459,7 @@ AnimationSession.prototype.resume = function () {
 };
 
 /**
- * @param {idk} duration
+ * @param {number} duration
  */
 
 AnimationSession.prototype.fadeOut = function (duration) {
@@ -2480,7 +2480,7 @@ AnimationSession.prototype.fadeOut = function (duration) {
 };
 
 /**
- * @param {idk} duration
+ * @param {number} duration
  * @param {Playable} [playable]
  */
 
@@ -2505,8 +2505,8 @@ AnimationSession.prototype.fadeIn = function (duration, playable) {
 };
 
 /**
- * @param {idk} playable
- * @param {idk} duration
+ * @param {Playable} playable
+ * @param {number} duration
  */
 
 AnimationSession.prototype.fadeTo = function (playable, duration) {
@@ -2517,7 +2517,7 @@ AnimationSession.prototype.fadeTo = function (playable, duration) {
 };
 
 /**
- * @param {idk} duration
+ * @param {number} duration
  */
 
 AnimationSession.prototype.fadeToSelf = function (duration) {
@@ -2624,7 +2624,7 @@ AnimationComponent.prototype.stopClip = function () {
 
 /**
  * @param {string} name
- * @param {idk} duration
+ * @param {number} duration
  */
 
 AnimationComponent.prototype.crossFadeToClip = function (name, duration) {
@@ -2648,9 +2648,9 @@ AnimationComponent.prototype.crossFadeToClip = function (name, duration) {
 // blend related
 
 /**
- * @param {idk} blendValue
- * @param {idk} weight
- * @param {idk} curveName
+ * @param {BlendValue} blendValue
+ * @param {number} weight
+ * @param {string} curveName
  */
 
 AnimationComponent.prototype.setBlend = function (blendValue, weight, curveName) {
@@ -2660,7 +2660,7 @@ AnimationComponent.prototype.setBlend = function (blendValue, weight, curveName)
 };
 
 /**
- * @param {idk} curveName
+ * @param {string} curveName
  */
 
 AnimationComponent.prototype.unsetBlend = function (curveName) {
@@ -2718,9 +2718,9 @@ AnimationComponent.prototype.crossFadeToSession = function (name, duration) {
 };
 
 /**
- * @param {idk} blendValue
- * @param {idk} weight
- * @param {idk} curveName
+ * @param {BlendValue} blendValue
+ * @param {number} weight
+ * @param {string} curveName
  */
 
 AnimationComponent.prototype.setBlendSession = function (blendValue, weight, curveName) {
@@ -2731,7 +2731,7 @@ AnimationComponent.prototype.setBlendSession = function (blendValue, weight, cur
 };
 
 /**
- * @param {idk} curveName
+ * @param {string} curveName
  */
 
 AnimationComponent.prototype.unsetBlendSession = function (curveName) {
@@ -2742,7 +2742,7 @@ AnimationComponent.prototype.unsetBlendSession = function (curveName) {
 };
 
 /**
- * @param {idk} substr
+ * @param {string} substr
  */
 
 AnimationComponent.prototype.playSubstring = function (substr) {
