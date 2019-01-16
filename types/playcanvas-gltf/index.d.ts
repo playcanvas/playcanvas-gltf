@@ -11,10 +11,10 @@ declare namespace pc {
 }
 
 declare interface AnimationKeyable {
-	value: any;
+	value: BlendValue;
 	outTangent: SingleDOF;
 	inTangent: SingleDOF;
-	normalize(): any;
+	normalize(): void;
 }
 
 declare interface AnimationEventCallback {
@@ -33,6 +33,8 @@ declare type SingleDOF = number | pc.Vec2 | pc.Vec3 | pc.Vec4 | pc.Quat;
 declare type BlendValue = SingleDOF | Playable;
 declare type AnimationInput = AnimationCurve | AnimationKeyable | AnimationClip | AnimationClipSnapshot;
 
+declare type Blendable = AnimationKeyable | BlendValue;
+
 // looks like: {
 // 	...
 // 	curve13: 106,
@@ -49,10 +51,10 @@ declare type Tuple_AnimationKeyable_number = [AnimationKeyable, number];
 declare type Tuple_AnimationClipSnapshot_MapStringToNumber = [AnimationClipSnapshot, MapStringToNumber];
 
 declare interface Playable {
-	animCurvesMap: any;
+	animCurvesMap: AnimationCurveMap;
 	session: AnimationSession;
-	bySpeed: any;
-	loop: any;
+	bySpeed: number;
+	loop: boolean;
 	getAnimTargets(): AnimationTargetsMap;
 	eval_cache(time: number, cacheKeyIdx: any, cacheValue: any): any;
 }
@@ -62,17 +64,16 @@ declare class AnimationCurve implements Playable {
 	type: AnimationCurveType;
 	tension: number;
 	duration: number;
-	keyableType: any;
+	keyableType: AnimationKeyableType;
 	animTargets: AnimationTarget[];
 	animKeys: AnimationKeyable[];
-	animCurvesMap: any;
+	animCurvesMap: AnimationCurveMap;
 	session: AnimationSession;
 	getAnimTargets(): AnimationTargetsMap;
 }
 
 declare class AnimationClipSnapshot {
-	curveKeyable: any;
-	value: any;
+	curveKeyable: {[curvename: string]: AnimationKeyable};
 	curveNames: string[];
 	time: number;
 }
@@ -97,13 +98,13 @@ declare class AnimationClip implements Playable {
 declare interface AnimationSession {
 	animTargets: AnimationTargetsMap;
 	_cacheKeyIdx: number | object;
-	speed: any;
-	blendables: any;
-	_cacheBlendValues: any;
-	blendWeights: any;
+	speed: number;
+	blendables: {[curveName: string]: Blendable};
+	_cacheBlendValues: {[name: string]: AnimationClipSnapshot | AnimationKeyable};
+	blendWeights: {[name: string]: Playable};
 	animEvents: AnimationEvent_[];
 	onTimer: (dt: number) => void;
-	_allocatePlayableCache(): any;
+	_allocatePlayableCache(): Playable;
 }
 
 declare interface AnimationComponent {
