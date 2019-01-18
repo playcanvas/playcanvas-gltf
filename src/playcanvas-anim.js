@@ -1482,41 +1482,6 @@ AnimationClip.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {/
 
 // take a snapshot of clip at this moment 
 AnimationClip.prototype.eval = function (time) {
-    snapshot.time = time;
-
-    for (var i = 0, len = this.animCurves.length; i < len; i++) {
-        var curve = this.animCurves[i];
-        var ki;
-        if (cacheKeyIdx) ki = cacheKeyIdx[curve.name];
-        var kv;
-        if (cacheValue) kv = cacheValue.curveKeyable[curve.name];
-        else kv = new AnimationKeyable(curve.keyableType);
-
-        var result = curve.eval_cache(time, ki, kv);//1215
-        var keyable = result[0];
-        if (keyIdx) keyIdx[curve.name] = result[1]
-        snapshot.curveKeyable[curve.name] = keyable;
-        snapshot.curveNames.push(curve.name);//1226
-    }
-    return [snapshot, cacheKeyIdx];
-};
-
-// take a snapshot of clip at this moment 
-AnimationClip.prototype.eval = function (time) {
-    var snapshot = new AnimationClipSnapshot();
-    snapshot.time = time;
-
-    for (var i = 0, len = this.animCurves.length; i < len; i++) {
-        var curve = this.animCurves[i];
-        var keyable = curve.eval(time);
-        snapshot.curveKeyable[curve.name] = keyable;
-        snapshot.curveNames.push(curve.name);//1226
-    }
-    return snapshot;
-};
-
-// take a snapshot of clip at this moment 
-AnimationClip.prototype.eval = function (time) {
     var snapshot = new AnimationClipSnapshot();
     snapshot.time = time;
 
