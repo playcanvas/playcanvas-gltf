@@ -977,8 +977,7 @@ AnimationCurve.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {
                 return this.evalLINEAR_cache(time, cacheKeyIdx, cacheValue);
             return this.evalCUBIC_cache(time, cacheKeyIdx, cacheValue);
         case AnimationCurveType.CUBICSPLINE_GLTF:// 10/15, keyable contains (inTangent, value, outTangent)
-            //return this.evalCUBICSPLINE_GLTF_cache(time, cacheKeyIdx, cacheValue);
-            return this.evalCUBIC_cache(time, cacheKeyIdx, cacheValue);//19 wangyi test
+            return this.evalCUBICSPLINE_GLTF_cache(time, cacheKeyIdx, cacheValue);
     }
     return [null, cacheKeyIdx];
 };
@@ -1041,23 +1040,6 @@ AnimationCurve.cubicCardinal = function (key0, key1, key2, key3, time, tension, 
             m2 = 2 * factor * (key3.value - key1.value) / (key3.time - key1.time);
         resKey.value = AnimationCurve.cubicHermite(m1, key1.value, m2, key2.value, p);
     }
-
-    /*/ each element in vector
-    if (key1.type === AnimationKeyableType.VEC) {
-        resKey.value = key1.value.clone();
-        for (var i = 0; i < resKey.value.data.length; i ++) {
-            m1 = factor * (key2.value.data[i] - key1.value.data[i]) / (key2.time - key1.time);
-            if (key0)
-                m1 = 2 * factor * (key2.value.data[i] - key0.value.data[i]) / (key2.time - key0.time);
-
-            m2 = factor * (key2.value.data[i] - key1.value.data[i]) / (key2.time - key1.time);
-            if (key3)
-                m2 = 2 * factor * (key3.value.data[i] - key1.value.data[i]) / (key3.time - key1.time);
-            resKey.value.data[i] = AnimationCurve.cubicHermite(m1, key1.value.data[i], m2, key2.value.data[i], p);
-        }
-    }*/
-
-    
 
     // each element in vector, direct x, y, z, w
     if (key1.type === AnimationKeyableType.VEC) {
