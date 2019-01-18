@@ -985,93 +985,6 @@ AnimationCurve.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {
 
 AnimationCurve.prototype.eval = function (time) {
     if (!this.animKeys || this.animKeys.length === 0)
-        return [null, cacheKeyIdx];
-
-    var begIdx = 0;
-    if (cacheKeyIdx) begIdx = cacheKeyIdx;
-    var i = begIdx;
-
-    // 1. find the interval [key1, key2]
-    var resKey = cacheValue;//new AnimationKeyable(); 1215
-    var key1, key2; 
-    for (var c = 0; c < this.animKeys.length; c ++) {
-        i = (begIdx + c) % this.animKeys.length; 
-
-        if (this.animKeys[i].time === time) {
-            resKey.copy(this.animKeys[i]); 
-            return [resKey, i];
-        }
-
-        if (i === 0 && this.animKeys[i].time > time) {//earlier than first
-            key1 = null;
-            key2 = this.animKeys[i];
-            break; 
-        }
-
-        if (i === this.animKeys.length -1 && this.animKeys[i].time < time) { //later than last
-            key1 = this.animKeys[i];
-            key2 = null;
-            break;
-
-        }
-
-        if (this.animKeys[i].time > time && 
-            (i-1 < 0 || this.animKeys[i-1].time < time)) {
-            key1 = this.animKeys[i-1];
-            key2 = this.animKeys[i];
-            break;
-        } 
-    }
-
-    // 2. only found one boundary
-    if (!key1 || !key2) {
-        resKey.copy(key1 ? key1 : key2);
-        resKey.time = time;
-        return [resKey, i];
-    }
-
-    // 3. both found then interpolate
-    var p = (time - key1.time) / (key2.time - key1.time);
-    var g = key2.time - key1.time;
-    if (this.keyableType === AnimationKeyableType.NUM) {
-        resKey.value = AnimationCurve.cubicHermite(g * key1.outTangent, key1.value, g * key2.inTangent, key2.value, p);
-    } else if (this.keyableType === AnimationKeyableType.VEC) {
-        resKey.value = new pc.Vec3();
-        resKey.value.x = AnimationCurve.cubicHermite(g * key1.outTangent.x, key1.value.x, g * key2.inTangent.x, key2.value.x, p);
-        resKey.value.y = AnimationCurve.cubicHermite(g * key1.outTangent.y, key1.value.y, g * key2.inTangent.y, key2.value.y, p);
-        resKey.value.z = AnimationCurve.cubicHermite(g * key1.outTangent.z, key1.value.z, g * key2.inTangent.z, key2.value.z, p);
-    } else if (this.keyableType === AnimationKeyableType.QUAT) {
-        resKey.value = new pc.Quat();
-        resKey.value.w = AnimationCurve.cubicHermite(g * key1.outTangent.w, key1.value.w, g * key2.inTangent.w, key2.value.w, p);
-        resKey.value.x = AnimationCurve.cubicHermite(g * key1.outTangent.x, key1.value.x, g * key2.inTangent.x, key2.value.x, p);
-        resKey.value.y = AnimationCurve.cubicHermite(g * key1.outTangent.y, key1.value.y, g * key2.inTangent.y, key2.value.y, p);
-        resKey.value.z = AnimationCurve.cubicHermite(g * key1.outTangent.z, key1.value.z, g * key2.inTangent.z, key2.value.z, p);
-        resKey.normalize();
-    }
-
-    resKey.time = time;
-    return [resKey, i]; 
-};
-
-AnimationCurve.prototype.eval = function (time, cacheKeyIdx, cacheValue) { //1215
-    if (!this.animKeys || this.animKeys.length === 0)
-        return [null, cacheKeyIdx];
-
-    switch (this.type) {
-        case AnimationCurveType.LINEAR: return this.evalLINEAR_cache(time, cacheKeyIdx, cacheValue);
-        case AnimationCurveType.STEP: return this.evalSTEP_cache(time, cacheKeyIdx, cacheValue);
-        case AnimationCurveType.CUBIC:
-            if (this.keyableType == AnimationKeyableType.QUAT)
-                return this.evalLINEAR(time);
-            return this.evalCUBIC(time);
-        case AnimationCurveType.CUBICSPLINE_GLTF://10/15, keyable contains (inTangent, value, outTangent)
-            return this.evalCUBICSPLINE_GLTF(time);
-    }
-    return [null, cacheKeyIdx];
-};
-
-AnimationCurve.prototype.eval = function (time) {
-    if (!this.animKeys || this.animKeys.length === 0)
         return null;
 
     switch (this.type) {
@@ -1640,7 +1553,7 @@ AnimationEvent.prototype.invoke = function () {
 //                           AnimationSession is the runtime play of curve/clip
 //                           one clip can be played by multiple AnimationSession simultaneously
 // *===============================================================================================================
-var AnimationSession = function AnimationSession(playable, targets) { 
+var AnimationSession = function AnimationSession(playable, targets) {
     this._cacheKeyIdx;//integer if playable is curve, object {} if playable is clip
     this._cacheValue;//1215, keyable if playable is curve, snapshot if playable is clip, all pre allocated
     this._cacheBlendValues = {};//1226
