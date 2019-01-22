@@ -1309,19 +1309,25 @@ AnimationCurve.cubicCardinal = function (key0, key1, key2, key3, time, tension, 
         resKey.value = AnimationCurve.cubicHermite(m1, key1.value, m2, key2.value, p);
     }
 
-    // each element in vector
+    // each element in vector, direct x, y, z, w
     if (key1.type === AnimationKeyableType.VEC) {
         resKey.value = key1.value.clone();
-        for (var i = 0; i < resKey.value.data.length; i ++) {
-            m1 = factor * (key2.value.data[i] - key1.value.data[i]) / (key2.time - key1.time);
+        var props = ["x", "y", "z", "w"];
+        for (var i = 0; i < props.length; i ++)
+        { 
+            var pr = props[i];
+            if (resKey.value[pr] === undefined)
+                continue;
+            
+            m1 = factor * (key2.value[pr] - key1.value[pr]) / (key2.time - key1.time);
             if (key0)
-                m1 = 2 * factor * (key2.value.data[i] - key0.value.data[i]) / (key2.time - key0.time);
+                m1 = 2 * factor * (key2.value[pr] - key0.value[pr]) / (key2.time - key0.time);
 
-            m2 = factor * (key2.value.data[i] - key1.value.data[i]) / (key2.time - key1.time);
+            m2 = factor * (key2.value[pr] - key1.value[pr]) / (key2.time - key1.time);
             if (key3)
-                m2 = 2 * factor * (key3.value.data[i] - key1.value.data[i]) / (key3.time - key1.time);
-            resKey.value.data[i] = AnimationCurve.cubicHermite(m1, key1.value.data[i], m2, key2.value.data[i], p);
-        }
+                m2 = 2 * factor * (key3.value[pr] - key1.value[pr]) / (key3.time - key1.time);
+            resKey.value[pr] = AnimationCurve.cubicHermite(m1, key1.value[pr], m2, key2.value[pr], p);
+        } 
     }
     return resKey;
 };
@@ -1739,7 +1745,7 @@ AnimationClip.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {/
 
         var result = curve.eval_cache(time, ki, kv);//1215
         var keyable = result[0];
-        if (cacheKeyIdx) cacheKeyIdx[curve.name] = result[1]
+        if (cacheKeyIdx) cacheKeyIdx[curve.name] = result[1];
         snapshot.curveKeyable[curve.name] = keyable;
     }
     return [snapshot, cacheKeyIdx];
