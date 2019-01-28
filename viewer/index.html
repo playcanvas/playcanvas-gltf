@@ -18,13 +18,16 @@
             clone_gltf = function(entity) {
                 // 1) clone entity
                 var entity_clone = entity.clone();
-                // 2) assign AnimationComponent
+                // 2) clone existing AnimationComponent, otherwise we are done
+                if (!entity.animComponent)
+                    return entity_clone;
+                // 3) assign new AnimationComponent
                 entity_clone.animComponent = new AnimationComponent();
-                // 3) clone animation clips
+                // 4) clone animation clips
                 var animationClips = [];
-                for (var i=0; i<viewer.animationClips.length; i++)
-                    animationClips.push( viewer.animationClips[i].clone() );
-                // 4) assign entity_clone to each clip->curve->target
+                for (var i=0; i<entity.animComponent.animClips.length; i++)
+                    animationClips.push( entity.animComponent.animClips[i].clone() );
+                // 5) assign entity_clone to each clip->curve->target
                 for (var i = 0; i < animationClips.length; i++) {
                     var clip = animationClips[i];
                     for(var c = 0; c < clip.animCurves.length; c++) {
@@ -33,7 +36,7 @@
                             curve.animTargets[0].targetNode = entity_clone;
                     }
                 }
-                // 5) Add all animations to the model's animation component
+                // 6) Add all animations to the model's animation component
                 for (i = 0; i < animationClips.length; i++) {
                     var clip = animationClips[i];
                     clip.transferToRoot(entity_clone);
@@ -42,15 +45,35 @@
                 return entity_clone;
             }
 
-            spawn8x8 = function() {
+            spawn_clone = function(x, y, z) {
                 var cloned = clone_gltf(viewer.gltf);
                 cloned.enabled = true;
-                cloned.setLocalPosition(100, 0, 0)
+                cloned.setLocalPosition(x, y, z)
                 viewer.app.root.addChild(cloned);
-                cloned.animComponent.curClip = cloned.animComponent.animClips[0].name;
-                cloned.animComponent.animClips[0].loop = true;
-                cloned.animComponent.animClips[0].play();
+                if (cloned.animComponent) {
+                    cloned.animComponent.curClip = cloned.animComponent.animClips[0].name;
+                    cloned.animComponent.animClips[0].loop = true;
+                    cloned.animComponent.animClips[0].play();
+                }
+                return cloned;
+            }
 
+            spawn8x8 = function() {
+                if (!viewer.gltf)
+                    return;
+                var padding_x = 0;
+                var padding_z = 0;
+                for (var i=0; i<viewer.gltf.model.meshInstances.length; i++) {
+                    var aabb = viewer.gltf.model.meshInstances[i].aabb;
+                    console.log(aabb.halfExtents);
+                    padding_x = Math.max(padding_x, aabb.halfExtents.x * 2);
+                    padding_z = Math.max(padding_z, aabb.halfExtents.z * 2);
+                }
+                for (var i=1; i<=8; i++) {
+                    for (var j=1; j<=8; j++) {
+                        spawn_clone(i * padding_x, 0, j * padding_z * -1);
+                    }
+                }
             }
 
         </script>
