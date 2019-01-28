@@ -13,86 +13,9 @@
         <script src='src/viewer.js'></script>
         <script src='src/shaderchunks.js'></script>
         <script src='src/timeline.js'></script>
-        <script>
-
-            clone_gltf = function(entity) {
-                // 1) clone entity
-                var entity_clone = entity.clone();
-                // 2) clone existing AnimationComponent, otherwise we are done
-                if (!entity.animComponent)
-                    return entity_clone;
-                // 3) assign new AnimationComponent
-                entity_clone.animComponent = new AnimationComponent();
-                // 4) clone animation clips
-                var animationClips = [];
-                for (var i=0; i<entity.animComponent.animClips.length; i++)
-                    animationClips.push( entity.animComponent.animClips[i].clone() );
-                // 5) assign entity_clone to each clip->curve->target
-                for (var i = 0; i < animationClips.length; i++) {
-                    var clip = animationClips[i];
-                    for(var c = 0; c < clip.animCurves.length; c++) {
-                        var curve = clip.animCurves[c];
-                        if (curve.animTargets[0].targetNode === "model")
-                            curve.animTargets[0].targetNode = entity_clone;
-                    }
-                }
-                // 6) Add all animations to the model's animation component
-                for (i = 0; i < animationClips.length; i++) {
-                    var clip = animationClips[i];
-                    clip.transferToRoot(entity_clone);
-                    entity_clone.animComponent.addClip(clip);
-                }
-                return entity_clone;
-            }
-
-            gltf_play_first_clip = function(entity) {
-                if (!entity.animComponent)
-                    return;
-                entity.animComponent.curClip = entity.animComponent.animClips[0].name;
-                entity.animComponent.animClips[0].loop = true;
-                entity.animComponent.animClips[0].play();
-            }
-
-            gltf_clone_setpos_playfirstclip = function(gltf, x, y, z) {
-                var cloned = clone_gltf(gltf);
-                cloned.enabled = true;
-                cloned.setLocalPosition(x, y, z);
-                gltf_play_first_clip(cloned);
-                return cloned;
-            }
-
-            clones = [];
-
-            spawn8x8 = function() {
-                if (!viewer.gltf)
-                    return;
-                var entity = viewer.gltf;
-                var padding_x = 0;
-                var padding_z = 0;
-                for (var i=0; i<entity.model.meshInstances.length; i++) {
-                    var aabb = entity.model.meshInstances[i].aabb;
-                    //console.log(aabb.halfExtents);
-                    padding_x = Math.max(padding_x, aabb.halfExtents.x * 2);
-                    padding_z = Math.max(padding_z, aabb.halfExtents.z * 2);
-                }
-                for (var i=1; i<=8; i++) {
-                    for (var j=1; j<=8; j++) {
-                        var clone = gltf_clone_setpos_playfirstclip(entity, i * padding_x, 0, j * padding_z * -1);
-                        clones.push(clone);
-                    }
-                }
-                
-                // add all clones to scene
-                for (var i=0; i<clones.length; i++) {
-                    var clone = clones[i];
-                    viewer.app.root.addChild(clone);
-                }
-            }
-
-        </script>
     </head>
     <body onload='main()'>
-        <div id="overlay"> 
+        <div id="overlay">
             <div id="anim">
                 <select id="anim_select"></select>
                 <input  id="anim_pause"  type="button" value="||">
