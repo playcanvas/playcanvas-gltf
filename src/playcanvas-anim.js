@@ -646,32 +646,37 @@ AnimationCurve.prototype.evalLINEAR_cache = function (time, cacheKeyIdx, cacheVa
     var key1, key2;
     
     var begIdx = 0;
-    if (cacheKeyIdx) begIdx = cacheKeyIdx;
+    if (cacheKeyIdx)
+        begIdx = cacheKeyIdx;
     var i = begIdx; 
-    
-    for (var c = 0; c < this.animKeys.length; c ++) {
-        i = (begIdx + c) % this.animKeys.length;  
-        if (this.animKeys[i].time === time) {
-            resKey.copy(this.animKeys[i]); 
+    var n = this.animKeys.length;
+    var animKey = undefined;
+    for (var c = 0; c < n; c ++) {
+        i = (begIdx + c) % n;
+        animKey = this.animKeys[i];
+
+        if (animKey.time === time) {
+            resKey.copy(animKey); 
             return [resKey, i];
         }
 
-        if (i === 0 && this.animKeys[i].time > time) {//earlier than first
+        if (i === 0 && animKey.time > time) {//earlier than first
             key1 = null;
-            key2 = this.animKeys[i];
+            key2 = animKey;
             break; 
         }
 
-        if (i == this.animKeys.length -1 && this.animKeys[i].time < time) { //later than last
-            key1 = this.animKeys[i];
+        if (i == n - 1 && animKey.time < time) { //later than last
+            key1 = animKey;
             key2 = null;
             break;
 
         }
-        if (this.animKeys[i].time > time && 
+
+        if (animKey.time > time && 
             (i-1 < 0 || this.animKeys[i-1].time < time)) {
             key1 = this.animKeys[i-1];
-            key2 = this.animKeys[i];
+            key2 = animKey;
             break;
         } 
     }
