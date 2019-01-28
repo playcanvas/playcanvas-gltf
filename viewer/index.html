@@ -45,34 +45,47 @@
                 return entity_clone;
             }
 
-            spawn_clone = function(x, y, z) {
-                var cloned = clone_gltf(viewer.gltf);
+            gltf_play_first_clip = function(entity) {
+                if (!entity.animComponent)
+                    return;
+                entity.animComponent.curClip = entity.animComponent.animClips[0].name;
+                entity.animComponent.animClips[0].loop = true;
+                entity.animComponent.animClips[0].play();
+            }
+
+            gltf_clone_setpos_playfirstclip = function(gltf, x, y, z) {
+                var cloned = clone_gltf(gltf);
                 cloned.enabled = true;
-                cloned.setLocalPosition(x, y, z)
-                viewer.app.root.addChild(cloned);
-                if (cloned.animComponent) {
-                    cloned.animComponent.curClip = cloned.animComponent.animClips[0].name;
-                    cloned.animComponent.animClips[0].loop = true;
-                    cloned.animComponent.animClips[0].play();
-                }
+                cloned.setLocalPosition(x, y, z);
+                gltf_play_first_clip(cloned);
                 return cloned;
             }
+
+            clones = [];
 
             spawn8x8 = function() {
                 if (!viewer.gltf)
                     return;
+                var entity = viewer.gltf;
                 var padding_x = 0;
                 var padding_z = 0;
-                for (var i=0; i<viewer.gltf.model.meshInstances.length; i++) {
-                    var aabb = viewer.gltf.model.meshInstances[i].aabb;
-                    console.log(aabb.halfExtents);
+                for (var i=0; i<entity.model.meshInstances.length; i++) {
+                    var aabb = entity.model.meshInstances[i].aabb;
+                    //console.log(aabb.halfExtents);
                     padding_x = Math.max(padding_x, aabb.halfExtents.x * 2);
                     padding_z = Math.max(padding_z, aabb.halfExtents.z * 2);
                 }
                 for (var i=1; i<=8; i++) {
                     for (var j=1; j<=8; j++) {
-                        spawn_clone(i * padding_x, 0, j * padding_z * -1);
+                        var clone = gltf_clone_setpos_playfirstclip(entity, i * padding_x, 0, j * padding_z * -1);
+                        clones.push(clone);
                     }
+                }
+                
+                // add all clones to scene
+                for (var i=0; i<clones.length; i++) {
+                    var clone = clones[i];
+                    viewer.app.root.addChild(clone);
                 }
             }
 
