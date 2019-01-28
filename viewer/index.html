@@ -13,6 +13,47 @@
         <script src='src/viewer.js'></script>
         <script src='src/shaderchunks.js'></script>
         <script src='src/timeline.js'></script>
+        <script>
+
+            clone_gltf = function(entity) {
+                // 1) clone entity
+                var entity_clone = entity.clone();
+                // 2) assign AnimationComponent
+                entity_clone.animComponent = new AnimationComponent();
+                // 3) clone animation clips
+                var animationClips = [];
+                for (var i=0; i<viewer.animationClips.length; i++)
+                    animationClips.push( viewer.animationClips[i].clone() );
+                // 4) assign entity_clone to each clip->curve->target
+                for (var i = 0; i < animationClips.length; i++) {
+                    var clip = animationClips[i];
+                    for(var c = 0; c < clip.animCurves.length; c++) {
+                        var curve = clip.animCurves[c];
+                        if (curve.animTargets[0].targetNode === "model")
+                            curve.animTargets[0].targetNode = entity_clone;
+                    }
+                }
+                // 5) Add all animations to the model's animation component
+                for (i = 0; i < animationClips.length; i++) {
+                    var clip = animationClips[i];
+                    clip.transferToRoot(entity_clone);
+                    entity_clone.animComponent.addClip(clip);
+                }
+                return entity_clone;
+            }
+
+            spawn8x8 = function() {
+                var cloned = clone_gltf(viewer.gltf);
+                cloned.enabled = true;
+                cloned.setLocalPosition(100, 0, 0)
+                viewer.app.root.addChild(cloned);
+                cloned.animComponent.curClip = cloned.animComponent.animClips[0].name;
+                cloned.animComponent.animClips[0].loop = true;
+                cloned.animComponent.animClips[0].play();
+
+            }
+
+        </script>
     </head>
     <body onload='main()'>
         <div id="overlay"> 
@@ -23,6 +64,7 @@
                 <input  id="anim_timeline_toggle" type="button" value="Show Timeline">
                 <input  id="shaderchunks_toggle"  type="button" value="Show ShaderChunks">
                 <input  id="shaderchunks_regen"  type="button" value="Regenerate Shaders">
+                <input  id="spawn_8x8"  type="button" value="Spawn 8x8" onclick="spawn8x8()">
                 <span   id="anim_info"></span>
                 <canvas id="anim_timeline" width=1000 height=200></canvas>
             </div>
