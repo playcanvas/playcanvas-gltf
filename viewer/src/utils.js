@@ -90,6 +90,10 @@ function add_infinite_ground(normal_, position_, rotation_) {
 function clone_gltf(entity) {
     // 1) clone entity
     var entity_clone = entity.clone();
+    for (var i=0; i<entity.model.meshInstances.length; i++) {
+        // visibility of meshInstances is not cloned, update manually:
+        entity_clone.model.meshInstances[i].visible = entity.model.meshInstances[i].visible;
+    }
     // 2) clone existing AnimationComponent, otherwise we are done
     if (!entity.animComponent)
         return entity_clone;
