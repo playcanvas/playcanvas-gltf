@@ -48,9 +48,6 @@ declare type Blendable = AnimationKeyable | BlendValue;
 // }
 declare type MapStringToNumber = {[curvenum: string]: number};
 
-declare type Tuple_AnimationKeyable_number = [AnimationKeyable, number];
-declare type Tuple_AnimationClipSnapshot_MapStringToNumber = [AnimationClipSnapshot, MapStringToNumber];
-
 declare interface Playable {
 	animCurvesMap: AnimationCurveMap;
 	session: AnimationSession;
