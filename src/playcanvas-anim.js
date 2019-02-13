@@ -639,7 +639,7 @@ AnimationCurve.prototype.evalLINEAR = function (time) {
 
 AnimationCurve.prototype.evalLINEAR_cache = function (time, cacheKeyIdx, cacheValue) { //1215
     if (!this.animKeys || this.animKeys.length === 0)
-        return [null, cacheKeyIdx];
+        return null;
 
     // 1. find the interval [key1, key2]
     var resKey = cacheValue;//new AnimationKeyable();
@@ -653,7 +653,8 @@ AnimationCurve.prototype.evalLINEAR_cache = function (time, cacheKeyIdx, cacheVa
         i = (begIdx + c) % this.animKeys.length;  
         if (this.animKeys[i].time === time) {
             resKey.copy(this.animKeys[i]); 
-            return [resKey, i];
+            resKey._cacheKeyIdx = i;
+            return resKey;
         }
 
         if (i === 0 && this.animKeys[i].time > time) {//earlier than first
@@ -680,14 +681,16 @@ AnimationCurve.prototype.evalLINEAR_cache = function (time, cacheKeyIdx, cacheVa
     if (!key1 || !key2) {
         resKey.copy(key1 ? key1 : key2);
         resKey.time = time;
-        return [resKey, i];
+        resKey._cacheKeyIdx = i;
+        return resKey;
     }
 
     // 3. both found then interpolate
     var p = (time - key1.time) / (key2.time - key1.time);
     resKey = AnimationKeyable.linearBlend(key1, key2, p, resKey);
     resKey.time = time;
-    return [resKey, i];
+    resKey._cacheKeyIdx = i;
+    return resKey;
 };
 
 AnimationCurve.prototype.evalSTEP = function (time) {
@@ -709,7 +712,7 @@ AnimationCurve.prototype.evalSTEP = function (time) {
 
 AnimationCurve.prototype.evalSTEP_cache = function (time, cacheKeyIdx, cacheValue) { //1215
     if (!this.animKeys || this.animKeys.length === 0)
-        return [null, cacheKeyIdx];
+        return null;
 
     var begIdx = 0;
     if (cacheKeyIdx) begIdx = cacheKeyIdx;
@@ -737,7 +740,8 @@ AnimationCurve.prototype.evalSTEP_cache = function (time, cacheKeyIdx, cacheValu
     var resKey = cacheValue;//new AnimationKeyable();
     resKey.copy(key);
     resKey.time = time;
-    return [resKey, i];
+    resKey._cacheKeyIdx = i;
+    return resKey;
 };
 
 AnimationCurve.prototype.evalCUBIC = function (time) {
@@ -782,7 +786,7 @@ AnimationCurve.prototype.evalCUBIC = function (time) {
 
 AnimationCurve.prototype.evalCUBIC_cache = function (time, cacheKeyIdx, cacheValue) {//1215
     if (!this.animKeys || this.animKeys.length === 0)
-        return [null, cacheKeyIdx];
+        return null;
 
     var begIdx = 0;
     if (cacheKeyIdx) begIdx = cacheKeyIdx;
@@ -797,7 +801,8 @@ AnimationCurve.prototype.evalCUBIC_cache = function (time, cacheKeyIdx, cacheVal
 
         if (this.animKeys[i].time === time) {
             resKey.copy(this.animKeys[i]);
-            return [resKey, i];
+            resKey._cacheKeyIdx = i;
+            return resKey;
         }
 
         if (i === 0 && this.animKeys[i].time > time) {//earlier than first
@@ -832,16 +837,18 @@ AnimationCurve.prototype.evalCUBIC_cache = function (time, cacheKeyIdx, cacheVal
     if (!key1 || !key2) {
         resKey.copy(key1 ? key1 : key2);
         resKey.time = time;
-        return [resKey, i];
+        resKey._cacheKeyIdx = i;
+        return resKey;
     }
 
     // 3. curve interpolation
     if (key1.type == AnimationKeyableType.NUM || key1.type == AnimationKeyableType.VEC) {
         resKey = AnimationCurve.cubicCardinal(key0, key1, key2, key3, time, this.tension);
         resKey.time = time;
-        return [resKey, i];
+        resKey._cacheKeyIdx = i;
+        return resKey;
     }
-    return [null, cacheKeyIdx];// quaternion or combo
+    return null;
 };
 
 AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time) {
@@ -897,7 +904,7 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time) {
 
 AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyIdx, cacheValue) {//1215
     if (!this.animKeys || this.animKeys.length === 0)
-        return [null, cacheKeyIdx];
+        return null;
 
     var begIdx = 0;
     if (cacheKeyIdx) begIdx = cacheKeyIdx;
@@ -911,7 +918,8 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyId
 
         if (this.animKeys[i].time === time) {
             resKey.copy(this.animKeys[i]); 
-            return [resKey, i];
+            resKey._cacheKeyIdx = i;
+            return resKey;
         }
 
         if (i === 0 && this.animKeys[i].time > time) {//earlier than first
@@ -939,7 +947,8 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyId
     if (!key1 || !key2) {
         resKey.copy(key1 ? key1 : key2);
         resKey.time = time;
-        return [resKey, i];
+        resKey._cacheKeyIdx = i;
+        return resKey;
     }
 
     // 3. both found then interpolate
@@ -962,12 +971,13 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyId
     }
 
     resKey.time = time;
-    return [resKey, i]; 
+    resKey._cacheKeyIdx = i;
+    return resKey;
 };
 
 AnimationCurve.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) { //1215
     if (!this.animKeys || this.animKeys.length === 0)
-        return [null, cacheKeyIdx];
+        return null;
 
     switch (this.type) {
         case AnimationCurveType.LINEAR: return this.evalLINEAR_cache(time, cacheKeyIdx, cacheValue);
@@ -979,7 +989,7 @@ AnimationCurve.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {
         case AnimationCurveType.CUBICSPLINE_GLTF:// 10/15, keyable contains (inTangent, value, outTangent)
             return this.evalCUBICSPLINE_GLTF_cache(time, cacheKeyIdx, cacheValue);
     }
-    return [null, cacheKeyIdx];
+    return null;
 };
 
 AnimationCurve.prototype.eval = function (time) {
@@ -1353,8 +1363,11 @@ AnimationClip.prototype.getSubClip = function (tmBeg, tmEnd) {
 };
 
 AnimationClip.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {//1226
-    if (!cacheValue)
-        return [this.eval(), cacheKeyIdx];
+    if (!cacheValue) {
+        var ret = this.eval();
+        ret._cacheKeyIdx = cacheKeyIdx;
+        return ret;
+    }
 
     var snapshot = cacheValue;
     snapshot.time = time;
@@ -1367,12 +1380,12 @@ AnimationClip.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {/
         if (cacheValue) kv = cacheValue.curveKeyable[curve.name];
         else kv = new AnimationKeyable(curve.keyableType);
 
-        var result = curve.eval_cache(time, ki, kv);//1215
-        var keyable = result[0];
-        if (cacheKeyIdx) cacheKeyIdx[curve.name] = result[1];
+        var keyable = curve.eval_cache(time, ki, kv);//0210 
+        if (cacheKeyIdx && keyable) cacheKeyIdx[curve.name] = keyable._cacheKeyIdx;//0210
         snapshot.curveKeyable[curve.name] = keyable;
     }
-    return [snapshot, cacheKeyIdx];
+    snapshot._cacheKeyIdx = cacheKeyIdx;
+    return snapshot;
 };
 
 // take a snapshot of clip at this moment 
@@ -1902,18 +1915,18 @@ AnimationSession.prototype.updateToTarget = function (input) {
 };
 
 AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTime, fadeTime) {
-    var i, p;
-    var ret = this.playable.eval_cache(time, this._cacheKeyIdx, this._cacheValue); //1215
-    var input = ret[0];
-    this._cacheKeyIdx = ret[1];
+    var i, p; 
+    var input = this.playable.eval_cache(time, this._cacheKeyIdx, this._cacheValue);
+    if(input)
+        this._cacheKeyIdx = input._cacheKeyIdx;
     // blend related==========================================================
     // blend animations first 
     for (var bname in this.blendables) {
         if (!this.blendables.hasOwnProperty(bname)) continue;
         p = this.blendWeights[bname];
         var blendClip = this.blendables[bname];
-        if (blendClip && (blendClip instanceof AnimationClip) && (typeof p === "number")) {
-            var blendInput = blendClip.eval_cache(this.accTime % blendClip.duration, null, this._cacheBlendValues[bname])[0];//1226
+        if (blendClip && (blendClip instanceof AnimationClip) && (typeof p === "number")) { 
+            var blendInput = blendClip.eval_cache(this.accTime % blendClip.duration, null, this._cacheBlendValues[bname]);//1226
             input = AnimationClipSnapshot.linearBlendExceptStep(input, blendInput, p, this.playable.animCurvesMap);
         }
     }
