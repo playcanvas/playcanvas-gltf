@@ -194,7 +194,7 @@
                         } else {
                             keyable.inTangent = values[3 * i];
                             keyable.value = values[3 * i + 1];
-                            keyable.outTangent = value[3 * i + 2];
+                            keyable.outTangent = values[3 * i + 2];
                         }
                         curve.insertKeyable(keyable);
                     }

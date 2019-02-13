@@ -14,6 +14,7 @@ declare interface AnimationKeyable {
 	value: BlendValue;
 	outTangent: SingleDOF;
 	inTangent: SingleDOF;
+	_cacheKeyIdx: number;
 	normalize(): void;
 }
 
@@ -76,6 +77,7 @@ declare class AnimationClipSnapshot {
 	curveKeyable: {[curvename: string]: AnimationKeyable};
 	curveNames: string[];
 	time: number;
+	_cacheKeyIdx: MapStringToNumber;
 }
 
 // AnimationEvent is a CSS class, so I added an underscore
