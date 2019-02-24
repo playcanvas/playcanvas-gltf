@@ -1923,7 +1923,7 @@ AnimationClip.prototype.setInterpolationType = function (type) {
  * @param {any} parameter
  */
 
-var AnimationEvent_ = function (name, time, fnCallback, context, parameter) {
+var AnimationEvent = function (name, time, fnCallback, context, parameter) {
     this.name = name;
     this.triggerTime = time;
     this.fnCallback = fnCallback;
@@ -1933,7 +1933,7 @@ var AnimationEvent_ = function (name, time, fnCallback, context, parameter) {
     this.triggered = false;
 };
 
-AnimationEvent_.prototype.invoke = function () {
+AnimationEvent.prototype.invoke = function () {
     if (this.fnCallback) {
         this.fnCallback.call(this.context, this.parameter);
         this.triggered = true;
@@ -1941,8 +1941,8 @@ AnimationEvent_.prototype.invoke = function () {
 };
 
 /*
-// note: used in line 2083, but undefined... never used so far
-pcAnimationEvent.prototype.clone = function () {
+// note: used in line 2127, but undefined... never used so far
+AnimationEvent.prototype.clone = function () {
     return new pcAnimationEvent(
         this.name,
         this.triggerTime,
@@ -2208,7 +2208,7 @@ AnimationSession.prototype.on = function (name, time, fnCallback, context, param
     if (!name || !fnCallback)
         return;
 
-    var event = new AnimationEvent_(name, time, fnCallback, context, parameter);
+    var event = new AnimationEvent(name, time, fnCallback, context, parameter);
     var pos = 0;
     for (; pos < this.animEvents.length; pos ++) {
         if (this.animEvents[pos].triggerTime > time)

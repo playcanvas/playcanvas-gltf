@@ -76,8 +76,8 @@ declare class AnimationClipSnapshot {
     _cacheKeyIdx: MapStringToNumber;
 }
 
-// AnimationEvent is a CSS class, so I added an underscore
-declare interface AnimationEvent_ {
+// todo: rename AnimationEvent (name collision with CSS)
+declare interface AnimationEvent {
     name: string;
     triggerTime: number;
     fnCallback: AnimationEventCallback;
@@ -100,7 +100,7 @@ declare interface AnimationSession {
     blendables: {[curveName: string]: Blendable};
     _cacheBlendValues: {[name: string]: AnimationClipSnapshot | AnimationKeyable};
     blendWeights: {[name: string]: Playable};
-    animEvents: AnimationEvent_[];
+    animEvents: AnimationEvent[];
     onTimer: (dt: number) => void;
     _allocatePlayableCache(): Playable;
 }
