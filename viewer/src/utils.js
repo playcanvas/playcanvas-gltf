@@ -100,9 +100,10 @@ function clone_gltf(entity) {
     // 3) assign new AnimationComponent
     entity_clone.animComponent = new AnimationComponent();
     // 4) clone animation clips
-    var animationClips = [];
-    for (var i=0; i<entity.animComponent.animClips.length; i++)
-        animationClips.push( entity.animComponent.animClips[i].clone() );
+    var numClips = entity.animComponent.animClips.length;
+    var animationClips = Array(numClips);
+    for (var i=0; i<numClips; i++)
+        animationClips[i] = entity.animComponent.animClips[i].clone();
     // 5) assign entity_clone to each clip->curve->target
     for (var i = 0; i < animationClips.length; i++) {
         var clip = animationClips[i];
@@ -122,29 +123,22 @@ function clone_gltf(entity) {
 }
 
 /**
- * @param {pc.Entity} entity
- */
-
-function gltf_play_first_clip(entity) {
-    if (!entity.animComponent)
-        return;
-    entity.animComponent.curClip = entity.animComponent.animClips[0].name;
-    entity.animComponent.animClips[0].loop = true;
-    entity.animComponent.animClips[0].play();
-}
-
-/**
  * @param {pc.Entity} gltf
  * @param {number} x
  * @param {number} y
  * @param {number} z
  */
 
-function gltf_clone_setpos_playfirstclip(gltf, x, y, z) {
+function gltf_clone_setpos_playclip(gltf, x, y, z) {
     var cloned = clone_gltf(gltf);
     cloned.enabled = true;
     cloned.setLocalPosition(x, y, z);
-    gltf_play_first_clip(cloned);
+    if (gltf.animComponent) {
+        var activeClipName = gltf.animComponent.curClip;
+        var activeClip = cloned.animComponent.animClipsMap[activeClipName];
+        activeClip.loop = true;
+        activeClip.play();
+    }
     return cloned;
 }
 
@@ -171,7 +165,7 @@ function spawn8x8() {
     }
     for (var i=1; i<=8; i++) {
         for (var j=1; j<=8; j++) {
-            var clone = gltf_clone_setpos_playfirstclip(entity, i * padding_x, 0, j * padding_z * -1);
+            var clone = gltf_clone_setpos_playclip(entity, i * padding_x, 0, j * padding_z * -1);
             clones.push(clone);
         }
     }
