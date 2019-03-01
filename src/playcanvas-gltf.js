@@ -126,7 +126,7 @@
                     curve = new AnimationCurve();
                     keyType = AnimationKeyableType.NUM;
                     curve.keyableType = keyType;
-                    curve.addTarget("model", path, i);
+                    curve.addTarget("model", TargetPath.Weights, i);
                     if (sampler.interpolation === "CUBIC")
                         curve.type = AnimationCurveType.CUBIC;
                     else if (sampler.interpolation === "STEP")
@@ -146,15 +146,15 @@
                 switch (path) {
                     case "translation":
                         keyType = AnimationKeyableType.VEC;
-                        targetPath = "localPosition";
+                        targetPath = TargetPath.LocalPosition;
                         break;
                     case "scale":
                         keyType = AnimationKeyableType.VEC;
-                        targetPath = "localScale";
+                        targetPath = TargetPath.LocalScale;
                         break;
                     case "rotation":
                         keyType = AnimationKeyableType.QUAT;
-                        targetPath = "localRotation";
+                        targetPath = TargetPath.LocalRotation;
                         break;
                 }
                 curve = new AnimationCurve();

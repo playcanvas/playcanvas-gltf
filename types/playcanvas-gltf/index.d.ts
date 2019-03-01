@@ -25,7 +25,7 @@ declare interface AnimationEventCallback {
 declare interface AnimationTarget {
     vScale?: pc.Vec3 | number[];
     targetNode: pc.GraphNode;
-    targetPath: string;
+    targetPath: TargetPath;
     targetProp: string;
 }
 
