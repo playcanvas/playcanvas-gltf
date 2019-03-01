@@ -143,7 +143,7 @@ function gltf_clone_setpos_playclip(gltf, x, y, z) {
 }
 
 clones = [];
-
+clonesNextHeight = 0;
 /**
  * @summary
  * clones the current viewer.gltf 64 times
@@ -156,23 +156,32 @@ function spawn8x8() {
         return;
     var entity = viewer.gltf;
     var padding_x = 0;
+    var padding_y = 0;
     var padding_z = 0;
     for (var i=0; i<entity.model.meshInstances.length; i++) {
         var aabb = entity.model.meshInstances[i].aabb;
         //console.log(aabb.halfExtents);
         padding_x = Math.max(padding_x, aabb.halfExtents.x * 2);
+        padding_y = Math.max(padding_y, aabb.halfExtents.y * 2);
         padding_z = Math.max(padding_z, aabb.halfExtents.z * 2);
     }
     for (var i=1; i<=8; i++) {
         for (var j=1; j<=8; j++) {
-            var clone = gltf_clone_setpos_playclip(entity, i * padding_x, 0, j * padding_z * -1);
+            var clone = gltf_clone_setpos_playclip(
+                entity,
+                i * padding_x,     // x
+                clonesNextHeight,  // y
+                j * padding_z * -1 // z
+            );
             clones.push(clone);
         }
     }
-    
+    clonesNextHeight += padding_y;
     // add all clones to scene
     for (var i=0; i<clones.length; i++) {
         var clone = clones[i];
+        if (clone.parent) // only add non-parented clones to scene
+            continue;
         viewer.app.root.addChild(clone);
     }
 }
