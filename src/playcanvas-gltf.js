@@ -1395,22 +1395,27 @@
         loadBuffers(resources, function () {
             parse('textures', translateTexture, resources);
             parse('images', translateImage, resources, function () {
-                parse('materials', translateMaterial, resources);
-                parse('meshes', translateMesh, resources);
-                parse('nodes', translateNode, resources);
-                parse('skins', translateSkin, resources);
-                parse('animations', translateAnimation, resources);
-
-                buildHierarchy(resources);
-
-                success(createModel(resources), resources.textures, resources.animations);
-
-                if (gltf.hasOwnProperty('extensionsUsed')) {
-                    if (gltf.extensionsUsed.indexOf('KHR_draco_mesh_compression') !== -1) {
-                        resources.decoderModule = null;
-                    }
+                if (resources.imagesLoaded === gltf.images.length) {
+                    buildHierarchy(resources);
+                    success(createModel(resources), resources.textures, resources.animations);
                 }
             });
+            parse('materials', translateMaterial, resources);
+            parse('meshes', translateMesh, resources);
+            parse('nodes', translateNode, resources);
+            parse('skins', translateSkin, resources);
+            parse('animations', translateAnimation, resources);
+
+            if (resources.imagesLoaded === gltf.images.length) {
+                buildHierarchy(resources);
+                success(createModel(resources), resources.textures, resources.animations);
+            }
+
+            if (gltf.hasOwnProperty('extensionsUsed')) {
+                if (gltf.extensionsUsed.indexOf('KHR_draco_mesh_compression') !== -1) {
+                    resources.decoderModule = null;
+                }
+            }
         });
     }
 
