@@ -1395,25 +1395,19 @@
         loadBuffers(resources, function () {
             parse('textures', translateTexture, resources);
             parse('images', translateImage, resources, function () {
-                if (resources.imagesLoaded === gltf.images.length) {
-                    buildHierarchy(resources);
-                    success(createModel(resources), resources.textures, resources.animations);
+                parse('materials', translateMaterial, resources);
+                parse('meshes', translateMesh, resources);
+                parse('nodes', translateNode, resources);
+                parse('skins', translateSkin, resources);
+                parse('animations', translateAnimation, resources);
+
+                if (gltf.hasOwnProperty('extras') && processGlobalExtras) {
+                    processGlobalExtras(gltf.extras);
                 }
-            });
-            parse('materials', translateMaterial, resources);
-            parse('meshes', translateMesh, resources);
-            parse('nodes', translateNode, resources);
-            parse('skins', translateSkin, resources);
-            parse('animations', translateAnimation, resources);
 
-            if (gltf.hasOwnProperty('extras') && processGlobalExtras) {
-                resources.processGlobalExtras(gltf.extras);
-            }
-
-            if (resources.imagesLoaded === gltf.images.length) {
                 buildHierarchy(resources);
                 success(createModel(resources), resources.textures, resources.animations);
-            }
+            });
 
             if (gltf.hasOwnProperty('extensionsUsed')) {
                 if (gltf.extensionsUsed.indexOf('KHR_draco_mesh_compression') !== -1) {
