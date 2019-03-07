@@ -178,7 +178,6 @@
                     }
                     clip.addCurve(curve);
                 } else { // 10/15 one key contains (in-tangent, value, out-tangent)
-                    console.log(clip.name, curve.name, path, "CUBICSPLINE");
                     curve.type = AnimationCurveType.CUBICSPLINE_GLTF;
                     for (i = 0; i < times.length; i++) {
                         time = times[i];
