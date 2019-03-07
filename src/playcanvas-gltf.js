@@ -1372,6 +1372,7 @@
         var processUri = (options && options.hasOwnProperty('processUri')) ? options.processUri : undefined;
         var processAnimationExtras = (options && options.hasOwnProperty('processAnimationExtras')) ? options.processAnimationExtras : undefined;
         var processMaterialExtras = (options && options.hasOwnProperty('processMaterialExtras')) ? options.processMaterialExtras : undefined;
+        var processGlobalExtras = (options && options.hasOwnProperty('processGlobalExtras')) ? options.processGlobalExtras : undefined;
 
         var resources = {
             basePath: basePath,
@@ -1405,6 +1406,10 @@
             parse('nodes', translateNode, resources);
             parse('skins', translateSkin, resources);
             parse('animations', translateAnimation, resources);
+
+            if (gltf.hasOwnProperty('extras') && processGlobalExtras) {
+                resources.processGlobalExtras(gltf.extras);
+            }
 
             if (resources.imagesLoaded === gltf.images.length) {
                 buildHierarchy(resources);
