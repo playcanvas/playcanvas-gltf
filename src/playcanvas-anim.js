@@ -219,6 +219,17 @@ AnimationKeyable.linearBlendValue = function (value1, value2, p) {
     return null;
 };
 
+/**
+ * @enum {number}
+ */
+var TargetPath = {
+    LocalPosition:    0,
+    LocalScale:       1,
+    LocalRotation:    2,
+    LocalEulerAngles: 3,
+    Weights:          4
+};
+
 // *===============================================================================================================
 // * class AnimationTarget: organize target into an object, this allows 1-Curve-Multiple-Targets
 // *                        one AnimationCurve has a [] collection of AnimationTargets
@@ -227,7 +238,7 @@ AnimationKeyable.linearBlendValue = function (value1, value2, p) {
 /**
  * @constructor
  * @param {pc.GraphNode} targetNode
- * @param {string} [targetPath]
+ * @param {TargetPath} [targetPath]
  * @param {string} [targetProp]
  */
 var AnimationTarget = function (targetNode, targetPath, targetProp) {
@@ -277,7 +288,7 @@ AnimationTarget.prototype.blendToTarget = function (value, p) {
         return;
 
      // target needs scaling for retargetting
-    if (this.targetPath === "localPosition" && (this.vScale instanceof pc.Vec3)) {
+    if (this.targetPath === TargetPath.LocalPosition && (this.vScale instanceof pc.Vec3)) {
         if (value instanceof pc.Vec3) {
             value.x *= this.vScale.x;
             value.y *= this.vScale.y;
@@ -293,25 +304,50 @@ AnimationTarget.prototype.blendToTarget = function (value, p) {
     }
 
     // p*cur + (1-p)*prev
-    if (this.targetNode && this.targetNode[this.targetPath] !== undefined) {
+    if (this.targetNode) {
         var blendValue;
-        if (this.targetProp && this.targetProp in this.targetNode[this.targetPath]) {
-            blendValue = AnimationKeyable.linearBlendValue(this.targetNode[this.targetPath][this.targetProp], value, p);
-            this.targetNode[this.targetPath][this.targetProp] = blendValue;
-        } else {
-            blendValue = AnimationKeyable.linearBlendValue(this.targetNode[this.targetPath], value, p);
-            this.targetNode[this.targetPath] = blendValue;
-        }
 
-        // special wrapping for eulerangles
-        if (this.targetPath == "localEulerAngles") {
-            var vec3 = new pc.Vec3();
-            if (this.targetProp === "x" || this.targetProp === "y" || this.targetProp === "z")
-                vec3[this.targetProp] = blendValue;
-            else
-                vec3 = blendValue;
-            this.targetNode.setLocalEulerAngles(vec3);
-        }
+        switch (this.targetPath) {
+            case TargetPath.LocalPosition: {
+                if (this.targetProp && this.targetProp in this.targetNode.localPosition) {
+                    blendValue = AnimationKeyable.linearBlendValue(this.targetNode.localPosition[this.targetProp], value, p);
+                    this.targetNode.localPosition[this.targetProp] = blendValue;
+                } else {
+                    blendValue = AnimationKeyable.linearBlendValue(this.targetNode.localPosition, value, p);
+                    this.targetNode.localPosition = blendValue;
+                }
+                break;
+            }
+            case TargetPath.LocalScale: {
+                if (this.targetProp && this.targetProp in this.targetNode.localScale) {
+                    blendValue = AnimationKeyable.linearBlendValue(this.targetNode.localScale[this.targetProp], value, p);
+                    this.targetNode.localScale[this.targetProp] = blendValue;
+                } else {
+                    blendValue = AnimationKeyable.linearBlendValue(this.targetNode.localScale, value, p);
+                    this.targetNode.localScale = blendValue;
+                }
+                break;
+            }
+            case TargetPath.LocalRotation: {
+                if (this.targetProp && this.targetProp in this.targetNode.localRotation) {
+                    blendValue = AnimationKeyable.linearBlendValue(this.targetNode.localRotation[this.targetProp], value, p);
+                    this.targetNode.localRotation[this.targetProp] = blendValue;
+                } else {
+                    blendValue = AnimationKeyable.linearBlendValue(this.targetNode.localRotation, value, p);
+                    this.targetNode.localRotation = blendValue;
+                }
+                break;
+            }
+            case TargetPath.LocalEulerAngles: {
+                var vec3 = new pc.Vec3();
+                if (this.targetProp === "x" || this.targetProp === "y" || this.targetProp === "z")
+                    vec3[this.targetProp] = blendValue;
+                else
+                    vec3 = blendValue;
+                this.targetNode.setLocalEulerAngles(vec3);
+                break;
+            }
+        }        
 
         // execute update target
         if (typeof this.targetNode._dirtifyLocal === 'function') {
@@ -320,7 +356,7 @@ AnimationTarget.prototype.blendToTarget = function (value, p) {
     }
 
     /* /special wrapping for morph weights
-    if (this.targetNode && this.targetPath === "weights" && this.targetNode.model)
+    if (this.targetNode && this.targetPath === TargetPath.Weights && this.targetNode.model)
     {
         var meshInstances = this.targetNode.model.meshInstances;
         for (var m = 0; m < meshInstances.length; m++)
@@ -341,7 +377,7 @@ AnimationTarget.prototype.updateToTarget = function (value) {
         return;
 
     // target needs scaling for retargetting
-    if (this.targetPath === "localPosition" && (this.vScale instanceof pc.Vec3)) {
+    if (this.targetPath === TargetPath.LocalPosition && (this.vScale instanceof pc.Vec3)) {
         if (value instanceof pc.Vec3) {
             value.x *= this.vScale.x;
             value.y *= this.vScale.y;
@@ -351,37 +387,76 @@ AnimationTarget.prototype.updateToTarget = function (value) {
         }
     }
 
-    if (this.targetNode && this.targetNode[this.targetPath] !== undefined) {
-        if (this.targetProp && this.targetProp in this.targetNode[this.targetPath])
-            this.targetNode[this.targetPath][this.targetProp] = value;
-        else
-            this.targetNode[this.targetPath] = value;
+    if (typeof this.targetNode === "undefined")
+        return;
 
-        // special wrapping for eulerangles
-        if (this.targetPath == "localEulerAngles") {
+    switch (this.targetPath) {
+
+        case TargetPath.LocalPosition: {
+            if (this.targetProp && this.targetProp in this.targetNode.localPosition) {
+                this.targetNode.localPosition[this.targetProp] = value;
+            } else {
+                this.targetNode.localPosition = value;
+            }
+            // execute update target
+            if (typeof this.targetNode._dirtifyLocal === 'function') {
+                this.targetNode._dirtifyLocal();
+            }
+            break;
+        }
+
+        case TargetPath.LocalScale: {
+            if (this.targetProp && this.targetProp in this.targetNode.localScale) {
+                this.targetNode.localScale[this.targetProp] = value;
+            } else {
+                this.targetNode.localScale = value;
+            }
+            // execute update target
+            if (typeof this.targetNode._dirtifyLocal === 'function') {
+                this.targetNode._dirtifyLocal();
+            }
+            break;
+        }
+
+        case TargetPath.LocalRotation: {
+            if (this.targetProp && this.targetProp in this.targetNode.localRotation) {
+                this.targetNode.localRotation[this.targetProp] = value;
+            } else {
+                this.targetNode.localRotation = value;
+            }
+            // execute update target
+            if (typeof this.targetNode._dirtifyLocal === 'function') {
+                this.targetNode._dirtifyLocal();
+            }
+            break;
+        }
+
+        case TargetPath.LocalEulerAngles: {
             var vec3 = new pc.Vec3();
             if (this.targetProp === "x" || this.targetProp === "y" || this.targetProp === "z")
                 vec3[this.targetProp] = value;
             else
                 vec3 = value;
             this.targetNode.setLocalEulerAngles(vec3);
+            // execute update target
+            if (typeof this.targetNode._dirtifyLocal === 'function') {
+                this.targetNode._dirtifyLocal();
+            }
+            break;
+        }
+        
+        case TargetPath.Weights: {
+            if (this.targetNode.model) {
+                var meshInstances = this.targetNode.model.meshInstances;
+                for (var m = 0; m < meshInstances.length; m++) {
+                    var morphInstance = meshInstances[m].morphInstance;
+                    if (!morphInstance) continue;
+                    morphInstance.setWeight(this.targetProp, value);
+                }
+            }
         }
 
-        // execute update target
-        if (typeof this.targetNode._dirtifyLocal === 'function') {
-            this.targetNode._dirtifyLocal();
-        }
-    }
-
-    // special wrapping for morph weights
-    if (this.targetNode && this.targetPath === "weights" && this.targetNode.model) {
-        var meshInstances = this.targetNode.model.meshInstances;
-        for (var m = 0; m < meshInstances.length; m++) {
-            var morphInstance = meshInstances[m].morphInstance;
-            if (!morphInstance) continue;
-            morphInstance.setWeight(this.targetProp, value);
-        }
-    }
+    } // switch (this.targetPath)
 };
 
 // static function
@@ -516,7 +591,7 @@ AnimationCurve.prototype.clone = function () {
 
 /**
  * @param {pc.GraphNode} targetNode
- * @param {string} targetPath
+ * @param {TargetPath} targetPath
  * @param {string} targetProp
  */
 
@@ -527,7 +602,7 @@ AnimationCurve.prototype.addTarget = function (targetNode, targetPath, targetPro
 
 /**
  * @param {pc.GraphNode} targetNode
- * @param {string} targetPath
+ * @param {TargetPath} targetPath
  * @param {string} [targetProp]
  */
 
@@ -1793,21 +1868,21 @@ AnimationClip.prototype.constructFromRoot = function (root) {
     var curveScale = new AnimationCurve();
     curveScale.keyableType = AnimationKeyableType.VEC;
     curveScale.name = root.name + ".localScale";
-    curveScale.setTarget(root, "localScale");
+    curveScale.setTarget(root, TargetPath.LocalScale);
     this.addCurve(curveScale);
 
     // translate
     var curvePos = new AnimationCurve();
     curvePos.keyableType = AnimationKeyableType.VEC;
     curvePos.name = root.name + ".localPosition";
-    curvePos.setTarget(root, "localPosition");
+    curvePos.setTarget(root, TargetPath.LocalPosition);
     this.addCurve(curvePos);
 
     // rotate
     var curveRotQuat = new AnimationCurve();
     curveRotQuat.name = root.name + ".localRotation.quat";
     curveRotQuat.keyableType = AnimationKeyableType.QUAT;
-    curveRotQuat.setTarget(root, "localRotation");
+    curveRotQuat.setTarget(root, TargetPath.LocalRotation);
     this.addCurve(curveRotQuat);
 
     // children
