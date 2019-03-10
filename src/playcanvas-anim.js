@@ -227,8 +227,8 @@ AnimationKeyable.linearBlendValue = function (value1, value2, p) {
 /**
  * @constructor
  * @param {pc.GraphNode} targetNode
- * @param {string} [targetPath]
- * @param {string} [targetProp]
+ * @param {String} [targetPath]
+ * @param {String} [targetProp]
  */
 var AnimationTarget = function (targetNode, targetPath, targetProp) {
     this.targetNode = targetNode;
@@ -388,7 +388,7 @@ AnimationTarget.prototype.updateToTarget = function (value) {
 /**
  * @param {pc.GraphNode} root
  * @param {pc.Vec3} vec3Scale
- * @param {object} output
+ * @param {Object} output
  */
 AnimationTarget.constructTargetNodes = function (root, vec3Scale, output) {
     if (!root)
@@ -408,23 +408,20 @@ AnimationTarget.constructTargetNodes = function (root, vec3Scale, output) {
 // static function
 /**
  * @param {pc.GraphNode} node
- * @returns {pc.Vec3}
+ * @param {pc.Vec3} localScale
  */
-AnimationTarget.getLocalScale = function (node) {
+AnimationTarget.getLocalScale = function (node, localScale) {
+    localScale.set(1, 1, 1);
+
     if (!node)
         return;
 
-    var vScale = new pc.Vec3(1, 1, 1);
-    var curNode = node;
-    while (curNode) {
-        if (curNode.localScale) {
-            vScale.x *= curNode.localScale.x;
-            vScale.y *= curNode.localScale.y;
-            vScale.z *= curNode.localScale.z;
+    while (node) {
+        if (node.localScale) {
+            localScale.mul(node.localScale);
         }
-        curNode = curNode.parent;
+        node = node.parent;
     }
-    return vScale;
 };
 
 // *===============================================================================================================
@@ -516,8 +513,8 @@ AnimationCurve.prototype.clone = function () {
 
 /**
  * @param {pc.GraphNode} targetNode
- * @param {string} targetPath
- * @param {string} targetProp
+ * @param {String} targetPath
+ * @param {String} targetProp
  */
 
 AnimationCurve.prototype.addTarget = function (targetNode, targetPath, targetProp) {
@@ -527,8 +524,8 @@ AnimationCurve.prototype.addTarget = function (targetNode, targetPath, targetPro
 
 /**
  * @param {pc.GraphNode} targetNode
- * @param {string} targetPath
- * @param {string} [targetProp]
+ * @param {String} targetPath
+ * @param {String} [targetProp]
  */
 
 AnimationCurve.prototype.setTarget = function (targetNode, targetPath, targetProp) {
@@ -581,7 +578,7 @@ AnimationCurve.prototype.getAnimTargets = function () {
 
 // events related
 /**
- * @param {string} name
+ * @param {String} name
  * @param {number} time
  * @param {AnimationEventCallback} fnCallback
  * @param {any} context
@@ -595,7 +592,7 @@ AnimationCurve.prototype.on = function (name, time, fnCallback, context, paramet
 };
 
 /**
- * @param {string} name
+ * @param {String} name
  * @param {number} time
  * @param {AnimationEventCallback} fnCallback
  */
@@ -837,7 +834,7 @@ AnimationCurve.prototype.evalLINEAR = function (time) {
  * @returns {AnimationKeyable}
  */
 
-AnimationCurve.prototype.evalLINEAR_cache = function (time, cacheKeyIdx, cacheValue) { //1215
+AnimationCurve.prototype.evalLINEAR_cache = function (time, cacheKeyIdx, cacheValue) {
     if (!this.animKeys || this.animKeys.length === 0)
         return null;
 
@@ -922,7 +919,7 @@ AnimationCurve.prototype.evalSTEP = function (time) {
  * @returns {AnimationKeyable}
  */
 
-AnimationCurve.prototype.evalSTEP_cache = function (time, cacheKeyIdx, cacheValue) { //1215
+AnimationCurve.prototype.evalSTEP_cache = function (time, cacheKeyIdx, cacheValue) {
     if (!this.animKeys || this.animKeys.length === 0)
         return null;
 
@@ -1008,7 +1005,7 @@ AnimationCurve.prototype.evalCUBIC = function (time) {
  * @returns {AnimationKeyable}
  */
 
-AnimationCurve.prototype.evalCUBIC_cache = function (time, cacheKeyIdx, cacheValue) {//1215
+AnimationCurve.prototype.evalCUBIC_cache = function (time, cacheKeyIdx, cacheValue) {
     if (!this.animKeys || this.animKeys.length === 0)
         return null;
 
@@ -1138,7 +1135,7 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time) {
  * @returns {AnimationKeyable}
  */
 
-AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyIdx, cacheValue) {//1215
+AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyIdx, cacheValue) {
     if (!this.animKeys || this.animKeys.length === 0)
         return null;
 
@@ -1218,7 +1215,7 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyId
  * @returns {AnimationKeyable}
  */
 
-AnimationCurve.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) { //1215
+AnimationCurve.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {
     if (!this.animKeys || this.animKeys.length === 0)
         return null;
 
@@ -1292,7 +1289,7 @@ AnimationCurve.cubicHermite = function (t1, v1, t2, v2, p) {
  * @summary static: only for num or vec
  */
 
-AnimationCurve.cubicCardinal = function (key0, key1, key2, key3, time, tension, cacheValue) {//1215
+AnimationCurve.cubicCardinal = function (key0, key1, key2, key3, time, tension, cacheValue) {
     var m1, m2;
 
     if (!key1 || !key2 || key1.type != key2.type)
@@ -1648,7 +1645,7 @@ AnimationClip.prototype.addCurve = function (curve) {
 };
 
 /**
- * @param {string} name
+ * @param {String} name
  */
 
 AnimationClip.prototype.removeCurve = function (name) {
@@ -1676,7 +1673,7 @@ AnimationClip.prototype.removeAllCurves = function () {
 // events related
 
 /**
- * @param {string} name
+ * @param {String} name
  * @param {number} time
  * @param {AnimationEventCallback} fnCallback
  * @param {any} context
@@ -1690,7 +1687,7 @@ AnimationClip.prototype.on = function (name, time, fnCallback, context, paramete
 };
 
 /**
- * @param {string} name
+ * @param {String} name
  * @param {number} time
  * @param {AnimationEventCallback} fnCallback
  */
@@ -1849,27 +1846,28 @@ AnimationClip.prototype.constructFromRoot = function (root) {
  */
 
 AnimationClip.prototype.transferToRoot = function (root) {
+    var cScale = new pc.Vec3();
     var dictTarget = {};
     AnimationTarget.constructTargetNodes(root, null, dictTarget);// contains localScale information
 
     for (var i = 0, len = this.animCurves.length; i < len; i++) {
         var curve = this.animCurves[i];
-        var ctarget = curve.animTargets[0];
         if (curve.animTargets.length === 0) {
             continue;
         }
+        var ctarget = curve.animTargets[0];
         var atarget = dictTarget[ctarget.targetNode.name];
         if (atarget) { // match by target name
-            var cScale = AnimationTarget.getLocalScale(ctarget.targetNode);
+            AnimationTarget.getLocalScale(ctarget.targetNode, cScale);
             ctarget.targetNode = atarget.targetNode; // atarget contains scale information
-            if (cScale && atarget.vScale) {
-                ctarget.vScale = new pc.Vec3(cScale.x, cScale.y, cScale.z);
+            if (atarget.vScale) {
+                ctarget.vScale = cScale.clone();
                 if (atarget.vScale.x) ctarget.vScale.x /= atarget.vScale.x;
                 if (atarget.vScale.y) ctarget.vScale.y /= atarget.vScale.y;
                 if (atarget.vScale.z) ctarget.vScale.z /= atarget.vScale.z;
             }
-        } else // not found
-            console.warn("transferToRoot: " + ctarget.targetNode.name + "in animation clip " + this.name + " has no transferred target under " + root.name);
+        } // else // not found
+            // console.warn("transferToRoot: " + ctarget.targetNode.name + "in animation clip " + this.name + " has no transferred target under " + root.name);
     }
 };
 
@@ -1916,7 +1914,7 @@ AnimationClip.prototype.setInterpolationType = function (type) {
 
 /**
  * @constructor
- * @param {string} name
+ * @param {String} name
  * @param {number} time
  * @param {AnimationEventCallback} fnCallback
  * @param {any} context
@@ -2009,7 +2007,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
 
     // ontimer function for playback
     var self = this;
-    this.onTimer = function (/**@type {number} */dt) {
+    this.onTimer = function (/** @type {number} */dt) {
         self.curTime += (self.bySpeed * dt);
         self.accTime += (self.bySpeed * dt);
 
@@ -2059,7 +2057,7 @@ AnimationSession.app = null;
  * @returns {AnimationKeyable | AnimationClipSnapshot}
  */
 
-AnimationSession._allocatePlayableCache = function(playable) {
+AnimationSession._allocatePlayableCache = function (playable) {
     if (!playable)
         return null;
 
@@ -2148,7 +2146,7 @@ AnimationSession.prototype.clone = function () {
 /**
  * @param {BlendValue} blendValue
  * @param {number} weight
- * @param {string} curveName
+ * @param {String} curveName
  */
 
 AnimationSession.prototype.setBlend = function (blendValue, weight, curveName){
@@ -2179,7 +2177,7 @@ AnimationSession.prototype.setBlend = function (blendValue, weight, curveName){
 };
 
 /**
- * @param {string} curveName
+ * @param {String} curveName
  */
 
 AnimationSession.prototype.unsetBlend = function (curveName) {
@@ -2197,7 +2195,7 @@ AnimationSession.prototype.unsetBlend = function (curveName) {
 // events related
 
 /**
- * @param {string} name
+ * @param {String} name
  * @param {number} time
  * @param {AnimationEventCallback} fnCallback
  * @param {any} context
@@ -2222,7 +2220,7 @@ AnimationSession.prototype.on = function (name, time, fnCallback, context, param
 };
 
 /**
- * @param {string} name
+ * @param {String} name
  * @param {number} time
  * @param {AnimationEventCallback} fnCallback
  */
@@ -2248,7 +2246,7 @@ AnimationSession.prototype.removeAllEvents = function () {
 };
 
 /**
- * @param {string} name
+ * @param {String} name
  */
 
 AnimationSession.prototype.invokeByName = function (name) {
@@ -2637,7 +2635,7 @@ AnimationComponent.prototype.addClip = function (clip) {
 };
 
 /**
- * @param {string} name
+ * @param {String} name
  */
 
 AnimationComponent.prototype.removeClip = function (name) {
@@ -2655,7 +2653,7 @@ AnimationComponent.prototype.removeClip = function (name) {
 };
 
 /**
- * @param {string} name
+ * @param {String} name
  */
 
 AnimationComponent.prototype.playClip = function (name) {
@@ -2675,7 +2673,7 @@ AnimationComponent.prototype.stopClip = function () {
 };
 
 /**
- * @param {string} name
+ * @param {String} name
  * @param {number} duration
  */
 
@@ -2702,7 +2700,7 @@ AnimationComponent.prototype.crossFadeToClip = function (name, duration) {
 /**
  * @param {BlendValue} blendValue
  * @param {number} weight
- * @param {string} curveName
+ * @param {String} curveName
  */
 
 AnimationComponent.prototype.setBlend = function (blendValue, weight, curveName) {
@@ -2712,7 +2710,7 @@ AnimationComponent.prototype.setBlend = function (blendValue, weight, curveName)
 };
 
 /**
- * @param {string} curveName
+ * @param {String} curveName
  */
 
 AnimationComponent.prototype.unsetBlend = function (curveName) {
@@ -2728,7 +2726,7 @@ AnimationComponent.prototype.getCurrentSession = function () {
 };
 
 /**
- * @param {string} name
+ * @param {String} name
  */
 
 AnimationComponent.prototype.playSession = function (name) {
@@ -2748,7 +2746,7 @@ AnimationComponent.prototype.stopSession = function () {
 };
 
 /**
- * @param {string} name
+ * @param {String} name
  * @param {number} duration
  */
 
@@ -2772,7 +2770,7 @@ AnimationComponent.prototype.crossFadeToSession = function (name, duration) {
 /**
  * @param {BlendValue} blendValue
  * @param {number} weight
- * @param {string} curveName
+ * @param {String} curveName
  */
 
 AnimationComponent.prototype.setBlendSession = function (blendValue, weight, curveName) {
@@ -2783,7 +2781,7 @@ AnimationComponent.prototype.setBlendSession = function (blendValue, weight, cur
 };
 
 /**
- * @param {string} curveName
+ * @param {String} curveName
  */
 
 AnimationComponent.prototype.unsetBlendSession = function (curveName) {
@@ -2794,7 +2792,7 @@ AnimationComponent.prototype.unsetBlendSession = function (curveName) {
 };
 
 /**
- * @param {string} substr
+ * @param {String} substr
  */
 
 AnimationComponent.prototype.playSubstring = function (substr) {
