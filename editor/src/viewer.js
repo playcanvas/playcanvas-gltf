@@ -295,7 +295,7 @@ Viewer.prototype = {
         
         this.anim_slider = document.getElementById("anim_slider");
         this.anim_slider.oninput = function(e) {
-            var curTime = this.anim_slider.value;
+            var curTime = Number(this.anim_slider.value);
             this.pauseAnimationsAndSeekToTime(curTime);
         }.bind(this);
         
