@@ -1131,12 +1131,10 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time) {
     if (this.keyableType === AnimationKeyableType.NUM) {
         resKey.value = AnimationCurve.cubicHermite(g * key1.outTangent, key1.value, g * key2.inTangent, key2.value, p);
     } else if (this.keyableType === AnimationKeyableType.VEC) {
-        resKey.value = new pc.Vec3();
         resKey.value.x = AnimationCurve.cubicHermite(g * key1.outTangent.x, key1.value.x, g * key2.inTangent.x, key2.value.x, p);
         resKey.value.y = AnimationCurve.cubicHermite(g * key1.outTangent.y, key1.value.y, g * key2.inTangent.y, key2.value.y, p);
         resKey.value.z = AnimationCurve.cubicHermite(g * key1.outTangent.z, key1.value.z, g * key2.inTangent.z, key2.value.z, p);
     } else if (this.keyableType === AnimationKeyableType.QUAT) {
-        resKey.value = new pc.Quat();
         resKey.value.w = AnimationCurve.cubicHermite(g * key1.outTangent.w, key1.value.w, g * key2.inTangent.w, key2.value.w, p);
         resKey.value.x = AnimationCurve.cubicHermite(g * key1.outTangent.x, key1.value.x, g * key2.inTangent.x, key2.value.x, p);
         resKey.value.y = AnimationCurve.cubicHermite(g * key1.outTangent.y, key1.value.y, g * key2.inTangent.y, key2.value.y, p);
@@ -1211,12 +1209,10 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyId
     if (this.keyableType === AnimationKeyableType.NUM) {
         resKey.value = AnimationCurve.cubicHermite(g * key1.outTangent, key1.value, g * key2.inTangent, key2.value, p);
     } else if (this.keyableType === AnimationKeyableType.VEC) {
-        resKey.value = new pc.Vec3();
         resKey.value.x = AnimationCurve.cubicHermite(g * key1.outTangent.x, key1.value.x, g * key2.inTangent.x, key2.value.x, p);
         resKey.value.y = AnimationCurve.cubicHermite(g * key1.outTangent.y, key1.value.y, g * key2.inTangent.y, key2.value.y, p);
         resKey.value.z = AnimationCurve.cubicHermite(g * key1.outTangent.z, key1.value.z, g * key2.inTangent.z, key2.value.z, p);
     } else if (this.keyableType === AnimationKeyableType.QUAT) {
-        resKey.value = new pc.Quat();
         resKey.value.w = AnimationCurve.cubicHermite(g * key1.outTangent.w, key1.value.w, g * key2.inTangent.w, key2.value.w, p);
         resKey.value.x = AnimationCurve.cubicHermite(g * key1.outTangent.x, key1.value.x, g * key2.inTangent.x, key2.value.x, p);
         resKey.value.y = AnimationCurve.cubicHermite(g * key1.outTangent.y, key1.value.y, g * key2.inTangent.y, key2.value.y, p);
