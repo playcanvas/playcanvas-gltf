@@ -1320,8 +1320,7 @@ AnimationCurve.cubicCardinal = function (key0, key1, key2, key3, time, tension, 
     if (key1.type === AnimationKeyableType.VEC) {
         resKey.value = key1.value.clone();
         var props = ["x", "y", "z", "w"];
-        for (var i = 0; i < props.length; i ++)
-        { 
+        for (var i = 0; i < props.length; i ++) { 
             var pr = props[i];
             if (resKey.value[pr] === undefined)
                 continue;
