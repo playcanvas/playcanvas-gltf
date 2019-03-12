@@ -54,6 +54,10 @@ AnimationKeyable.prototype.copy = function (keyable) {
         value = keyable.value.clone();
 
     this.init(keyable.type, keyable.time, value);
+    if(keyable.inTangent)
+        this.inTangent = keyable.inTangent.clone();
+    if(keyable.outTangent)
+        this.outTangent = keyable.outTangent.clone();
     return this;
 };
 
@@ -62,6 +66,10 @@ AnimationKeyable.prototype.clone = function () {
     if (this.value instanceof pc.Vec3 || this.value instanceof pc.Quat)
         value = this.value.clone();
     var cloned = new AnimationKeyable(this.type, this.time, value);
+    if(this.inTangent)
+        cloned.inTangent = this.inTangent.clone();
+    if(this.outTangent)
+        cloned.outTangent = this.outTangent.clone();
     return cloned;
 };
 
