@@ -2472,6 +2472,7 @@ AnimationSession.prototype.play = function (playable, animTargets) {
 
     var app = pc.Application.getApplication();
     app.on('update', this.onTimer);
+    this.showAt(this.curTime, this.fadeDir, this.fadeBegTime, this.fadeEndTime, this.fadeTime);
     return this;
 };
 
