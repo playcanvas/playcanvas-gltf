@@ -54,6 +54,10 @@ AnimationKeyable.prototype.copy = function (keyable) {
         value = keyable.value.clone();
 
     this.init(keyable.type, keyable.time, value);
+    if(keyable.inTangent)
+        this.inTangent = keyable.inTangent.clone();
+    if(keyable.outTangent)
+        this.outTangent = keyable.outTangent.clone();
     return this;
 };
 
@@ -62,6 +66,10 @@ AnimationKeyable.prototype.clone = function () {
     if (this.value instanceof pc.Vec3 || this.value instanceof pc.Quat)
         value = this.value.clone();
     var cloned = new AnimationKeyable(this.type, this.time, value);
+    if(this.inTangent)
+        cloned.inTangent = this.inTangent.clone();
+    if(this.outTangent)
+        cloned.outTangent = this.outTangent.clone();
     return cloned;
 };
 
@@ -451,33 +459,41 @@ var AnimationCurve = function () {
     this.animTargets = [];// allow multiple targets
     this.duration = 0;
     this.animKeys = [];
-    this.session = new AnimationSession(this);
 };
 AnimationCurve.count = 0;
 
 // getter and setter
 Object.defineProperty(AnimationCurve.prototype, 'isPlaying', {
     get: function () {
-        return this.session.isPlaying;
+        if(this.session)
+            return this.session.isPlaying;
+        return false;
     },
     set: function (isPlaying) {
-        this.session.isPlaying = isPlaying;
+        if(this.session)
+            this.session.isPlaying = isPlaying;
     }
 });
 Object.defineProperty(AnimationCurve.prototype, 'loop', {
     get: function () {
-        return this.session.loop;
+        if(this.session)
+            return this.session.loop;
+        return false;
     },
     set: function (loop) {
-        this.session.loop = loop;
+        if(this.session)
+            this.session.loop = loop;
     }
 });
 Object.defineProperty(AnimationCurve.prototype, 'bySpeed', {
     get: function () {
-        return this.session.bySpeed;
+        if(this.session)
+            return this.session.bySpeed;
+        return 0;
     },
     set: function (bySpeed) {
-        this.session.bySpeed = bySpeed;
+        if(this.session)
+            this.session.bySpeed = bySpeed;
     }
 });
 
@@ -538,14 +554,16 @@ AnimationCurve.prototype.clearTargets = function () {
 };
 
 AnimationCurve.prototype.resetSession = function () {
-    this.session.playable = this;
-    this.session.animTargets = this.getAnimTargets();
-    this.session.isPlaying = true;
-    this.session.begTime = 0;
-    this.session.endTime = this.duration;
-    this.session.curTime = 0;
-    this.session.bySpeed = 1;
-    this.session.loop = true;
+    if(this.session) { 
+        this.session.playable = this;
+        this.session.animTargets = this.getAnimTargets();
+        this.session.isPlaying = true;
+        this.session.begTime = 0;
+        this.session.endTime = this.duration;
+        this.session.curTime = 0;
+        this.session.bySpeed = 1;
+        this.session.loop = true;
+    }
 };
 
 /**
@@ -554,7 +572,8 @@ AnimationCurve.prototype.resetSession = function () {
  */
 
 AnimationCurve.prototype.blendToTarget = function (keyable, p) {
-    this.session.blendToTarget(keyable, p);
+    if (this.session)
+        this.session.blendToTarget(keyable, p);
 };
 
 /**
@@ -562,7 +581,8 @@ AnimationCurve.prototype.blendToTarget = function (keyable, p) {
  */
 
 AnimationCurve.prototype.updateToTarget = function (keyable) {
-    this.session.updateToTarget(keyable);
+    if (this.session)
+        this.session.updateToTarget(keyable);
 };
 
 // this.animTargets wrapped in object, with curve name
@@ -618,6 +638,8 @@ AnimationCurve.prototype.removeAllEvents = function () {
  */
 
 AnimationCurve.prototype.fadeIn = function (duration) {
+    if (!this.session)
+        this.session = new AnimationSession(this);
     this.session.fadeIn(duration, this);
 };
 
@@ -626,23 +648,29 @@ AnimationCurve.prototype.fadeIn = function (duration) {
  */
 
 AnimationCurve.prototype.fadeOut = function (duration) {
-    this.session.fadeOut(duration);
+    if (this.session)
+        this.session.fadeOut(duration);
 };
 
 AnimationCurve.prototype.play = function () {
+    if (!this.session)
+        this.session = new AnimationSession(this);
     this.session.play(this);
 };
 
 AnimationCurve.prototype.resume = function () {
-    this.session.resume();
+    if (this.session)
+        this.session.resume();
 };
 
 AnimationCurve.prototype.stop = function () {
-    this.session.stop();
+    if (this.session)
+        this.session.stop();
 };
 
 AnimationCurve.prototype.pause = function () {
-    this.session.pause();
+    if (this.session)
+        this.session.pause();
 };
 
 /**
@@ -654,7 +682,8 @@ AnimationCurve.prototype.pause = function () {
  */
 
 AnimationCurve.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTime, fadeTime) {
-    this.session.showAt(time, fadeDir, fadeBegTime, fadeEndTime, fadeTime);
+    if (this.session)
+        this.session.showAt(time, fadeDir, fadeBegTime, fadeEndTime, fadeTime);
 };
 
 /**
@@ -1110,12 +1139,10 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time) {
     if (this.keyableType === AnimationKeyableType.NUM) {
         resKey.value = AnimationCurve.cubicHermite(g * key1.outTangent, key1.value, g * key2.inTangent, key2.value, p);
     } else if (this.keyableType === AnimationKeyableType.VEC) {
-        resKey.value = new pc.Vec3();
         resKey.value.x = AnimationCurve.cubicHermite(g * key1.outTangent.x, key1.value.x, g * key2.inTangent.x, key2.value.x, p);
         resKey.value.y = AnimationCurve.cubicHermite(g * key1.outTangent.y, key1.value.y, g * key2.inTangent.y, key2.value.y, p);
         resKey.value.z = AnimationCurve.cubicHermite(g * key1.outTangent.z, key1.value.z, g * key2.inTangent.z, key2.value.z, p);
     } else if (this.keyableType === AnimationKeyableType.QUAT) {
-        resKey.value = new pc.Quat();
         resKey.value.w = AnimationCurve.cubicHermite(g * key1.outTangent.w, key1.value.w, g * key2.inTangent.w, key2.value.w, p);
         resKey.value.x = AnimationCurve.cubicHermite(g * key1.outTangent.x, key1.value.x, g * key2.inTangent.x, key2.value.x, p);
         resKey.value.y = AnimationCurve.cubicHermite(g * key1.outTangent.y, key1.value.y, g * key2.inTangent.y, key2.value.y, p);
@@ -1190,12 +1217,10 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyId
     if (this.keyableType === AnimationKeyableType.NUM) {
         resKey.value = AnimationCurve.cubicHermite(g * key1.outTangent, key1.value, g * key2.inTangent, key2.value, p);
     } else if (this.keyableType === AnimationKeyableType.VEC) {
-        resKey.value = new pc.Vec3();
         resKey.value.x = AnimationCurve.cubicHermite(g * key1.outTangent.x, key1.value.x, g * key2.inTangent.x, key2.value.x, p);
         resKey.value.y = AnimationCurve.cubicHermite(g * key1.outTangent.y, key1.value.y, g * key2.inTangent.y, key2.value.y, p);
         resKey.value.z = AnimationCurve.cubicHermite(g * key1.outTangent.z, key1.value.z, g * key2.inTangent.z, key2.value.z, p);
     } else if (this.keyableType === AnimationKeyableType.QUAT) {
-        resKey.value = new pc.Quat();
         resKey.value.w = AnimationCurve.cubicHermite(g * key1.outTangent.w, key1.value.w, g * key2.inTangent.w, key2.value.w, p);
         resKey.value.x = AnimationCurve.cubicHermite(g * key1.outTangent.x, key1.value.x, g * key2.inTangent.x, key2.value.x, p);
         resKey.value.y = AnimationCurve.cubicHermite(g * key1.outTangent.y, key1.value.y, g * key2.inTangent.y, key2.value.y, p);
