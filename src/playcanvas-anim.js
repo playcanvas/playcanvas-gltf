@@ -2685,11 +2685,13 @@ AnimationComponent.prototype.playClip = function (name) {
 };
 
 AnimationComponent.prototype.stopClip = function () {
+    var session = this.animSessions[this.curClip];
+    if (session)
+        session.stop();
     var clip = this.animClipsMap[this.curClip];
-    if (clip) {
+    if (clip)
         clip.stop();
-        this.curClip = "";
-    }
+    this.curClip = "";
 };
 
 /**
@@ -2759,10 +2761,12 @@ AnimationComponent.prototype.playSession = function (name) {
 
 AnimationComponent.prototype.stopSession = function () {
     var session = this.animSessions[this.curClip];
-    if (session) {
+    if (session)
         session.stop();
-        this.curClip = "";
-    }
+    var clip = this.animClipsMap[this.curClip];
+    if (clip)
+        clip.stop();
+    this.curClip = "";
 };
 
 /**
