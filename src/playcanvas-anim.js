@@ -2164,7 +2164,7 @@ AnimationSession.prototype.clone = function () {
     return cloned;
 };
 
-// blend related========================================================== 
+// blend related==========================================================
 
 /**
  * @param {BlendValue} blendValue

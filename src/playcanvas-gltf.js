@@ -1,5 +1,5 @@
-(function () { 
-    
+(function () {
+
     // Math utility functions
     function nearestPow2(n) {
         return Math.pow(2, Math.round(Math.log(n) / Math.log(2)));
