@@ -32,7 +32,7 @@ function Viewer() {
     app.root.addChild(camera);
 
     // Make the camera interactive
-    app.assets.loadFromUrl('./src/orbit-camera.js', 'script', function (err, asset) {
+    app.assets.loadFromUrl('../viewer/src/orbit-camera.js', 'script', function (err, asset) {
         camera.script.create('orbitCamera', {
             attributes: {
                 inertiaFactor: 0,
@@ -66,7 +66,7 @@ function Viewer() {
 
     // Set a prefiltered cubemap as the skybox
     var cubemapAsset = new pc.Asset('helipad', 'cubemap', {
-        url: "./assets/cubemap/6079289/Helipad.dds"
+        url: "../viewer/assets/cubemap/6079289/Helipad.dds"
     }, {
         "textures": [
             "./assets/cubemap/6079292/Helipad_posx.png",
@@ -93,7 +93,6 @@ function Viewer() {
     this.app = app;
     this.camera = camera;
     this.playing = true; // for play/pause button
-    this.overlay = init_overlay();
     this.setupAnimControls();
     this.timeline = new Timeline();
 
@@ -101,9 +100,6 @@ function Viewer() {
     
     // Press 'D' to delete the currently loaded model
     app.on('update', function () {
-        if (viewer.shaderChunks.enabled == false && this.app.keyboard.wasPressed(pc.KEY_D)) {
-            this.destroyScene();
-        }
         if (this.gltf && this.gltf.animComponent) {
             // mirror the playback time of the playing clip into the html range slider
             var curTime = this.gltf.animComponent.getCurrentClip().session.curTime;
@@ -240,17 +236,7 @@ Viewer.prototype = {
             this.anim_pause.value = ">";
         }
     },
-    resumeCurrentAnimationClip: function() {
-        if (this.gltf && this.gltf.animComponent) {
-            var clip = this.gltf.animComponent.getCurrentClip();
-            clip.resume();
-            this.anim_slider.max = clip.duration;
-            this.playing = true;
-            this.anim_pause.value = "||";
-            this.clip = clip; // quick access for f12 devtools
-            this.timeline.resize();
-        }
-    },
+    
     playCurrentAnimationClip: function() {
         if (this.gltf && this.gltf.animComponent) {
             //this.gltf.animComponent.getCurrentClip().resume(); // resume doesn't work yet
@@ -268,7 +254,7 @@ Viewer.prototype = {
         if (this.playing) {
             this.pauseAnimationClips();
         } else {
-            this.resumeCurrentAnimationClip();
+            this.playCurrentAnimationClip();
         }
     },
     

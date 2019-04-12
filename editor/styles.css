@@ -14,6 +14,12 @@ body {
     position: absolute;
 }
 
+
+#editor {
+    top: 50px;
+    position: absolute;
+}
+
 #anim_timeline {
     position: absolute;
     border-top: 1px solid rgba(0, 0, 0, 0.1);
