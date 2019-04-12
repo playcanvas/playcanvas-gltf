@@ -240,6 +240,7 @@ Viewer.prototype = {
             this.anim_pause.value = ">";
         }
     },
+    
     resumeCurrentAnimationClip: function() {
         if (this.gltf && this.gltf.animComponent) {
             var clip = this.gltf.animComponent.getCurrentClip();

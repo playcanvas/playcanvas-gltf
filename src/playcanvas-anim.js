@@ -2025,6 +2025,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
         this.animTargets = targets;// collection of AnimationTarget
 
     this.animEvents = [];
+
     // blend related==========================================================
     this.blendables = {};
     this.blendWeights = {};
@@ -2034,6 +2035,7 @@ var AnimationSession = function AnimationSession(playable, targets) {
     this.onTimer = function (/** @type {number} */dt) {
         self.curTime += (self.bySpeed * dt);
         self.accTime += (self.bySpeed * dt);
+
         if (!self.isPlaying ||// not playing
             (!self.loop && (self.curTime < self.begTime || self.curTime > self.endTime))){ // not in range
             self.invokeByTime(self.curTime);
@@ -2041,7 +2043,8 @@ var AnimationSession = function AnimationSession(playable, targets) {
             self.invokeByName("stop");
             return;
         }
-        //round time to duration
+
+        // round time to duration
         var duration = self.endTime - self.begTime;
         if (self.curTime > self.endTime) { // loop start
             self.invokeByTime(self.curTime);
@@ -2162,6 +2165,7 @@ AnimationSession.prototype.clone = function () {
 };
 
 // blend related========================================================== 
+
 /**
  * @param {BlendValue} blendValue
  * @param {number} weight
@@ -2178,7 +2182,7 @@ AnimationSession.prototype.setBlend = function (blendValue, weight, curveName){
         return;
     }
 
-    //blendable is just a single DOF=================================
+    // blendable is just a single DOF=================================
     var keyType;
     if (typeof blendValue === "number")// 1 instanceof Number is false, don't know why
         keyType =  AnimationKeyableType.NUM;
@@ -2210,6 +2214,7 @@ AnimationSession.prototype.unsetBlend = function (curveName) {
         delete this.blendWeights[curveName];
     }
 };
+
 // events related
 
 /**
@@ -2433,7 +2438,7 @@ AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEn
     if (fadeDir === 0 || fadeTime < fadeBegTime || fadeTime > fadeEndTime)
         this.updateToTarget(input);
     else {
-        var p = (fadeTime - fadeBegTime) / (fadeEndTime - fadeBegTime);
+        p = (fadeTime - fadeBegTime) / (fadeEndTime - fadeBegTime);
         if (fadeDir === -1)
             p = 1 - p;
 
@@ -2709,6 +2714,7 @@ AnimationComponent.prototype.crossFadeToClip = function (name, duration) {
     }
 };
 
+
 // blend related
 
 /**
@@ -2732,6 +2738,7 @@ AnimationComponent.prototype.unsetBlend = function (curveName) {
     if (curClip && curClip.session)
         curClip.session.unsetBlend(curveName);
 };
+
 
 // APIs for sessions =================================================
 AnimationComponent.prototype.getCurrentSession = function () {
