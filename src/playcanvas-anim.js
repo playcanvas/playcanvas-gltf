@@ -2075,8 +2075,6 @@ var AnimationSession = function AnimationSession(playable, targets) {
     };
 };
 
-AnimationSession.app = null;
-
 /**
  * @param {Playable} playable
  * @returns {AnimationKeyable | AnimationClipSnapshot}
@@ -2491,10 +2489,6 @@ AnimationSession.prototype.play = function (playable, animTargets) {
     for (i = 0; i < this.animEvents.length; i ++)
         this.animEvents[i].triggered = false;
 
-    // reset events
-    for (i = 0; i < this.animEvents.length; i ++)
-        this.animEvents[i].triggered = false;
-
     var app = pc.Application.getApplication();
     app.on('update', this.onTimer);
     this.showAt(this.curTime, this.fadeDir, this.fadeBegTime, this.fadeEndTime, this.fadeTime);
@@ -2515,8 +2509,8 @@ AnimationSession.prototype.stop = function () {
 };
 
 AnimationSession.prototype.pause = function () {
-    if (AnimationSession.app)
-        AnimationSession.app.off('update', this.onTimer);
+    var app = pc.Application.getApplication();
+    app.off('update', this.onTimer);
     this.isPlaying = false;
     return this;
 };
@@ -2593,8 +2587,8 @@ AnimationSession.prototype.fadeTo = function (playable, duration) {
 
 AnimationSession.prototype.fadeToSelf = function (duration) {
     var session = this.clone();
-    if (AnimationSession.app)
-        AnimationSession.app.on('update', session.onTimer);
+    var app = pc.Application.getApplication();
+    app.off('update', this.onTimer);
     session.fadeOut(duration);
 
     this.stop();
@@ -2691,11 +2685,13 @@ AnimationComponent.prototype.playClip = function (name) {
 };
 
 AnimationComponent.prototype.stopClip = function () {
+    var session = this.animSessions[this.curClip];
+    if (session)
+        session.stop();
     var clip = this.animClipsMap[this.curClip];
-    if (clip) {
+    if (clip)
         clip.stop();
-        this.curClip = "";
-    }
+    this.curClip = "";
 };
 
 /**
@@ -2765,10 +2761,12 @@ AnimationComponent.prototype.playSession = function (name) {
 
 AnimationComponent.prototype.stopSession = function () {
     var session = this.animSessions[this.curClip];
-    if (session) {
+    if (session)
         session.stop();
-        this.curClip = "";
-    }
+    var clip = this.animClipsMap[this.curClip];
+    if (clip)
+        clip.stop();
+    this.curClip = "";
 };
 
 /**

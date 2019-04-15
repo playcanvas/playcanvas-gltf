@@ -241,6 +241,17 @@ Viewer.prototype = {
         }
     },
     
+    resumeCurrentAnimationClip: function() {
+        if (this.gltf && this.gltf.animComponent) {
+            var clip = this.gltf.animComponent.getCurrentClip();
+            clip.resume();
+            this.anim_slider.max = clip.duration;
+            this.playing = true;
+            this.anim_pause.value = "||";
+            this.clip = clip; // quick access for f12 devtools
+            this.timeline.resize();
+        }
+    },
     playCurrentAnimationClip: function() {
         if (this.gltf && this.gltf.animComponent) {
             //this.gltf.animComponent.getCurrentClip().resume(); // resume doesn't work yet
@@ -258,7 +269,7 @@ Viewer.prototype = {
         if (this.playing) {
             this.pauseAnimationClips();
         } else {
-            this.playCurrentAnimationClip();
+            this.resumeCurrentAnimationClip();
         }
     },
     
