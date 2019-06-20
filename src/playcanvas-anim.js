@@ -1147,7 +1147,7 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time) {
         resKey.value.x = AnimationCurve.cubicHermite(g * key1.outTangent.x, key1.value.x, g * key2.inTangent.x, key2.value.x, p);
         resKey.value.y = AnimationCurve.cubicHermite(g * key1.outTangent.y, key1.value.y, g * key2.inTangent.y, key2.value.y, p);
         resKey.value.z = AnimationCurve.cubicHermite(g * key1.outTangent.z, key1.value.z, g * key2.inTangent.z, key2.value.z, p);
-        resKey.normalize();
+        resKey.value.normalize();
     }
 
     resKey.time = time;
@@ -1225,7 +1225,7 @@ AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyId
         resKey.value.x = AnimationCurve.cubicHermite(g * key1.outTangent.x, key1.value.x, g * key2.inTangent.x, key2.value.x, p);
         resKey.value.y = AnimationCurve.cubicHermite(g * key1.outTangent.y, key1.value.y, g * key2.inTangent.y, key2.value.y, p);
         resKey.value.z = AnimationCurve.cubicHermite(g * key1.outTangent.z, key1.value.z, g * key2.inTangent.z, key2.value.z, p);
-        resKey.normalize();
+        resKey.value.normalize();
     }
 
     resKey.time = time;
