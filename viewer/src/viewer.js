@@ -354,7 +354,7 @@ function loadScript(src) {
 }
 
 function main() {
-    if (true) {//typeof WebAssembly !== 'object') {
+    if (typeof WebAssembly !== 'object') {
         loadScript('../draco/draco_decoder.js').then(function () {
             decoderModule = DracoDecoderModule();
         });
