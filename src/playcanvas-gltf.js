@@ -630,6 +630,9 @@
             resources.processMaterialExtras(material, data.extras);
         }
 
+        // gl_PointSize is required for rendering points but ignored for lines and triangles.
+        material.chunks.startVS = pc.shaderChunks.startVS + "    gl_PointSize = 1.0;\n";
+
         material.update();
 
         return material;
