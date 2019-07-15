@@ -382,29 +382,7 @@
         if (data.hasOwnProperty('name')) {
             material.name = data.name;
         }
-
-        if (data.hasOwnProperty('extensions') && data.extensions.hasOwnProperty('KHR_materials_unlit')) {
-            material.useLighting = false;
-
-            // Make sure diffuse is not actually combined with any form of lighting
-            material.chunks.combineDiffusePS = [
-                "vec3 combineColor() {",
-                "    return dAlbedo;",
-                "}",
-            ].join('\n') + "\n";
-
-            material.useSpecular = false;
-
-            // NOTE: Although useSpecular is a documented property of pc.StandardMaterial,
-            // it doesn't seem to be used. Hence why below chunks need to be changed as well: 
-            material.chunks.combineDiffuseSpecularPS = 
-                material.chunks.combineDiffuseSpecularOldPS = 
-                material.chunks.combineDiffuseSpecularNoReflPS = 
-                material.chunks.combineDiffuseSpecularNoConservePS = 
-                material.chunks.combineDiffuseSpecularNoReflSeparateAmbientPS =
-                material.chunks.combineDiffusePS;
-        }
-
+        
         var color, texture;
         if (data.hasOwnProperty('extensions') && data.extensions.hasOwnProperty('KHR_materials_pbrSpecularGlossiness')) {
             var specData = data.extensions.KHR_materials_pbrSpecularGlossiness;
@@ -551,6 +529,29 @@
             }
 
             material.chunks.glossPS = glossChunk;
+        }
+
+        if (data.hasOwnProperty('extensions') && data.extensions.hasOwnProperty('KHR_materials_unlit')) {
+            material.useLighting = false;
+
+            // Make sure diffuse is not actually combined with any form of lighting
+            material.chunks.combineDiffusePS = [
+                "vec3 combineColor() {",
+                "    return dAlbedo;",
+                "}",
+            ].join('\n') + "\n";
+
+            material.useMetalness = false; // Make sure shader chunk metalnessPS doesn't change dAlbedo
+            material.useSpecular = false;
+
+            // NOTE: Although useSpecular is a documented property of pc.StandardMaterial,
+            // it doesn't seem to be used. Hence why below chunks need to be changed as well: 
+            material.chunks.combineDiffuseSpecularPS = 
+                material.chunks.combineDiffuseSpecularOldPS = 
+                material.chunks.combineDiffuseSpecularNoReflPS = 
+                material.chunks.combineDiffuseSpecularNoConservePS = 
+                material.chunks.combineDiffuseSpecularNoReflSeparateAmbientPS =
+                material.chunks.combineDiffusePS;
         }
 
         if (data.hasOwnProperty('normalTexture')) {
