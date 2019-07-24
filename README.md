@@ -22,11 +22,11 @@ loadGlb(glb, device, done);
 * glb - An [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) holding the binary glb file data.
 * device - A [pc.GraphicsDevice](https://developer.playcanvas.com/en/api/pc.GraphicsDevice.html).
 * done - A [Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) called when the glb has loaded (either successfully or with an error). The function has the following signature: function (err, res) {}. The parameters of the ```done``` function are as follows:
-** err - A [String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) describing any error encountered on load. If ```err``` is null, the load operation completed successfully.
-** res - An [Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) holding the loaded PlayCanvas objects.
-** res.model - A [pc.Model](https://developer.playcanvas.com/en/api/pc.Model.html) object representing the glTF scene
-** res.textures - An array of [pc.Texture](https://developer.playcanvas.com/en/api/pc.Texture.html) objects
-** res.animations - An array of AnimationClip objects
+  * err - A [String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) describing any error encountered on load. If ```err``` is null, the load operation completed successfully.
+  * res - An [Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) holding the loaded PlayCanvas objects.
+  * res.model - A [pc.Model](https://developer.playcanvas.com/en/api/pc.Model.html) object representing the glTF scene
+  * res.textures - An array of [pc.Texture](https://developer.playcanvas.com/en/api/pc.Texture.html) objects
+  * res.animations - An array of AnimationClip objects
 
 ### Example
 ```javascript
@@ -59,11 +59,11 @@ loadGltf(gltf, device, done, options);
 * gltf - An [Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) representing the root of the glTF scene.
 * device - A [pc.GraphicsDevice](https://developer.playcanvas.com/en/api/pc.GraphicsDevice.html).
 * done - A [Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) called when the glb has loaded (either successfully or with an error). The function has the following signature: function (err, res) {}. The parameters of the ```done``` function are as follows:
-** err - A [String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) describing any error encountered on load. If ```err``` is null, the load operation completed successfully.
-** res - An [Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) holding the loaded PlayCanvas objects.
-** res.model - A [pc.Model](https://developer.playcanvas.com/en/api/pc.Model.html) object representing the glTF scene
-** res.textures - An array of [pc.Texture](https://developer.playcanvas.com/en/api/pc.Texture.html) objects
-** res.animations - An array of AnimationClip objects
+  * err - A [String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) describing any error encountered on load. If ```err``` is null, the load operation completed successfully.
+  * res - An [Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) holding the loaded PlayCanvas objects.
+  * res.model - A [pc.Model](https://developer.playcanvas.com/en/api/pc.Model.html) object representing the glTF scene
+  * res.textures - An array of [pc.Texture](https://developer.playcanvas.com/en/api/pc.Texture.html) objects
+  * res.animations - An array of AnimationClip objects
 * options - An [Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) specifying optional parameters for the function.
 * options.buffers - An [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) of preloaded [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) objects holding the glTF file's buffer data.
 * options.basePath - A [String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) set to the relative path of the glTF file.
