@@ -1378,7 +1378,7 @@
         return model;
     }
 
-    function loadGltf(gltf, device, success, options) {
+    function loadGltf(gltf, device, done, options) {
         var buffers = (options && options.hasOwnProperty('buffers')) ? options.buffers : undefined;
         var basePath = (options && options.hasOwnProperty('basePath')) ? options.basePath : undefined;
         var processUri = (options && options.hasOwnProperty('processUri')) ? options.processUri : undefined;
@@ -1419,7 +1419,11 @@
                 }
 
                 buildHierarchy(resources);
-                success(createModel(resources), resources.textures, resources.animations);
+                done(null, {
+                    model: createModel(resources),
+                    textures: resources.textures,
+                    animations: resources.animations
+                });
 
                 if (gltf.hasOwnProperty('extensionsUsed')) {
                     if (gltf.extensionsUsed.indexOf('KHR_draco_mesh_compression') !== -1) {
@@ -1443,19 +1447,17 @@
         return decodeURIComponent(escape(str));
     }
 
-    function loadGlb(glb, device, success, options) {
+    function loadGlb(glb, device, done, options) {
         var dataView = new DataView(glb);
 
         // Read header
         var magic = dataView.getUint32(0, true);
         if (magic !== 0x46546C67) {
-            console.error("Invalid magic number found in glb header. Expected 0x46546C67, found 0x" + magic.toString(16));
-            return null;
+            done("Invalid magic number found in glb header. Expected 0x46546C67, found 0x" + magic.toString(16));
         }
         var version = dataView.getUint32(4, true);
         if (version !== 2) {
-            console.error("Invalid version number found in glb header. Expected 2, found " + version);
-            return null;
+            done("Invalid version number found in glb header. Expected 2, found " + version);
         }
         var length = dataView.getUint32(8, true);
 
@@ -1463,8 +1465,7 @@
         var chunkLength = dataView.getUint32(12, true);
         var chunkType = dataView.getUint32(16, true);
         if (chunkType !== 0x4E4F534A) {
-            console.error("Invalid chunk type found in glb file. Expected 0x4E4F534A, found 0x" + chunkType.toString(16));
-            return null;
+            done("Invalid chunk type found in glb file. Expected 0x4E4F534A, found 0x" + chunkType.toString(16));
         }
         var jsonData = new Uint8Array(glb, 20, chunkLength);
         var gltf = JSON.parse(decodeBinaryUtf8(jsonData));
@@ -1476,8 +1477,7 @@
             chunkLength = dataView.getUint32(byteOffset, true);
             chunkType = dataView.getUint32(byteOffset + 4, true);
             if (chunkType !== 0x004E4942) {
-                console.error("Invalid chunk type found in glb file. Expected 0x004E4942, found 0x" + chunkType.toString(16));
-                return null;
+                done("Invalid chunk type found in glb file. Expected 0x004E4942, found 0x" + chunkType.toString(16));
             }
 
             var buffer = glb.slice(byteOffset + 8, byteOffset + 8 + chunkLength);
@@ -1488,7 +1488,7 @@
 
         options = options || {};
         options.buffers = buffers;
-        loadGltf(gltf, device, success, options);
+        loadGltf(gltf, device, done, options);
     }
 
     window.loadGltf = loadGltf;

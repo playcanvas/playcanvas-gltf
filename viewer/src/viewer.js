@@ -146,8 +146,12 @@ Viewer.prototype = {
         delete this.gltf;
     },
 
-    initializeScene: function (model, textures, animationClips) {
+    initializeScene: function (err, res) {
         var i;
+
+        var model = res.model;
+        var textures = res.textures;
+        var animationClips = res.animations;
 
         if (!this.onlyLoadAnimations) {
             // Blow away whatever is currently loaded
