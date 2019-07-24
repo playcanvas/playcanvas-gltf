@@ -21,18 +21,18 @@ loadGlb(glb, device, success);
 ```
 * glb - An [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) holding the binary glb file data.
 * device - A [pc.GraphicsDevice](https://developer.playcanvas.com/en/api/pc.GraphicsDevice.html).
-* success - A [Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) called when the glb has successfully loaded. Called with a [pc.Model](https://developer.playcanvas.com/en/api/pc.Model.html) object representing the glTF scene, an array of [pc.Texture](https://developer.playcanvas.com/en/api/pc.Texture.html) objects and an array of AnimationClip objects.
+* done - A [Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) called when the glb has loaded (either successfully or with an error). Called with a [pc.Model](https://developer.playcanvas.com/en/api/pc.Model.html) object representing the glTF scene, an array of [pc.Texture](https://developer.playcanvas.com/en/api/pc.Texture.html) objects and an array of AnimationClip objects.
 
 ### Example
 ```javascript
 app.assets.loadFromUrl('assets/monkey/monkey.glb', 'binary', function (err, asset) {
     var glb = asset.resource;
-    loadGlb(glb, app.graphicsDevice, function (model, textures, animationClips) {
+    loadGlb(glb, app.graphicsDevice, function (err, res) {
         // Wrap the model as an asset and add to the asset registry
         var asset = new pc.Asset('gltf', 'model', {
             url: ''
         });
-        asset.resource = model;
+        asset.resource = res.model;
         asset.loaded = true;
         app.assets.add(asset);
 
@@ -53,7 +53,7 @@ loadGltf(gltf, device, success, options);
 ```
 * gltf - An [Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) representing the root of the glTF scene.
 * device - A [pc.GraphicsDevice](https://developer.playcanvas.com/en/api/pc.GraphicsDevice.html).
-* success - A [Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) called when the glb has successfully loaded. Called with a [pc.Model](https://developer.playcanvas.com/en/api/pc.Model.html) object representing the glTF scene, an array of [pc.Texture](https://developer.playcanvas.com/en/api/pc.Texture.html) objects and an array of AnimationClip objects.
+* done - A [Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function) called when the glb has loaded (either successfully or with an error). Called with a [pc.Model](https://developer.playcanvas.com/en/api/pc.Model.html) object representing the glTF scene, an array of [pc.Texture](https://developer.playcanvas.com/en/api/pc.Texture.html) objects and an array of AnimationClip objects.
 * options - An [Object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object) specifying optional parameters for the function.
 * options.buffers - An [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) of preloaded [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) objects holding the glTF file's buffer data.
 * options.basePath - A [String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) set to the relative path of the glTF file.
@@ -64,12 +64,12 @@ loadGltf(gltf, device, success, options);
 app.assets.loadFromUrl('assets/monkey/monkey.gltf', 'json', function (err, asset) {
     var json = asset.resource;
     var gltf = JSON.parse(json);
-    loadGltf(gltf, app.graphicsDevice, function (model, textures, animationClips) {
+    loadGltf(gltf, app.graphicsDevice, function (err, res) {
         // Wrap the model as an asset and add to the asset registry
         var asset = new pc.Asset('gltf', 'model', {
             url: ''
         });
-        asset.resource = model;
+        asset.resource = res.model;
         asset.loaded = true;
         app.assets.add(asset);
 
