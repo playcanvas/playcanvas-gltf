@@ -1454,10 +1454,12 @@
         var magic = dataView.getUint32(0, true);
         if (magic !== 0x46546C67) {
             done("Invalid magic number found in glb header. Expected 0x46546C67, found 0x" + magic.toString(16));
+            return;
         }
         var version = dataView.getUint32(4, true);
         if (version !== 2) {
             done("Invalid version number found in glb header. Expected 2, found " + version);
+            return;
         }
         var length = dataView.getUint32(8, true);
 
@@ -1466,6 +1468,7 @@
         var chunkType = dataView.getUint32(16, true);
         if (chunkType !== 0x4E4F534A) {
             done("Invalid chunk type found in glb file. Expected 0x4E4F534A, found 0x" + chunkType.toString(16));
+            return;
         }
         var jsonData = new Uint8Array(glb, 20, chunkLength);
         var gltf = JSON.parse(decodeBinaryUtf8(jsonData));
@@ -1478,6 +1481,7 @@
             chunkType = dataView.getUint32(byteOffset + 4, true);
             if (chunkType !== 0x004E4942) {
                 done("Invalid chunk type found in glb file. Expected 0x004E4942, found 0x" + chunkType.toString(16));
+                return;
             }
 
             var buffer = glb.slice(byteOffset + 8, byteOffset + 8 + chunkLength);
