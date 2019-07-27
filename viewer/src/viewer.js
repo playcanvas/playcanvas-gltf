@@ -33,23 +33,9 @@ function Viewer() {
 
     // Make the camera interactive
     app.assets.loadFromUrl('./src/orbit-camera.js', 'script', function (err, asset) {
-        camera.script.create('orbitCamera', {
-            attributes: {
-                inertiaFactor: 0,
-                distanceMin: 0,
-                distanceMax: 0,
-                pitchAngleMax: 90,
-                pitchAngleMin: -90,
-                frameOnStart: true
-            }
-        });
+        camera.script.create('orbitCamera');
         camera.script.create('keyboardInput');
-        camera.script.create('mouseInput', {
-            attributes: {
-                orbitSensitivity: 0.3,
-                distanceSensitivity: 0.15
-            }
-        });
+        camera.script.create('mouseInput');
 
         if (this.cameraPosition) {
             camera.script.orbitCamera.distance = this.cameraPosition.length();
