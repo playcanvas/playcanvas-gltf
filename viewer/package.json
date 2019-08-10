@@ -10,7 +10,7 @@
   },
   "scripts": {
     "viewer": "electron ./main.js",
-    "package-win": "electron-packager . --overwrite --platform=win32 --arch=x64 --electron-version=6.0.0 --asar --icon=icons/gltf-viewer.ico",
-    "package-mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --electron-version=6.0.0 --asar --icon=icons/gltf-viewer.icns"
+    "package-win": "electron-packager . --overwrite --platform=win32 --arch=x64 --electron-version=6.0.0 --asar --icon=icons/gltf-viewer.ico && node ./copy_resources.js",
+    "package-mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --electron-version=6.0.0 --asar --icon=icons/gltf-viewer.icns && node ./copy_resources.js"
   }
 }
