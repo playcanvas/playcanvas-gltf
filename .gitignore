@@ -1,2 +1,4 @@
 *.DS_Store
 node_modules/
+viewer/glTF Viewer-win32-x64/
+viewer/glTF Viewer-darwin-x64/
