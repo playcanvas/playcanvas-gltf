@@ -1,4 +1,4 @@
-(function () {
+Object.assign(window, function () {
 
     // Math utility functions
     function nearestPow2(n) {
@@ -1495,6 +1495,8 @@
         loadGltf(gltf, device, done, options);
     }
 
-    window.loadGltf = loadGltf;
-    window.loadGlb = loadGlb;
+    return {
+        loadGltf: loadGltf,
+        loadGlb: loadGlb,
+    };
 }());
