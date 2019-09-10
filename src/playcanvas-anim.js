@@ -51,28 +51,40 @@ Object.assign(window, function () {
         if (!keyable)
             return this;
 
-        var value = keyable.value;
-        if (keyable.value instanceof pc.Vec3 || keyable.value instanceof pc.Quat)
-            value = keyable.value.clone();
+        var value = AnimationKeyable._cloneValue(keyable.value);
 
         this.init(keyable.type, keyable.time, value);
-        if(keyable.inTangent)
-            this.inTangent = keyable.inTangent.clone();
-        if(keyable.outTangent)
-            this.outTangent = keyable.outTangent.clone();
+        if(keyable.inTangent || keyable.inTangent === 0)
+            this.inTangent = AnimationKeyable._cloneValue(keyable.inTangent);
+        if(keyable.outTangent || keyable.outTangent === 0)
+            this.outTangent = AnimationKeyable._cloneValue(keyable.outTangent);
         return this;
     };
 
     AnimationKeyable.prototype.clone = function () {
-        var value = this.value;
-        if (this.value instanceof pc.Vec3 || this.value instanceof pc.Quat)
-            value = this.value.clone();
+        var value = AnimationKeyable._cloneValue(this.value);
         var cloned = new AnimationKeyable(this.type, this.time, value);
-        if(this.inTangent)
-            cloned.inTangent = this.inTangent.clone();
-        if(this.outTangent)
-            cloned.outTangent = this.outTangent.clone();
+        if(this.inTangent || this.inTangent === 0)
+            cloned.inTangent = AnimationKeyable._cloneValue(this.inTangent);
+        if(this.outTangent || this.outTangent === 0)
+            cloned.outTangent = AnimationKeyable._cloneValue(this.outTangent);
         return cloned;
+    };
+
+    /**
+     * @param {T} value Value to clone
+     * @returns {T} Clone of the given value
+     * @template T
+     */
+
+    AnimationKeyable._cloneValue = function (value) {
+        if (value instanceof pc.Vec3 || value instanceof pc.Quat)
+            return value.clone();
+        // just in case there's something not covered by pc.Vec3 and pc.Quat
+        if (value !== undefined && typeof value.clone === "function")
+            return value.clone();
+        // must be a primitive value or an undefined then
+        return value;
     };
 
     /**
