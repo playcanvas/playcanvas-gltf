@@ -1880,6 +1880,11 @@ AnimationClip.prototype.transferToRoot = function (root) {
         if (curve.animTargets.length === 0) {
             continue;
         }
+        // ctrl-dragging: target root is specified as string "model"
+        // link curve target "model" to root node
+        if (curve.animTargets[0].targetNode === "model")
+            curve.animTargets[0].targetNode = root;
+
         var ctarget = curve.animTargets[0];
         var atarget = dictTarget[ctarget.targetNode.name];
         if (atarget) { // match by target name
