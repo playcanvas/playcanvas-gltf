@@ -9,7 +9,7 @@
                 overflow: hidden;
             }
         </style>
-        <script src='https://code.playcanvas.com/playcanvas-1.6.4.min.js'></script>
+        <script src='https://code.playcanvas.com/playcanvas-stable.js'></script>
         <script src='../src/playcanvas-gltf.js'></script>
     </head>
     <body>
@@ -58,10 +58,10 @@
             app.assets.loadFromUrl('assets/monkey/monkey.gltf', 'json', function (err, asset) {
                 var json = asset.resource;
                 var gltf = JSON.parse(json);
-                loadGltf(gltf, app.graphicsDevice, function (model, textures, animationClips) {
+                loadGltf(gltf, app.graphicsDevice, function (err, res) {
                     // add the loaded scene to the hierarchy
                     gltfRoot.addComponent('model');
-                    gltfRoot.model.model = model;
+                    gltfRoot.model.model = res.model;
                 }, {
                     basePath: 'assets/monkey/'
                 });
