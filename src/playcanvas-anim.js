@@ -1894,6 +1894,12 @@ Object.assign(window, function () {
             if (curve.animTargets.length === 0) {
                 continue;
             }
+
+            // ctrl-drag target root is specified as "model"
+            // link targetNode to root properly
+            if (curve.animTargets[0].targetNode === "model")
+                curve.animTargets[0].targetNode = root;
+
             var ctarget = curve.animTargets[0];
             var atarget = dictTarget[ctarget.targetNode.name];
             if (atarget) { // match by target name
