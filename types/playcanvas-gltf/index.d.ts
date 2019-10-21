@@ -5,7 +5,6 @@ declare namespace pc {
         [prop: string]: any;
     }
     interface GraphNode {
-        name: string;
         [prop: string]: any;
     }
 }
