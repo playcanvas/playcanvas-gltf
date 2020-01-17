@@ -141,19 +141,40 @@ Object.assign(window, function () {
                 }
             } else {
                 // translation, rotation or scale
-                keyType = AnimationKeyableType.NUM;
+
+                var valuesPerKey = Math.round(values.length / times.length);
+                switch (valuesPerKey) {
+                    case 1: keyType = AnimationKeyableType.NUM; break;
+                    case 3: keyType = AnimationKeyableType.VEC; break;
+                    case 4: keyType = AnimationKeyableType.QUAT; break;
+                    default:
+                        console.warn("Unexpected amount of values per keyframe: " + valuesPerKey);
+                        keyType = AnimationKeyableType.NUM;
+                }
+
+                function ensureKeyType(expectedKeyType) {
+                    if (keyType !== expectedKeyType) {
+                        console.warn(
+                            'Unexpected key type: ' +
+                            '"' + keyType + '" ' +
+                            '(expected "' + expectedKeyType + '")'
+                        );
+                        keyType = expectedKeyType;
+                    }
+                }
+
                 var targetPath = path;
                 switch (path) {
                     case "translation":
-                        keyType = AnimationKeyableType.VEC;
+                        ensureKeyType(AnimationKeyableType.VEC);
                         targetPath = "localPosition";
                         break;
                     case "scale":
-                        keyType = AnimationKeyableType.VEC;
+                        ensureKeyType(AnimationKeyableType.VEC);
                         targetPath = "localScale";
                         break;
                     case "rotation":
-                        keyType = AnimationKeyableType.QUAT;
+                        ensureKeyType(AnimationKeyableType.QUAT);
                         targetPath = "localRotation";
                         break;
                 }
@@ -175,18 +196,22 @@ Object.assign(window, function () {
                 if (sampler.interpolation === "CUBICSPLINE") {
                     for (i = 0; i < times.length; i++) {
                         time = times[i];
-                        if ((path === 'translation') || (path === 'scale')) {
-                            inTangent = new pc.Vec3(values[9 * i + 0], values[9 * i + 1], values[9 * i + 2]);
-                            value = new pc.Vec3(values[9 * i + 3], values[9 * i + 4], values[9 * i + 5]);
-                            outTangent = new pc.Vec3(values[9 * i + 6], values[9 * i + 7], values[9 * i + 8]);
-                        } else if (path === 'rotation') {
-                            inTangent = new pc.Quat(values[12 * i + 0], values[12 * i + 1], values[12 * i + 2], values[12 * i + 3]);
-                            value = new pc.Quat(values[12 * i + 4], values[12 * i + 5], values[12 * i + 6], values[12 * i + 7]);
-                            outTangent = new pc.Quat(values[12 * i + 8], values[12 * i + 9], values[12 * i + 10], values[12 * i + 11]);
-                        } else {
-                            inTangent = values[3 * i];
-                            value = values[3 * i + 1];
-                            outTangent = values[3 * i + 2];
+                        switch (keyType) {
+                            case AnimationKeyableType.VEC:
+                                inTangent = new pc.Vec3(values[9 * i + 0], values[9 * i + 1], values[9 * i + 2]);
+                                value = new pc.Vec3(values[9 * i + 3], values[9 * i + 4], values[9 * i + 5]);
+                                outTangent = new pc.Vec3(values[9 * i + 6], values[9 * i + 7], values[9 * i + 8]);
+                                break;
+                            case AnimationKeyableType.QUAT:
+                                inTangent = new pc.Quat(values[12 * i + 0], values[12 * i + 1], values[12 * i + 2], values[12 * i + 3]);
+                                value = new pc.Quat(values[12 * i + 4], values[12 * i + 5], values[12 * i + 6], values[12 * i + 7]);
+                                outTangent = new pc.Quat(values[12 * i + 8], values[12 * i + 9], values[12 * i + 10], values[12 * i + 11]);
+                                break;
+                            default:
+                            case AnimationKeyableType.NUM:
+                                inTangent = values[3 * i];
+                                value = values[3 * i + 1];
+                                outTangent = values[3 * i + 2];
                         }
 
                         keyable = new AnimationKeyable(keyType, time, value);
@@ -197,12 +222,17 @@ Object.assign(window, function () {
                 } else {
                     for (i = 0; i < times.length; i++) {
                         time = times[i];
-                        if ((path === 'translation') || (path === 'scale'))
-                            value = new pc.Vec3(values[3 * i + 0], values[3 * i + 1], values[3 * i + 2]);
-                        else if (path === 'rotation')
-                            value = new pc.Quat(values[4 * i + 0], values[4 * i + 1], values[4 * i + 2], values[4 * i + 3]);
-                        else // AnimationKeyableType.NUM
-                            value = values[i];
+                        switch (keyType) {
+                            case AnimationKeyableType.VEC:
+                                value = new pc.Vec3(values[3 * i + 0], values[3 * i + 1], values[3 * i + 2]);
+                                break;
+                            case AnimationKeyableType.QUAT:
+                                value = new pc.Quat(values[4 * i + 0], values[4 * i + 1], values[4 * i + 2], values[4 * i + 3]);
+                                break;
+                            default:
+                            case AnimationKeyableType.NUM:
+                                value = values[i];
+                        }
 
                         keyable = new AnimationKeyable(keyType, time, value);
                         keyables.push(keyable);
