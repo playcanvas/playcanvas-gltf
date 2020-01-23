@@ -110,6 +110,7 @@ Object.assign(window, function () {
             var sampler = data.samplers[channel.sampler];
             var times = getAccessorData(gltf, gltf.accessors[sampler.input], resources.buffers);
             var values = getAccessorData(gltf, gltf.accessors[sampler.output], resources.buffers);
+            var numCurves = values.length / times.length;
             var time, value, inTangent, outTangent;
 
             var target = channel.target;
@@ -121,7 +122,6 @@ Object.assign(window, function () {
             var entity = resources.nodes[target.node];
 
             if (path === 'weights') {
-                var numCurves = values.length / times.length;
                 for (i = 0; i < numCurves; i++) {
                     curve = new AnimationCurve();
                     keyType = AnimationKeyableType.NUM;
@@ -142,13 +142,17 @@ Object.assign(window, function () {
             } else {
                 // translation, rotation or scale
 
-                var valuesPerKey = Math.round(values.length / times.length);
-                switch (valuesPerKey) {
+                var valuesContainTangents = sampler.interpolation === "CUBICSPLINE";
+
+                if (valuesContainTangents)
+                    numCurves /= 3;
+
+                switch (Math.round(numCurves)) {
                     case 1: keyType = AnimationKeyableType.NUM; break;
                     case 3: keyType = AnimationKeyableType.VEC; break;
                     case 4: keyType = AnimationKeyableType.QUAT; break;
                     default:
-                        console.warn("Unexpected amount of values per keyframe: " + valuesPerKey);
+                        console.warn("Unexpected amount of curves per keyframe: " + numCurves);
                         keyType = AnimationKeyableType.NUM;
                 }
 
@@ -193,7 +197,7 @@ Object.assign(window, function () {
                 // extra work to insert a key at the correct index).
                 var keyable, keyables = [];
 
-                if (sampler.interpolation === "CUBICSPLINE") {
+                if (valuesContainTangents) {
                     for (i = 0; i < times.length; i++) {
                         time = times[i];
                         switch (keyType) {
