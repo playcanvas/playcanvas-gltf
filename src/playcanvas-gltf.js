@@ -311,7 +311,12 @@ Object.assign(window, function () {
             }
         };
 
+        var onError = function () {
+            console.error('Could not load image from url ' + image.src);
+        };
+
         image.addEventListener('load', onLoad, false);
+        image.addEventListener('error', onError, false);
 
         if (data.hasOwnProperty('uri')) {
             if (isDataURI(data.uri)) {
