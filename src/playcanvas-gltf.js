@@ -1062,7 +1062,7 @@ Object.assign(window, function () {
                         options.deltaTangents = getAccessorData(gltf, accessor, resources.buffers);
                     }
 
-                    targets.push(new pc.MorphTarget(options));
+                    targets.push(new pc.MorphTarget(resources.device, options));
                 });
 
                 mesh.morph = new pc.Morph(targets);
@@ -1375,9 +1375,6 @@ Object.assign(window, function () {
                     if (mesh.morph) {
                         var morphInstance = new pc.MorphInstance(mesh.morph);
                         meshInstance.morphInstance = morphInstance;
-                        // HACK: need to force calculation of the morph's AABB due to a bug
-                        // in the engine. This is a private function and will be removed!
-                        morphInstance.updateBounds(meshInstance.mesh);
                         if (mesh.weights) {
                             mesh.weights.forEach(function (weight, weightIndex) {
                                 morphInstance.setWeight(weightIndex, weight);
