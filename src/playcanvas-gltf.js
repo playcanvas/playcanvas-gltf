@@ -288,7 +288,7 @@ Object.assign(window, function () {
                 if (texture.hasOwnProperty('source')) {
                     if (texture.source === imageIndex) {
                         var t = resources.textures[idx];
-                        if ((!isPowerOf2(image.width) || !isPowerOf2(image.width)) &&
+                        if ((!isPowerOf2(image.width) || !isPowerOf2(image.height)) &&
                             ((t.addressU === pc.ADDRESS_REPEAT) || (t.addressU === pc.ADDRESS_MIRRORED_REPEAT) ||
                              (t.addressV === pc.ADDRESS_REPEAT) || (t.addressV === pc.ADDRESS_MIRRORED_REPEAT) ||
                              (t.minFilter === pc.FILTER_LINEAR_MIPMAP_LINEAR) || (t.minFilter === pc.FILTER_NEAREST_MIPMAP_LINEAR) ||
