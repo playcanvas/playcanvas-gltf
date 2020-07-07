@@ -206,6 +206,7 @@ Viewer.prototype = {
             if (this.cameraPosition) {
                 this.camera.script.orbitCamera.distance = this.cameraPosition.length();
             } else {
+                this.camera.script.orbitCamera.frameOnStart = true;
                 this.camera.script.orbitCamera.focusEntity = this.gltf;
             }
         }

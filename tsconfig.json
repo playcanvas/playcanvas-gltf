@@ -7,11 +7,11 @@
         "outFile": "../../built/local/tsc.js",
         "sourceMap": true,
         "allowJs": true,
-        "checkJs": true
+        "checkJs": true,
+        "types": ["playcanvas"]
     },
     "include": [
         "src/**/*",
-        "types/playcanvas/*",
         "types/playcanvas-gltf/*"
     ]
 }

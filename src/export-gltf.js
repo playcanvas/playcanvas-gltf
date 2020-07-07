@@ -1,15 +1,15 @@
 Object.assign(window, function () {
 
-    function writeAsset(gltf) {
+    function writeAsset(gltf, root) {
         gltf.asset = {
             version: "2.0",
             generator: "PlayCanvas"
         };
     }
 
-    function writeNodes(gltf) {
+    function writeNodes(gltf, root) {
         var nodes = [];
-        this.entity.forEach(function (entity) {
+        root.forEach(function (entity) {
             nodes.push(entity);
         });
         
@@ -56,22 +56,22 @@ Object.assign(window, function () {
         document.body.removeChild(element);
     }
 
-    function saveGlb(entity) {
+    function saveGlb(root) {
         var gltf = {};
-        writeAsset(gltf);
-        writeNodes(gltf);
+        writeAsset(gltf, root);
+        writeNodes(gltf, root);
 
         var gltfText = JSON.stringify(gltf);
         var gltfBuffer = new TextEncoder().encode(gltfText).buffer;
 
-        // GLB header.
+        // GLB header
         var headerBuffer = new ArrayBuffer(12);
         var headerView = new DataView(headerBuffer);
         headerView.setUint32(0, 0x46546C67, true);
         headerView.setUint32(4, 2, true);
         headerView.setUint32(8, 12 + 8 + gltfBuffer.byteLength, true);
 
-        // JSON Chunk Header
+        // JSON chunk header
         var jsonChunkBuffer = new ArrayBuffer(8);
         var jsonChunkView = new DataView(jsonChunkBuffer);
         jsonChunkView.setUint32( 0, gltfBuffer.byteLength, true );
