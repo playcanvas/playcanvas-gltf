@@ -21,11 +21,14 @@
     "type": "git",
     "url": "https://github.com/playcanvas/playcanvas-gltf.git"
   },
+  "eslintConfig": {
+    "extends": "@playcanvas/eslint-config"
+  },
   "devDependencies": {
-    "electron": "6.0.0",
-    "electron-packager": "14.0.4",
-    "eslint": "^4.19.0",
-    "eslint-config-playcanvas": "^1.0.0"
+    "electron": "9.1.0",
+    "electron-packager": "15.0.0",
+    "eslint": "^7.4.0",
+    "@playcanvas/eslint-config": "^1.0.6"
   },
   "scripts": {
     "viewer": "electron ./viewer/main.js",
