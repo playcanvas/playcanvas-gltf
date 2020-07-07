@@ -10,7 +10,7 @@ Object.assign(window, function () {
     var AnimationKeyableType = { NUM: 0, VEC: 1, QUAT: 2 };
 
     /**
-     * @constructor
+     * @class
      * @param {AnimationKeyableType} [type]
      * @param {number} [time]
      * @param {BlendValue} [value]
@@ -54,9 +54,9 @@ Object.assign(window, function () {
         var value = AnimationKeyable._cloneValue(keyable.value);
 
         this.init(keyable.type, keyable.time, value);
-        if(keyable.inTangent || keyable.inTangent === 0)
+        if (keyable.inTangent || keyable.inTangent === 0)
             this.inTangent = AnimationKeyable._cloneValue(keyable.inTangent);
-        if(keyable.outTangent || keyable.outTangent === 0)
+        if (keyable.outTangent || keyable.outTangent === 0)
             this.outTangent = AnimationKeyable._cloneValue(keyable.outTangent);
         return this;
     };
@@ -64,15 +64,15 @@ Object.assign(window, function () {
     AnimationKeyable.prototype.clone = function () {
         var value = AnimationKeyable._cloneValue(this.value);
         var cloned = new AnimationKeyable(this.type, this.time, value);
-        if(this.inTangent || this.inTangent === 0)
+        if (this.inTangent || this.inTangent === 0)
             cloned.inTangent = AnimationKeyable._cloneValue(this.inTangent);
-        if(this.outTangent || this.outTangent === 0)
+        if (this.outTangent || this.outTangent === 0)
             cloned.outTangent = AnimationKeyable._cloneValue(this.outTangent);
         return cloned;
     };
 
     /**
-     * @param {T} value Value to clone
+     * @param {T} value - Value to clone
      * @returns {T} Clone of the given value
      * @template T
      */
@@ -247,10 +247,10 @@ Object.assign(window, function () {
     // *                        one AnimationClip has a {} dictionary of AnimationTargets, keyname matches curvename
     // *===============================================================================================================
     /**
-     * @constructor
+     * @class
      * @param {pc.GraphNode} targetNode
-     * @param {String} [targetPath]
-     * @param {String} [targetProp]
+     * @param {string} [targetPath]
+     * @param {string} [targetProp]
      */
     var AnimationTarget = function (targetNode, targetPath, targetProp) {
         this.targetNode = targetNode;
@@ -341,17 +341,17 @@ Object.assign(window, function () {
             }
         }
 
-        /* /special wrapping for morph weights
-        if (this.targetNode && this.targetPath === "weights" && this.targetNode.model)
-        {
-            var meshInstances = this.targetNode.model.meshInstances;
-            for (var m = 0; m < meshInstances.length; m++)
-            {
-                var morphInstance = meshInstances[m].morphInstance;
-                if (!morphInstance) continue;
-                morphInstance.setWeight(this.targetProp, keyable.value);
-            }
-        }*/
+        // Special wrapping for morph weights
+        // if (this.targetNode && this.targetPath === "weights" && this.targetNode.model)
+        // {
+        //     var meshInstances = this.targetNode.model.meshInstances;
+        //     for (var m = 0; m < meshInstances.length; m++)
+        //     {
+        //         var morphInstance = meshInstances[m].morphInstance;
+        //         if (!morphInstance) continue;
+        //         morphInstance.setWeight(this.targetProp, keyable.value);
+        //     }
+        // }
     };
 
     /**
@@ -410,7 +410,7 @@ Object.assign(window, function () {
     /**
      * @param {pc.GraphNode} root
      * @param {pc.Vec3} vec3Scale
-     * @param {Object} output
+     * @param {object} output
      */
     AnimationTarget.constructTargetNodes = function (root, vec3Scale, output) {
         if (!root)
@@ -461,7 +461,7 @@ Object.assign(window, function () {
     var AnimationCurveType = { LINEAR: 0, STEP: 1, CUBIC: 2, CUBICSPLINE_GLTF: 3 };
 
     /**
-     * @constructor
+     * @class
      */
 
     var AnimationCurve = function () {
@@ -479,34 +479,34 @@ Object.assign(window, function () {
     // getter and setter
     Object.defineProperty(AnimationCurve.prototype, 'isPlaying', {
         get: function () {
-            if(this.session)
+            if (this.session)
                 return this.session.isPlaying;
             return false;
         },
         set: function (isPlaying) {
-            if(this.session)
+            if (this.session)
                 this.session.isPlaying = isPlaying;
         }
     });
     Object.defineProperty(AnimationCurve.prototype, 'loop', {
         get: function () {
-            if(this.session)
+            if (this.session)
                 return this.session.loop;
             return false;
         },
         set: function (loop) {
-            if(this.session)
+            if (this.session)
                 this.session.loop = loop;
         }
     });
     Object.defineProperty(AnimationCurve.prototype, 'bySpeed', {
         get: function () {
-            if(this.session)
+            if (this.session)
                 return this.session.bySpeed;
             return 0;
         },
         set: function (bySpeed) {
-            if(this.session)
+            if (this.session)
                 this.session.bySpeed = bySpeed;
         }
     });
@@ -543,8 +543,8 @@ Object.assign(window, function () {
 
     /**
      * @param {pc.GraphNode} targetNode
-     * @param {String} targetPath
-     * @param {String} targetProp
+     * @param {string} targetPath
+     * @param {string} targetProp
      */
 
     AnimationCurve.prototype.addTarget = function (targetNode, targetPath, targetProp) {
@@ -554,8 +554,8 @@ Object.assign(window, function () {
 
     /**
      * @param {pc.GraphNode} targetNode
-     * @param {String} targetPath
-     * @param {String} [targetProp]
+     * @param {string} targetPath
+     * @param {string} [targetProp]
      */
 
     AnimationCurve.prototype.setTarget = function (targetNode, targetPath, targetProp) {
@@ -568,7 +568,7 @@ Object.assign(window, function () {
     };
 
     AnimationCurve.prototype.resetSession = function () {
-        if(this.session) { 
+        if (this.session) {
             this.session.playable = this;
             this.session.animTargets = this.getAnimTargets();
             this.session.isPlaying = true;
@@ -612,7 +612,7 @@ Object.assign(window, function () {
 
     // events related
     /**
-     * @param {String} name
+     * @param {string} name
      * @param {number} time
      * @param {AnimationEventCallback} fnCallback
      * @param {any} context
@@ -626,7 +626,7 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {String} name
+     * @param {string} name
      * @param {number} time
      * @param {AnimationEventCallback} fnCallback
      */
@@ -1385,7 +1385,7 @@ Object.assign(window, function () {
     // *===============================================================================================================
 
     /**
-     * @constructor
+     * @class
      */
 
     var AnimationClipSnapshot = function () {
@@ -1493,7 +1493,7 @@ Object.assign(window, function () {
     // *===============================================================================================================
 
     /**
-     * @constructor
+     * @class
      * @param {pc.GraphNode} [root]
      */
 
@@ -1684,7 +1684,7 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {String} name
+     * @param {string} name
      */
 
     AnimationClip.prototype.removeCurve = function (name) {
@@ -1712,7 +1712,7 @@ Object.assign(window, function () {
     // events related
 
     /**
-     * @param {String} name
+     * @param {string} name
      * @param {number} time
      * @param {AnimationEventCallback} fnCallback
      * @param {any} context
@@ -1726,7 +1726,7 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {String} name
+     * @param {string} name
      * @param {number} time
      * @param {AnimationEventCallback} fnCallback
      */
@@ -1851,39 +1851,35 @@ Object.assign(window, function () {
             if (root.children[i]) this.constructFromRoot(root.children[i]);
     };
 
-    /*
-    //this animation clip's target will now to root
-    //Note that animationclip's original target may be on different scale from new root, for "localPosition", this needs to be adjusted
-    //Example: animation clip is made under AS scale,
-    //         AS will never change no matter how many times this animation clip is transferred, because it is bound with how it is made
-    //         when it is transferred to a new root, which is under RS scale, define standard scale SS=1,
-    //thus
-    //         standardPos = curvePos / AS;          converting curvePos from AS to SS
-    //         newRootPos = standardPos * RS;        converting position under SS to new RS
-    //thus
-    //         target.vScale = RS / AS;              how to update curve pos to target
-    //         newRootPos = curvePos * target.vScale
+    // This animation clip's target will now to root
+    // Note that animationclip's original target may be on different scale from new root, for "localPosition", this needs to be adjusted
+    // Example: animation clip is made under AS scale,
+    //          AS will never change no matter how many times this animation clip is transferred, because it is bound with how it is made
+    //          when it is transferred to a new root, which is under RS scale, define standard scale SS=1,
+    // thus
+    //          standardPos = curvePos / AS;          converting curvePos from AS to SS
+    //          newRootPos = standardPos * RS;        converting position under SS to new RS
+    // thus
+    //          target.vScale = RS / AS;              how to update curve pos to target
+    //          newRootPos = curvePos * target.vScale
     //
-    //given animation clip, it maybe transferred multiple times, and its original AS is unknown, to recover AS, we have
-    //                      RS (scale of current root in scene) and
-    //                      vScale (scale of animation curve's value update to target)
-    //thus
-    //         AS = RS / vScale;
+    // given animation clip, it maybe transferred multiple times, and its original AS is unknown, to recover AS, we have
+    //                       RS (scale of current root in scene) and
+    //                       vScale (scale of animation curve's value update to target)
+    // thus
+    //          AS = RS / vScale;
     //
-    //to transfer again to a new root with scale NS
+    // to transfer again to a new root with scale NS
     //
-    //         standardPos = curvePos / AS = curvePos * vScale / RS
-    //         newTargetPos = standardPos * NS = curvePos * vScale * NS / RS
+    //          standardPos = curvePos / AS = curvePos * vScale / RS
+    //          newTargetPos = standardPos * NS = curvePos * vScale * NS / RS
     //
-    //thus
-    //         newTarget.vScale = NS / AS = vScale * NS / RS;
-    //
-    */
+    // thus
+    //          newTarget.vScale = NS / AS = vScale * NS / RS;
 
     /**
      * @param {pc.GraphNode} root
      */
-
     AnimationClip.prototype.transferToRoot = function (root) {
         var cScale = new pc.Vec3();
         var dictTarget = {};
@@ -1958,14 +1954,13 @@ Object.assign(window, function () {
     };
 
     /**
-     * @constructor
-     * @param {String} name
+     * @class
+     * @param {string} name
      * @param {number} time
      * @param {AnimationEventCallback} fnCallback
      * @param {any} context
      * @param {any} parameter
      */
-
     var AnimationEvent = function (name, time, fnCallback, context, parameter) {
         this.name = name;
         this.triggerTime = time;
@@ -1983,18 +1978,16 @@ Object.assign(window, function () {
         }
     };
 
-    /*
-    // note: used in line 2127, but undefined... never used so far
-    AnimationEvent.prototype.clone = function () {
-        return new pcAnimationEvent(
-            this.name,
-            this.triggerTime,
-            this.fnCallback,
-            this.context,
-            this.parameter
-        );
-    }
-    */
+    // Note: used in line 2127, but undefined... never used so far
+    // AnimationEvent.prototype.clone = function () {
+    //     return new pcAnimationEvent(
+    //         this.name,
+    //         this.triggerTime,
+    //         this.fnCallback,
+    //         this.context,
+    //         this.parameter
+    //     );
+    // }
 
     // *===============================================================================================================
     // * class AnimationSession: playback/runtime related thing
@@ -2004,7 +1997,7 @@ Object.assign(window, function () {
     // *===============================================================================================================
 
     /**
-     * @constructor
+     * @class
      * @param {Playable} [playable]
      * @param {AnimationTargetsMap} [targets]
      */
@@ -2028,10 +2021,10 @@ Object.assign(window, function () {
         this.fadeTime = -1;
         this.fadeDir = 0;// 1 is in, -1 is out
         this.fadeSpeed = 1;
-        /* fadeIn, speed starts 0
-        fadeOut from fully-playing session, speed starts 1
-        fadeOut from previously unfinished fading session, speed starts from value (0,1)
-        this is solving such situation: session fadeIn a small amount unfinished yet, and it now fadeOut(it should not start updating 100% to target) */
+        // fadeIn, speed starts 0
+        // fadeOut from fully-playing session, speed starts 1
+        // fadeOut from previously unfinished fading session, speed starts from value (0,1)
+        // this is solving such situation: session fadeIn a small amount unfinished yet, and it now fadeOut(it should not start updating 100% to target)
 
         this.playable = null;
         this.animTargets = {};
@@ -2189,7 +2182,7 @@ Object.assign(window, function () {
     /**
      * @param {BlendValue} blendValue
      * @param {number} weight
-     * @param {String} curveName
+     * @param {string} curveName
      */
 
     AnimationSession.prototype.setBlend = function (blendValue, weight, curveName){
@@ -2220,7 +2213,7 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {String} curveName
+     * @param {string} curveName
      */
 
     AnimationSession.prototype.unsetBlend = function (curveName) {
@@ -2238,7 +2231,7 @@ Object.assign(window, function () {
     // events related
 
     /**
-     * @param {String} name
+     * @param {string} name
      * @param {number} time
      * @param {AnimationEventCallback} fnCallback
      * @param {any} context
@@ -2263,7 +2256,7 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {String} name
+     * @param {string} name
      * @param {number} time
      * @param {AnimationEventCallback} fnCallback
      */
@@ -2289,7 +2282,7 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {String} name
+     * @param {string} name
      */
 
     AnimationSession.prototype.invokeByName = function (name) {
@@ -2623,7 +2616,7 @@ Object.assign(window, function () {
     // *===============================================================================================================
 
     /**
-     * @constructor
+     * @class
      */
 
     var AnimationComponent = function () {
@@ -2675,7 +2668,7 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {String} name
+     * @param {string} name
      */
 
     AnimationComponent.prototype.removeClip = function (name) {
@@ -2693,7 +2686,7 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {String} name
+     * @param {string} name
      */
 
     AnimationComponent.prototype.playClip = function (name) {
@@ -2715,7 +2708,7 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {String} name
+     * @param {string} name
      * @param {number} duration
      */
 
@@ -2742,7 +2735,7 @@ Object.assign(window, function () {
     /**
      * @param {BlendValue} blendValue
      * @param {number} weight
-     * @param {String} curveName
+     * @param {string} curveName
      */
 
     AnimationComponent.prototype.setBlend = function (blendValue, weight, curveName) {
@@ -2752,7 +2745,7 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {String} curveName
+     * @param {string} curveName
      */
 
     AnimationComponent.prototype.unsetBlend = function (curveName) {
@@ -2768,7 +2761,7 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {String} name
+     * @param {string} name
      */
 
     AnimationComponent.prototype.playSession = function (name) {
@@ -2790,7 +2783,7 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {String} name
+     * @param {string} name
      * @param {number} duration
      */
 
@@ -2814,7 +2807,7 @@ Object.assign(window, function () {
     /**
      * @param {BlendValue} blendValue
      * @param {number} weight
-     * @param {String} curveName
+     * @param {string} curveName
      */
 
     AnimationComponent.prototype.setBlendSession = function (blendValue, weight, curveName) {
@@ -2825,7 +2818,7 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {String} curveName
+     * @param {string} curveName
      */
 
     AnimationComponent.prototype.unsetBlendSession = function (curveName) {
@@ -2836,7 +2829,7 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {String} substr
+     * @param {string} substr
      */
 
     AnimationComponent.prototype.playSubstring = function (substr) {
@@ -2869,6 +2862,6 @@ Object.assign(window, function () {
         AnimationClip: AnimationClip,
         AnimationEvent: AnimationEvent,
         AnimationSession: AnimationSession,
-        AnimationComponent: AnimationComponent,
+        AnimationComponent: AnimationComponent
     };
 }());

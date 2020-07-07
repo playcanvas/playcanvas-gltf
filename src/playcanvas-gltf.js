@@ -1116,39 +1116,38 @@ Object.assign(window, function () {
 
         // TODO: The loader has been temporarily switch from using Entities to GraphNodes
         // in the hierarchy. Therefore, camera loading is disabled for now.
-        /*
-        if (data.hasOwnProperty('camera')) {
-            var gltf = resources.gltf;
-            var camera = gltf.cameras[data.camera];
-            var options = {};
-            if (camera.type === 'perspective') {
-                options.type = pc.PROJECTION_PERSPECTIVE;
-                if (camera.hasOwnProperty('perspective')) {
-                    var perspective = camera.perspective;
-                    if (perspective.hasOwnProperty('aspectRatio')) {
-                        options.aspectRatio = perspective.aspectRatio;
-                    }
-                    options.fov = perspective.yfov;
-                    if (perspective.hasOwnProperty('zfar')) {
-                        options.farClip = perspective.zfar;
-                    }
-                    options.nearClip = perspective.znear;
-                }
-            } else if (camera.type === 'orthographic') {
-                options.type = pc.PROJECTION_ORTHOGRAPHIC;
-                if (camera.hasOwnProperty('orthographic')) {
-                    var orthographic = camera.orthographic;
-                    options.aspectRatio = orthographic.xmag / orthographic.ymag;
-                    options.orthoHeight = orthographic.ymag * 0.5;
-                    options.farClip = orthographic.zfar;
-                    options.nearClip = orthographic.znear;
-                }
-            }
-            entity.addComponent('camera', options);
-            // Diable loaded cameras by default and leave it to the application to enable them
-            entity.camera.enabled = false;
-        }
-        */
+        //
+        // if (data.hasOwnProperty('camera')) {
+        //     var gltf = resources.gltf;
+        //     var camera = gltf.cameras[data.camera];
+        //     var options = {};
+        //     if (camera.type === 'perspective') {
+        //         options.type = pc.PROJECTION_PERSPECTIVE;
+        //         if (camera.hasOwnProperty('perspective')) {
+        //             var perspective = camera.perspective;
+        //             if (perspective.hasOwnProperty('aspectRatio')) {
+        //                 options.aspectRatio = perspective.aspectRatio;
+        //             }
+        //             options.fov = perspective.yfov;
+        //             if (perspective.hasOwnProperty('zfar')) {
+        //                 options.farClip = perspective.zfar;
+        //             }
+        //             options.nearClip = perspective.znear;
+        //         }
+        //     } else if (camera.type === 'orthographic') {
+        //         options.type = pc.PROJECTION_ORTHOGRAPHIC;
+        //         if (camera.hasOwnProperty('orthographic')) {
+        //             var orthographic = camera.orthographic;
+        //             options.aspectRatio = orthographic.xmag / orthographic.ymag;
+        //             options.orthoHeight = orthographic.ymag * 0.5;
+        //             options.farClip = orthographic.zfar;
+        //             options.nearClip = orthographic.znear;
+        //         }
+        //     }
+        //     entity.addComponent('camera', options);
+        //     // Diable loaded cameras by default and leave it to the application to enable them
+        //     entity.camera.enabled = false;
+        // }
 
         resources.nodeCounter++;
 
@@ -1533,6 +1532,6 @@ Object.assign(window, function () {
 
     return {
         loadGltf: loadGltf,
-        loadGlb: loadGlb,
+        loadGlb: loadGlb
     };
 }());
