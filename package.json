@@ -22,7 +22,7 @@
     "url": "https://github.com/playcanvas/playcanvas-gltf.git"
   },
   "devDependencies": {
-    "electron": "6.0.0",
+    "electron": "9.1.0",
     "electron-packager": "14.0.4",
     "eslint": "^4.19.0",
     "eslint-config-playcanvas": "^1.0.0"
