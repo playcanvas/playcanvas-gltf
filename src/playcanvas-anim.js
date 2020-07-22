@@ -2502,15 +2502,13 @@ Object.assign(window, function () {
         for (i = 0; i < this.animEvents.length; i ++)
             this.animEvents[i].triggered = false;
 
-        var app = pc.Application.getApplication();
-        app.on('update', this.onTimer);
+        pc.ComponentSystem.bind('animationUpdate', this.onTimer, this);
         this.showAt(this.curTime, this.fadeDir, this.fadeBegTime, this.fadeEndTime, this.fadeTime);
         return this;
     };
 
     AnimationSession.prototype.stop = function () {
-        var app = pc.Application.getApplication();
-        app.off('update', this.onTimer);
+        pc.ComponentSystem.unbind('animationUpdate', this.onTimer, this);
         this.curTime = 0;
         this.isPlaying = false;
         this.fadeBegTime = -1;
@@ -2522,8 +2520,7 @@ Object.assign(window, function () {
     };
 
     AnimationSession.prototype.pause = function () {
-        var app = pc.Application.getApplication();
-        app.off('update', this.onTimer);
+        pc.ComponentSystem.unbind('animationUpdate', this.onTimer, this);
         this.isPlaying = false;
         return this;
     };
@@ -2531,8 +2528,7 @@ Object.assign(window, function () {
     AnimationSession.prototype.resume = function () {
         if (!this.isPlaying) {
             this.isPlaying = true;
-            var app = pc.Application.getApplication();
-            app.on('update', this.onTimer);
+            pc.ComponentSystem.bind('animationUpdate', this.onTimer, this);
         }
     };
 
@@ -2600,8 +2596,7 @@ Object.assign(window, function () {
 
     AnimationSession.prototype.fadeToSelf = function (duration) {
         var session = this.clone();
-        var app = pc.Application.getApplication();
-        app.off('update', this.onTimer);
+        pc.ComponentSystem.unbind('animationUpdate', this.onTimer, this);
         session.fadeOut(duration);
 
         this.stop();
