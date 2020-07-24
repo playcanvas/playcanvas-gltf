@@ -1,6 +1,40 @@
 Object.assign(window, function () {
 
     // *===============================================================================================================
+    // * Session updater
+    // *
+    // *===============================================================================================================
+
+    // Should contain an object of { function, scope }
+    var activeAnimationSessions = [];
+
+    // Hook into the AnimationSystem update
+    pc.ComponentSystem.bind('animationUpdate', function (dt) {
+        for (var i = activeAnimationSessions.length - 1; i >= 0; i--) {
+            var cb = activeAnimationSessions[i];
+            cb.f.call(cb.s, dt);
+        }
+    }, this);
+
+    function bindUpdate(callback, scope) {
+        activeAnimationSessions.push({ f: callback, s: scope });
+    }
+
+
+    function unbindUpdate(callback, scope) {
+        // Find the element index;
+        var index = -1;
+        for (var i = 0; i < activeAnimationSessions.length; i++) {
+            var cb = activeAnimationSessions[i];
+            if (cb.f === callback && cb.s === scope) {
+                activeAnimationSessions.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+
+    // *===============================================================================================================
     // * class AnimationKeyable
     // *
     // *===============================================================================================================
@@ -2502,13 +2536,13 @@ Object.assign(window, function () {
         for (i = 0; i < this.animEvents.length; i ++)
             this.animEvents[i].triggered = false;
 
-        pc.ComponentSystem.bind('animationUpdate', this.onTimer, this);
+        bindUpdate(this.onTimer, this);
         this.showAt(this.curTime, this.fadeDir, this.fadeBegTime, this.fadeEndTime, this.fadeTime);
         return this;
     };
 
     AnimationSession.prototype.stop = function () {
-        pc.ComponentSystem.unbind('animationUpdate', this.onTimer, this);
+        unbindUpdate(this.onTimer, this);
         this.curTime = 0;
         this.isPlaying = false;
         this.fadeBegTime = -1;
@@ -2520,7 +2554,7 @@ Object.assign(window, function () {
     };
 
     AnimationSession.prototype.pause = function () {
-        pc.ComponentSystem.unbind('animationUpdate', this.onTimer, this);
+        unbindUpdate(this.onTimer, this);
         this.isPlaying = false;
         return this;
     };
@@ -2528,7 +2562,7 @@ Object.assign(window, function () {
     AnimationSession.prototype.resume = function () {
         if (!this.isPlaying) {
             this.isPlaying = true;
-            pc.ComponentSystem.bind('animationUpdate', this.onTimer, this);
+            bindUpdate(this.onTimer, this);
         }
     };
 
@@ -2596,7 +2630,7 @@ Object.assign(window, function () {
 
     AnimationSession.prototype.fadeToSelf = function (duration) {
         var session = this.clone();
-        pc.ComponentSystem.unbind('animationUpdate', this.onTimer, this);
+        unbindUpdate(this.onTimer, this);
         session.fadeOut(duration);
 
         this.stop();
