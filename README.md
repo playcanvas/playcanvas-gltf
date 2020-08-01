@@ -1,3 +1,8 @@
+# THIS REPO IS NOW DEPRECATED
+Please visit:
+* https://github.com/playcanvas/engine - which now has built-in glTF 2.0 support
+* https://github.com/playcanvas/playcanvas-viewer - viewer based on engine's built in glTF 2.0 support
+
 # playcanvas-gltf
 ![gtTF viewer](/images/playcanvas-gltf-viewer.jpg?raw=true "glTF Viewer")
 
