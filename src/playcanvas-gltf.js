@@ -1062,10 +1062,10 @@ Object.assign(window, function () {
                         options.deltaTangents = getAccessorData(gltf, accessor, resources.buffers);
                     }
 
-                    targets.push(new pc.MorphTarget(resources.device, options));
+                    targets.push(new pc.MorphTarget(options));
                 });
 
-                mesh.morph = new pc.Morph(targets);
+                mesh.morph = new pc.Morph(resources.device, targets);
             }
 
             meshes.push(mesh);
