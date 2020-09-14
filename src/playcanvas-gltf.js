@@ -309,6 +309,11 @@ Object.assign(window, function () {
             if (resources.imagesLoaded === gltf.images.length) {
                 success();
             }
+
+            // Check if it's a blob DOMString so we can free it
+            if (image.src.startsWith('blob')) {
+                URL.revokeObjectURL(image.src);
+            }
         };
 
         var onError = function () {
