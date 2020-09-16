@@ -277,6 +277,7 @@ Object.assign(window, function () {
 
     function translateImage(data, resources, success) {
         var image = new Image();
+        var loadedBlob = false;
 
         var onLoad = function () {
             image.removeEventListener('load', onLoad, false);
@@ -311,7 +312,7 @@ Object.assign(window, function () {
             }
 
             // Check if it's a blob DOMString so we can free it
-            if (image.src.startsWith('blob')) {
+            if (loadedBlob) {
                 URL.revokeObjectURL(image.src);
             }
         };
@@ -346,6 +347,8 @@ Object.assign(window, function () {
             var imageBuffer = arrayBuffer.slice(byteOffset, byteOffset + bufferView.byteLength);
             var blob = new Blob([imageBuffer], { type: data.mimeType });
             image.src = URL.createObjectURL(blob);
+
+            loadedBlob = true;
         }
 
         return image;
