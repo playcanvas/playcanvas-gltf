@@ -311,7 +311,6 @@ Object.assign(window, function () {
                 success();
             }
 
-            // Check if it's a blob DOMString so we can free it
             if (loadedBlob) {
                 URL.revokeObjectURL(image.src);
             }
@@ -319,6 +318,10 @@ Object.assign(window, function () {
 
         var onError = function () {
             console.error('Could not load image from url ' + image.src);
+
+            if (loadedBlob) {
+                URL.revokeObjectURL(image.src);
+            }
         };
 
         image.addEventListener('load', onLoad, false);
