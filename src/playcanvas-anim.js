@@ -423,10 +423,10 @@ Object.assign(window, function () {
             }
             basePath = currNode.path + '/' + currNode.children[0].name + '/';
         }
-        var path = rootTargetNode.targetNode.path.replace(basePath, '');
 
         var vScale = vec3Scale || new pc.Vec3(1, 1, 1);
         var rootTargetNode = new AnimationTarget(root);
+        var path = rootTargetNode.targetNode.path.replace(basePath, '');
         if (root.localScale)
             rootTargetNode.vScale = new pc.Vec3(root.localScale.x * vScale.x, root.localScale.y * vScale.y, root.localScale.z * vScale.z);
 
