@@ -418,7 +418,7 @@ Object.assign(window, function () {
 
         if (!basePath) {
             var currNode = root;
-            while(currNode.constructor !== pc.Entity) {
+            while(currNode && currNode.constructor !== pc.Entity) {
                 currNode = currNode.parent;
             }
             basePath = currNode.path + '/' + currNode.children[0].name + '/';
