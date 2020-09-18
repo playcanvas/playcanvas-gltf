@@ -421,7 +421,7 @@ Object.assign(window, function () {
         if (root.localScale)
             rootTargetNode.vScale = new pc.Vec3(root.localScale.x * vScale.x, root.localScale.y * vScale.y, root.localScale.z * vScale.z);
 
-        output[rootTargetNode.targetNode.name] = rootTargetNode;
+        output[rootTargetNode.targetNode.path] = rootTargetNode;
         for (var i = 0; i < root.children.length; i ++) {
             AnimationTarget.constructTargetNodes(root.children[i], rootTargetNode.vScale, output);
         }
@@ -433,7 +433,11 @@ Object.assign(window, function () {
      * @param {pc.Vec3} localScale
      */
     AnimationTarget.getLocalScale = function (node, localScale) {
-        localScale.set(1, 1, 1);
+        if (localScale) {
+            localScale.set(1, 1, 1);
+        } else {
+            localScale = new pc.Vec3(1, 1, 1);
+        }
 
         if (!node)
             return;
@@ -1828,20 +1832,20 @@ Object.assign(window, function () {
         // scale
         var curveScale = new AnimationCurve();
         curveScale.keyableType = AnimationKeyableType.VEC;
-        curveScale.name = root.name + ".localScale";
+        curveScale.name = root.path + ".localScale";
         curveScale.setTarget(root, "localScale");
         this.addCurve(curveScale);
 
         // translate
         var curvePos = new AnimationCurve();
         curvePos.keyableType = AnimationKeyableType.VEC;
-        curvePos.name = root.name + ".localPosition";
+        curvePos.name = root.path + ".localPosition";
         curvePos.setTarget(root, "localPosition");
         this.addCurve(curvePos);
 
         // rotate
         var curveRotQuat = new AnimationCurve();
-        curveRotQuat.name = root.name + ".localRotation.quat";
+        curveRotQuat.name = root.path + ".localRotation.quat";
         curveRotQuat.keyableType = AnimationKeyableType.QUAT;
         curveRotQuat.setTarget(root, "localRotation");
         this.addCurve(curveRotQuat);
@@ -1897,7 +1901,7 @@ Object.assign(window, function () {
                 curve.animTargets[0].targetNode = root;
 
             var ctarget = curve.animTargets[0];
-            var atarget = dictTarget[ctarget.targetNode.name];
+            var atarget = dictTarget[ctarget.targetNode.path];
             if (atarget) { // match by target name
                 AnimationTarget.getLocalScale(ctarget.targetNode, cScale);
                 ctarget.targetNode = atarget.targetNode; // atarget contains scale information
