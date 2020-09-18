@@ -423,7 +423,7 @@ Object.assign(window, function () {
             }
             basePath = currNode.path + '/' + currNode.children[0].name + '/';
         }
-        var path = rootTargetNode.targetNode.path.replace(basePath, '');;
+        var path = rootTargetNode.targetNode.path.replace(basePath, '');
 
         var vScale = vec3Scale || new pc.Vec3(1, 1, 1);
         var rootTargetNode = new AnimationTarget(root);
