@@ -412,16 +412,25 @@ Object.assign(window, function () {
      * @param {pc.Vec3} vec3Scale
      * @param {object} output
      */
-    AnimationTarget.constructTargetNodes = function (root, vec3Scale, output) {
+    AnimationTarget.constructTargetNodes = function (root, vec3Scale, output, basePath) {
         if (!root)
             return;
+
+        if (!basePath) {
+            var currNode = root;
+            while(currNode.constructor !== pc.Entity) {
+                currNode = currNode.parent;
+            }
+            basePath = currNode.path + '/' + currNode.children[0].name + '/';
+        }
+        var path = rootTargetNode.targetNode.path.replace(basePath, '');;
 
         var vScale = vec3Scale || new pc.Vec3(1, 1, 1);
         var rootTargetNode = new AnimationTarget(root);
         if (root.localScale)
             rootTargetNode.vScale = new pc.Vec3(root.localScale.x * vScale.x, root.localScale.y * vScale.y, root.localScale.z * vScale.z);
 
-        output[rootTargetNode.targetNode.path] = rootTargetNode;
+        output[path] = rootTargetNode;
         for (var i = 0; i < root.children.length; i ++) {
             AnimationTarget.constructTargetNodes(root.children[i], rootTargetNode.vScale, output);
         }
