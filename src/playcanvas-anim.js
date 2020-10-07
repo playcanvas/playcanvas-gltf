@@ -1911,9 +1911,10 @@ Object.assign(window, function () {
 
             var ctarget = curve.animTargets[0];
                         
+            var j;
             var keys = Object.keys(dictTarget);
             var nodes = [];
-            for (var j = 0; j < keys.length; j++) {
+            for (j = 0; j < keys.length; j++) {
                 var path = keys[j];
                 var name = ctarget.targetNode.name;
                 if (path.length >= name.length && (path.lastIndexOf(name) - (path.length - name.length)) === 0) {
@@ -1927,7 +1928,7 @@ Object.assign(window, function () {
                 atarget = nodes[0];
             } else if (nodes.length > 1) {
                 var maxMatchingHierarchyDepth = 0;
-                for (var j = 0; j < nodes.length; j++) {
+                for (j = 0; j < nodes.length; j++) {
                     var matchingHierarchyDepth = 0;
                     var animNode = ctarget.targetNode.parent;
                     var modelNode = nodes[j].targetNode.parent;
