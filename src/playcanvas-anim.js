@@ -1910,7 +1910,40 @@ Object.assign(window, function () {
                 curve.animTargets[0].targetNode = root;
 
             var ctarget = curve.animTargets[0];
-            var atarget = dictTarget[ctarget.targetNode.path];
+                        
+            var keys = Object.keys(dictTarget);
+            var nodes = [];
+            for (var j = 0; j < keys.length; j++) {
+                var path = keys[j];
+                var name = ctarget.targetNode.name;
+                if (path.length >= name.length && (path.lastIndexOf(name) - (path.length - name.length)) === 0) {
+                    nodes.push(dictTarget[path]);
+                }
+            }
+
+            var atarget;
+
+            if (nodes.length === 1) {
+                atarget = nodes[0];
+            } else if (nodes.length > 1) {
+                var maxMatchingHierarchyDepth = 0;
+                for (var j = 0; j < nodes.length; j++) {
+                    var matchingHierarchyDepth = 0;
+                    var animNode = ctarget.targetNode.parent;
+                    var modelNode = nodes[j].targetNode.parent;
+                    while (animNode && modelNode && animNode.name === modelNode.name) {
+                        matchingHierarchyDepth++;
+                        animNode = animNode.parent;
+                        modelNode = modelNode.parent;
+                    }
+                    // if the base of the animation hierarchy is reached, test the model nodes parent against the animation root
+                    if (!animNode && modelNode.name === root.name) matchingHierarchyDepth++;
+                    if (matchingHierarchyDepth > maxMatchingHierarchyDepth) {
+                        maxMatchingHierarchyDepth = matchingHierarchyDepth;
+                        atarget = nodes[j];
+                    }
+                }
+            }
             if (atarget) { // match by target name
                 AnimationTarget.getLocalScale(ctarget.targetNode, cScale);
                 ctarget.targetNode = atarget.targetNode; // atarget contains scale information
