@@ -25,9 +25,9 @@
     "extends": "@playcanvas/eslint-config"
   },
   "devDependencies": {
-    "electron": "9.1.0",
-    "electron-packager": "15.0.0",
-    "eslint": "^7.4.0",
+    "electron": "11.2.1",
+    "electron-packager": "15.2.0",
+    "eslint": "^7.18.0",
     "@playcanvas/eslint-config": "^1.0.6"
   },
   "scripts": {
@@ -38,6 +38,6 @@
     "node": ">= 0.6.12"
   },
   "dependencies": {
-    "playcanvas": "^1.23.2"
+    "playcanvas": "^1.38.4"
   }
 }
