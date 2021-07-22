@@ -1058,7 +1058,7 @@ Object.assign(window, function () {
             if (primitive.hasOwnProperty('targets')) {
                 var targets = [];
 
-                primitive.targets.forEach(function (target) {
+                primitive.targets.forEach(function (target, targetIndex) {
                     var options = {};
                     if (target.hasOwnProperty('POSITION')) {
                         accessor = gltf.accessors[target.POSITION];
@@ -1072,11 +1072,19 @@ Object.assign(window, function () {
                         accessor = gltf.accessors[target.TANGENT];
                         options.deltaTangents = getAccessorData(gltf, accessor, resources.buffers);
                     }
+                    if (data.hasOwnProperty('extras') && data.extras.hasOwnProperty('targetNames') && data.extras.targetNames[targetIndex]) {
+                        options.name = data.extras.targetNames[targetIndex];
+                    } else {
+                        options.name = '' + targetIndex;
+                    }
+                    if (data.hasOwnProperty('weights') && data.weights[targetIndex]) {
+                        options.defaultWeight = data.weights[targetIndex];
+                    }
 
                     targets.push(new pc.MorphTarget(options));
                 });
 
-                mesh.morph = new pc.Morph(resources.device, targets);
+                mesh.morph = new pc.Morph(targets, resources.device);
             }
 
             meshes.push(mesh);
