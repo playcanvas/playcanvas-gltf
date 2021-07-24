@@ -115,27 +115,68 @@ Object.assign(window, function () {
 
             var target = channel.target;
             var path = target.path;
-            var curve, keyType;
+            var curve, keyType, curveType, numValues, offsetPerTime;
             var i, j;
 
             // Animation for the same root, organized in one AnimationComponent
             var entity = resources.nodes[target.node];
 
             if (path === 'weights') {
+                switch (sampler.interpolation) {
+                    case 'CUBIC':
+                        numValues = 1;
+                        keyType = AnimationKeyableType.NUM;
+                        curveType = AnimationCurveType.CUBIC;
+                        console.warn('CUBIC not tested');
+                        break;
+                    case 'CUBICSPLINE':
+                        numValues = 3;
+                        keyType = AnimationKeyableType.NUM;
+                        curveType = AnimationCurveType.CUBICSPLINE_GLTF;
+                        break;
+                    case 'LINEAR':
+                        numValues = 1;
+                        keyType = AnimationKeyableType.NUM;
+                        curveType = AnimationCurveType.LINEAR;
+                        break;
+                    case 'STEP':
+                        numValues = 1;
+                        keyType = AnimationKeyableType.NUM;
+                        curveType = AnimationCurveType.STEP;
+                        console.warn('STEP not tested');
+                        break;
+                    default:
+                        // Whatever extensions people might develop/use, good luck:
+                        numValues = 1;
+                        keyType = AnimationKeyableType.NUM;
+                        curveType = AnimationCurveType.LINEAR;
+                        console.warn('translateAnimation: sampler interpolation not handled:', sampler.interpolation);
+                        break;
+                }
+                numCurves = values.length / (times.length * numValues);
+                offsetPerTime = numCurves * numValues;
                 for (i = 0; i < numCurves; i++) {
                     curve = new AnimationCurve();
-                    keyType = AnimationKeyableType.NUM;
                     curve.keyableType = keyType;
+                    curve.type = curveType;
                     curve.addTarget("model", path, i);
-                    if (sampler.interpolation === "CUBIC")
-                        curve.type = AnimationCurveType.CUBIC;
-                    else if (sampler.interpolation === "STEP")
-                        curve.type = AnimationCurveType.STEP;
-
-                    for (j = 0; j < times.length; j++) {
-                        time = times[j];
-                        value = values[numCurves * j + i];
-                        curve.insertKey(keyType, time, value);
+                    if (numValues == 1) {
+                        for (j = 0; j < times.length; j++) {
+                            time = times[j];
+                            value = values[numCurves * j + i];
+                            curve.insertKey(keyType, time, value);
+                        }
+                    } else {
+                        for (j = 0; j < times.length; j++) {
+                            time = times[j];
+                            inTangent  = values[j * offsetPerTime                 + i];
+                            value      = values[j * offsetPerTime + numCurves     + i];
+                            outTangent = values[j * offsetPerTime + numCurves * 2 + i];
+                            keyable = new AnimationKeyable(keyType, time, value);
+                            keyable.inTangent  = inTangent;
+                            keyable.outTangent = outTangent;
+                            curve.insertKeyable(keyable);
+                        }
                     }
                     clip.addCurve(curve);
                 }
