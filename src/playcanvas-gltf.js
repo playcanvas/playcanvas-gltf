@@ -156,7 +156,7 @@ Object.assign(window, function () {
                         keyType = AnimationKeyableType.NUM;
                 }
 
-                function ensureKeyType(expectedKeyType) {
+                var ensureKeyType = function (expectedKeyType) {
                     if (keyType !== expectedKeyType) {
                         console.warn(
                             'Unexpected key type: ' +
@@ -165,7 +165,7 @@ Object.assign(window, function () {
                         );
                         keyType = expectedKeyType;
                     }
-                }
+                };
 
                 var targetPath = path;
                 switch (path) {

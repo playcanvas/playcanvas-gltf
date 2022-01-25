@@ -22,13 +22,21 @@
     "url": "https://github.com/playcanvas/playcanvas-gltf.git"
   },
   "eslintConfig": {
-    "extends": "@playcanvas/eslint-config"
+    "extends": "@playcanvas/eslint-config",
+    "globals": {
+      "AnimationClip": "readonly",
+      "AnimationCurve": "readonly",
+      "AnimationCurveType": "readonly",
+      "AnimationKeyable": "readonly",
+      "AnimationKeyableType": "readonly",
+      "pc": "readonly"
+    }
   },
   "devDependencies": {
-    "electron": "11.2.1",
-    "electron-packager": "15.2.0",
-    "eslint": "^7.18.0",
-    "@playcanvas/eslint-config": "^1.0.6"
+    "@playcanvas/eslint-config": "^1.0.16",
+    "electron": "^16.0.7",
+    "electron-packager": "^15.4.0",
+    "eslint": "^8.7.0"
   },
   "scripts": {
     "viewer": "electron ./viewer/main.js",
@@ -38,6 +46,6 @@
     "node": ">= 0.6.12"
   },
   "dependencies": {
-    "playcanvas": "^1.38.4"
+    "playcanvas": "^1.51.5"
   }
 }

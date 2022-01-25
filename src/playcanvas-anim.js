@@ -1,3 +1,8 @@
+/* eslint-disable no-use-before-define */
+/* eslint-disable jsdoc/require-returns */
+/* eslint-disable jsdoc/require-param-description */
+/* eslint-disable jsdoc/require-returns-description */
+
 Object.assign(window, function () {
 
     // *===============================================================================================================
@@ -72,11 +77,9 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {T} value - Value to clone
-     * @returns {T} Clone of the given value
-     * @template T
+     * @param {*} value - Value to clone
+     * @returns {*} Clone of the given value
      */
-
     AnimationKeyable._cloneValue = function (value) {
         if (value instanceof pc.Vec3 || value instanceof pc.Quat)
             return value.clone();
@@ -88,14 +91,12 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {AnimationKeyable} keyable1
-     * @param {AnimationKeyable} keyable2
-     * @returns {AnimationKeyable}
-     * @summary
-     * static function for lack of overloaded operator
-     * return keyable1 + keyable2
+     * Static function for lack of overloaded operator.
+     *
+     * @param {AnimationKeyable} keyable1 - First key.
+     * @param {AnimationKeyable} keyable2 - Second key.
+     * @returns {AnimationKeyable} Return keyable1 + keyable2.
      */
-
     AnimationKeyable.sum = function (keyable1, keyable2) {
         if (!keyable1 || !keyable2 || keyable1.type != keyable2.type)
             return null;
@@ -114,12 +115,10 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {AnimationKeyable} keyable1
-     * @param {AnimationKeyable} keyable2
-     * @returns {AnimationKeyable}
-     * @summary return keyable1 - keyable2
+     * @param {AnimationKeyable} keyable1 - First key.
+     * @param {AnimationKeyable} keyable2 - Second key.
+     * @returns {AnimationKeyable} Return keyable1 - keyable2.
      */
-
     AnimationKeyable.minus = function (keyable1, keyable2) {
         if (!keyable1 || !keyable2 || keyable1.type != keyable2.type)
             return null;
@@ -138,12 +137,10 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {AnimationKeyable} keyable
-     * @param {number} coeff
-     * @returns {AnimationKeyable}
-     * @summary return keyable * coeff
+     * @param {AnimationKeyable} keyable - Keyframe.
+     * @param {number} coeff - Scalar coefficient.
+     * @returns {AnimationKeyable} Return keyable * coeff.
      */
-
     AnimationKeyable.mul = function (keyable, coeff) {
         if (!keyable)
             return null;
@@ -163,11 +160,10 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {AnimationKeyable} keyable
-     * @param {number} coeff
-     * @returns {AnimationKeyable}
+     * @param {AnimationKeyable} keyable - Key.
+     * @param {number} coeff - Divisor.
+     * @returns {AnimationKeyable} Return keyable / coeff.
      */
-    // return keyable / coeff
     AnimationKeyable.div = function (keyable, coeff) {
         if (coeff === 0)
             return null;
@@ -176,13 +172,12 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {AnimationKeyable} keyable1
-     * @param {AnimationKeyable} keyable2
-     * @param {number} p
-     * @param {AnimationKeyable} [cacheValue]
-     * @returns {AnimationKeyable}
+     * @param {AnimationKeyable} keyable1 - First key.
+     * @param {AnimationKeyable} keyable2 - Second key.
+     * @param {number} p - Interpolation factor.
+     * @param {AnimationKeyable} [cacheValue] - Cached value.
+     * @returns {AnimationKeyable} Return interpolated key.
      */
-
     AnimationKeyable.linearBlend = function (keyable1, keyable2, p, cacheValue) {
         if (!keyable1 || !keyable2 || keyable1.type !== keyable2.type)
             return null;
@@ -213,11 +208,10 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {SingleDOF} value1
-     * @param {SingleDOF} value2
-     * @param {number} p
+     * @param {SingleDOF} value1 - First value.
+     * @param {SingleDOF} value2 - Second value.
+     * @param {number} p - Interpolation factor.
      */
-
     AnimationKeyable.linearBlendValue = function (value1, value2, p) {
         var valRes;
 
@@ -259,7 +253,7 @@ Object.assign(window, function () {
     };
 
     // blend related
-    AnimationTarget.prototype.toString = function (){
+    AnimationTarget.prototype.toString = function () {
         var str = "";
         if (this.targetNode)
             str += this.targetNode.name;
@@ -289,11 +283,10 @@ Object.assign(window, function () {
     };
 
     /**
-     * @param {pc.Vec3 | number} value
-     * @param {number} p
+     * @param {pc.Vec3 | number} value - Target value.
+     * @param {number} p - Interpolation factor.
      * @summary based on current target[path]'s value, blend in value by p
      */
-
     AnimationTarget.prototype.blendToTarget = function (value, p) {
         if ((typeof value === "undefined") || p > 1 || p <= 0)// p===0 remain prev
             return;
@@ -408,9 +401,10 @@ Object.assign(window, function () {
 
     // static function
     /**
-     * @param {pc.GraphNode} root
-     * @param {pc.Vec3} vec3Scale
-     * @param {object} output
+     * @param {pc.GraphNode} root - Root node of the graph.
+     * @param {pc.Vec3} vec3Scale - Scale of the graph.
+     * @param {object} output - Output object.
+     * @param {string} basePath - Base path of the graph.
      */
     AnimationTarget.constructTargetNodes = function (root, vec3Scale, output, basePath) {
         if (!root)
@@ -418,7 +412,7 @@ Object.assign(window, function () {
 
         if (!basePath) {
             var currNode = root;
-            while(currNode.constructor !== pc.Entity) {
+            while (currNode.constructor !== pc.Entity) {
                 currNode = currNode.parent;
             }
             basePath = currNode.path + '/' + currNode.children[0].name + '/';
@@ -431,15 +425,15 @@ Object.assign(window, function () {
             rootTargetNode.vScale = new pc.Vec3(root.localScale.x * vScale.x, root.localScale.y * vScale.y, root.localScale.z * vScale.z);
 
         output[path] = rootTargetNode;
-        for (var i = 0; i < root.children.length; i ++) {
+        for (var i = 0; i < root.children.length; i++) {
             AnimationTarget.constructTargetNodes(root.children[i], rootTargetNode.vScale, output);
         }
     };
 
     // static function
     /**
-     * @param {pc.GraphNode} node
-     * @param {pc.Vec3} localScale
+     * @param {pc.GraphNode} node - Graph node to query.
+     * @param {pc.Vec3} localScale - Vector to receive the local scale of the node.
      */
     AnimationTarget.getLocalScale = function (node, localScale) {
         if (localScale) {
@@ -470,15 +464,13 @@ Object.assign(window, function () {
     /**
      * @enum {number}
      */
-
     var AnimationCurveType = { LINEAR: 0, STEP: 1, CUBIC: 2, CUBICSPLINE_GLTF: 3 };
 
     /**
      * @class
      */
-
     var AnimationCurve = function () {
-        AnimationCurve.count ++;
+        AnimationCurve.count++;
         this.name = "curve" + AnimationCurve.count.toString();
         this.type = AnimationCurveType.LINEAR;
         this.keyableType = AnimationKeyableType.NUM;
@@ -527,7 +519,6 @@ Object.assign(window, function () {
     /**
      * @param {AnimationCurve} curve
      */
-
     AnimationCurve.prototype.copy = function (curve) {
         var i;
 
@@ -538,11 +529,11 @@ Object.assign(window, function () {
         this.duration = curve.duration;
 
         this.animTargets = [];
-        for (i = 0; i < curve.animTargets.length; i ++)
+        for (i = 0; i < curve.animTargets.length; i++)
             this.animTargets.push(curve.animTargets[i].clone());
 
         this.animKeys = [];
-        for (i = 0; i < curve.animKeys.length; i ++) {
+        for (i = 0; i < curve.animKeys.length; i++) {
             var key = new AnimationKeyable();
             key.copy(curve.animKeys[i]);
             this.animKeys.push(key);
@@ -559,7 +550,6 @@ Object.assign(window, function () {
      * @param {string} targetPath
      * @param {string} targetProp
      */
-
     AnimationCurve.prototype.addTarget = function (targetNode, targetPath, targetProp) {
         var target = new AnimationTarget(targetNode, targetPath, targetProp);
         this.animTargets.push(target);
@@ -570,7 +560,6 @@ Object.assign(window, function () {
      * @param {string} targetPath
      * @param {string} [targetProp]
      */
-
     AnimationCurve.prototype.setTarget = function (targetNode, targetPath, targetProp) {
         this.animTargets = [];
         this.addTarget(targetNode, targetPath, targetProp);
@@ -597,7 +586,6 @@ Object.assign(window, function () {
      * @param {AnimationKeyable} keyable
      * @param {number} p
      */
-
     AnimationCurve.prototype.blendToTarget = function (keyable, p) {
         if (this.session)
             this.session.blendToTarget(keyable, p);
@@ -606,7 +594,6 @@ Object.assign(window, function () {
     /**
      * @param {AnimationKeyable} keyable
      */
-
     AnimationCurve.prototype.updateToTarget = function (keyable) {
         if (this.session)
             this.session.updateToTarget(keyable);
@@ -631,7 +618,6 @@ Object.assign(window, function () {
      * @param {any} context
      * @param {any} parameter
      */
-
     AnimationCurve.prototype.on = function (name, time, fnCallback, context, parameter) {
         if (this.session)
             this.session.on(name, time, fnCallback, context, parameter);
@@ -643,7 +629,6 @@ Object.assign(window, function () {
      * @param {number} time
      * @param {AnimationEventCallback} fnCallback
      */
-
     AnimationCurve.prototype.off = function (name, time, fnCallback) {
         if (this.session)
             this.session.off(name, time, fnCallback);
@@ -653,7 +638,6 @@ Object.assign(window, function () {
     /**
      * @returns {AnimationCurve}
      */
-
     AnimationCurve.prototype.removeAllEvents = function () {
         if (this.session)
             this.session.removeAllEvents();
@@ -663,7 +647,6 @@ Object.assign(window, function () {
     /**
      * @param {number} duration
      */
-
     AnimationCurve.prototype.fadeIn = function (duration) {
         if (!this.session)
             this.session = new AnimationSession(this);
@@ -673,7 +656,6 @@ Object.assign(window, function () {
     /**
      * @param {number} duration
      */
-
     AnimationCurve.prototype.fadeOut = function (duration) {
         if (this.session)
             this.session.fadeOut(duration);
@@ -707,7 +689,6 @@ Object.assign(window, function () {
      * @param {number} fadeEndTime
      * @param {number} fadeTime
      */
-
     AnimationCurve.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTime, fadeTime) {
         if (this.session)
             this.session.showAt(time, fadeDir, fadeBegTime, fadeEndTime, fadeTime);
@@ -716,7 +697,6 @@ Object.assign(window, function () {
     /**
      * @param {AnimationKeyable[]} animKeys
      */
-
     AnimationCurve.prototype.setAnimKeys = function (animKeys) {
         this.animKeys = animKeys;
     };
@@ -726,14 +706,13 @@ Object.assign(window, function () {
      * @param {number} time
      * @param {SingleDOF} value
      */
-
     AnimationCurve.prototype.insertKey = function (type, time, value) {
         if (this.keyableType != type)
             return;
 
         var pos = 0;
         while (pos < this.animKeys.length && this.animKeys[pos].time < time)
-            pos ++;
+            pos++;
 
         // replace if existed at time
         if (pos < this.animKeys.length && this.animKeys[pos].time == time) {
@@ -765,7 +744,7 @@ Object.assign(window, function () {
         var time = keyable.time;
         var pos = 0;
         while (pos < this.animKeys.length && this.animKeys[pos].time < time)
-            pos ++;
+            pos++;
 
         // replace if existed at time
         if (pos < this.animKeys.length && this.animKeys[pos].time == time) {
@@ -787,7 +766,6 @@ Object.assign(window, function () {
     /**
      * @param {number} index
      */
-
     AnimationCurve.prototype.removeKey = function (index) {
         if (index <= this.animKeys.length) {
             if (index == this.animKeys.length - 1)
@@ -804,9 +782,8 @@ Object.assign(window, function () {
     /**
      * @param {number} time
      */
-
     AnimationCurve.prototype.shiftKeyTime = function (time) {
-        for (var i = 0; i < this.animKeys.length; i ++)
+        for (var i = 0; i < this.animKeys.length; i++)
             this.animKeys[i].time += time;
     };
 
@@ -814,7 +791,6 @@ Object.assign(window, function () {
      * @param {number} tmBeg
      * @param {number} tmEnd
      */
-
     AnimationCurve.prototype.getSubCurve = function (tmBeg, tmEnd) {
         var i;
         var subCurve = new AnimationCurve();
@@ -825,7 +801,7 @@ Object.assign(window, function () {
         subCurve.tension = this.tension;
 
         subCurve.animTargets = [];
-        for (i = 0; i < this.animTargets.length; i ++)
+        for (i = 0; i < this.animTargets.length; i++)
             subCurve.animTargets.push(this.animTargets[i].clone());
 
         var tmFirst = -1;
@@ -848,7 +824,6 @@ Object.assign(window, function () {
      * @param {number} time
      * @returns {AnimationKeyable}
      */
-
     AnimationCurve.prototype.evalLINEAR = function (time) {
         if (!this.animKeys || this.animKeys.length === 0)
             return null;
@@ -856,7 +831,7 @@ Object.assign(window, function () {
         // 1. find the interval [key1, key2]
         var resKey = new AnimationKeyable();
         var key1, key2;
-        for (var i = 0; i < this.animKeys.length; i ++) {
+        for (var i = 0; i < this.animKeys.length; i++) {
             if (this.animKeys[i].time === time) {
                 resKey.copy(this.animKeys[i]);
                 return resKey;
@@ -889,7 +864,6 @@ Object.assign(window, function () {
      * @param {AnimationKeyable} cacheValue
      * @returns {AnimationKeyable}
      */
-
     AnimationCurve.prototype.evalLINEAR_cache = function (time, cacheKeyIdx, cacheValue) {
         if (!this.animKeys || this.animKeys.length === 0)
             return null;
@@ -902,7 +876,7 @@ Object.assign(window, function () {
         if (cacheKeyIdx) begIdx = cacheKeyIdx;
         var i = begIdx;
 
-        for (var c = 0; c < this.animKeys.length; c ++) {
+        for (var c = 0; c < this.animKeys.length; c++) {
             i = (begIdx + c) % this.animKeys.length;
             if (this.animKeys[i].time === time) {
                 resKey.copy(this.animKeys[i]);
@@ -950,13 +924,12 @@ Object.assign(window, function () {
      * @param {number} time
      * @returns {AnimationKeyable}
      */
-
     AnimationCurve.prototype.evalSTEP = function (time) {
         if (!this.animKeys || this.animKeys.length === 0)
             return null;
 
         var key = this.animKeys[0];
-        for (var i = 1; i < this.animKeys.length; i ++) {
+        for (var i = 1; i < this.animKeys.length; i++) {
             if (this.animKeys[i].time <= time)
                 key = this.animKeys[i];
             else
@@ -974,7 +947,6 @@ Object.assign(window, function () {
      * @param {AnimationKeyable} cacheValue
      * @returns {AnimationKeyable}
      */
-
     AnimationCurve.prototype.evalSTEP_cache = function (time, cacheKeyIdx, cacheValue) {
         if (!this.animKeys || this.animKeys.length === 0)
             return null;
@@ -984,7 +956,7 @@ Object.assign(window, function () {
         var i = begIdx;
 
         var key = this.animKeys[i];
-        for (var c = 1; c < this.animKeys.length; c ++) {
+        for (var c = 1; c < this.animKeys.length; c++) {
             i = (begIdx + c) % this.animKeys.length;
 
             if (i === 0 && this.animKeys[i].time > time) { // earlier than first
@@ -1013,7 +985,6 @@ Object.assign(window, function () {
      * @param {number} time
      * @returns {AnimationKeyable}
      */
-
     AnimationCurve.prototype.evalCUBIC = function (time) {
         if (!this.animKeys || this.animKeys.length === 0)
             return null;
@@ -1022,7 +993,7 @@ Object.assign(window, function () {
         // key0, key3 are for tangent computation
         var key0, key1, key2, key3;
         var resKey = new AnimationKeyable();
-        for (var i = 0; i < this.animKeys.length; i ++) {
+        for (var i = 0; i < this.animKeys.length; i++) {
             if (this.animKeys[i].time === time) {
                 resKey.copy(this.animKeys[i]);
                 return resKey;
@@ -1060,7 +1031,6 @@ Object.assign(window, function () {
      * @param {AnimationKeyable} cacheValue
      * @returns {AnimationKeyable}
      */
-
     AnimationCurve.prototype.evalCUBIC_cache = function (time, cacheKeyIdx, cacheValue) {
         if (!this.animKeys || this.animKeys.length === 0)
             return null;
@@ -1073,7 +1043,7 @@ Object.assign(window, function () {
         // key0, key3 are for tangent computation
         var key0, key1, key2, key3;
         var resKey = cacheValue;// new AnimationKeyable();
-        for (var c = 0; c < this.animKeys.length; c ++) {
+        for (var c = 0; c < this.animKeys.length; c++) {
             i = (begIdx + c) % this.animKeys.length;
 
             if (this.animKeys[i].time === time) {
@@ -1132,7 +1102,6 @@ Object.assign(window, function () {
      * @param {number} time
      * @returns {AnimationKeyable}
      */
-
     AnimationCurve.prototype.evalCUBICSPLINE_GLTF = function (time) {
         if (!this.animKeys || this.animKeys.length === 0)
             return null;
@@ -1140,7 +1109,7 @@ Object.assign(window, function () {
         // 1. find the interval [key1, key2]
         var resKey = new AnimationKeyable();
         var key1, key2;
-        for (var i = 0; i < this.animKeys.length; i ++) {
+        for (var i = 0; i < this.animKeys.length; i++) {
             if (this.animKeys[i].time === time) {
                 resKey.copy(this.animKeys[i]);
                 return resKey;
@@ -1188,7 +1157,6 @@ Object.assign(window, function () {
      * @param {AnimationKeyable} cacheValue
      * @returns {AnimationKeyable}
      */
-
     AnimationCurve.prototype.evalCUBICSPLINE_GLTF_cache = function (time, cacheKeyIdx, cacheValue) {
         if (!this.animKeys || this.animKeys.length === 0)
             return null;
@@ -1200,7 +1168,7 @@ Object.assign(window, function () {
         // 1. find the interval [key1, key2]
         var resKey = cacheValue;// new AnimationKeyable(); 1215
         var key1, key2;
-        for (var c = 0; c < this.animKeys.length; c ++) {
+        for (var c = 0; c < this.animKeys.length; c++) {
             i = (begIdx + c) % this.animKeys.length;
 
             if (this.animKeys[i].time === time) {
@@ -1266,7 +1234,6 @@ Object.assign(window, function () {
      * @param {AnimationKeyable} cacheValue
      * @returns {AnimationKeyable}
      */
-
     AnimationCurve.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) {
         if (!this.animKeys || this.animKeys.length === 0)
             return null;
@@ -1288,7 +1255,6 @@ Object.assign(window, function () {
      * @param {number} time
      * @returns {AnimationKeyable}
      */
-
     AnimationCurve.prototype.eval = function (time) {
         if (!this.animKeys || this.animKeys.length === 0)
             return null;
@@ -1315,7 +1281,6 @@ Object.assign(window, function () {
      * @returns {number}
      * @summary static method: tangent 1, value 1, tangent 2, value 2, proportion
      */
-
     AnimationCurve.cubicHermite = function (t1, v1, t2, v2, p) {
         // basis
         var p2 = p * p;
@@ -1340,7 +1305,6 @@ Object.assign(window, function () {
      * @returns {AnimationKeyable}
      * @summary static: only for num or vec
      */
-
     AnimationCurve.cubicCardinal = function (key0, key1, key2, key3, time, tension, cacheValue) {
         var m1, m2;
 
@@ -1372,7 +1336,7 @@ Object.assign(window, function () {
         if (key1.type === AnimationKeyableType.VEC) {
             resKey.value = key1.value.clone();
             var props = ["x", "y", "z", "w"];
-            for (var i = 0; i < props.length; i ++) {
+            for (var i = 0; i < props.length; i++) {
                 var pr = props[i];
                 if (resKey.value[pr] === undefined)
                     continue;
@@ -1400,7 +1364,6 @@ Object.assign(window, function () {
     /**
      * @class
      */
-
     var AnimationClipSnapshot = function () {
         this.curveKeyable = {};// curveKeyable[curveName]=keyable
         this.curveNames = [];
@@ -1409,14 +1372,13 @@ Object.assign(window, function () {
     /**
      * @param {AnimationClipSnapshot} shot
      */
-
     AnimationClipSnapshot.prototype.copy = function (shot) {
         if (!shot)
             return this;
 
         this.curveKeyable = {};
         this.curveNames = [];
-        for (var i = 0; i < shot.curveNames.length; i ++) {
+        for (var i = 0; i < shot.curveNames.length; i++) {
             var cname = shot.curveNames[i];
             this.curveKeyable[cname] = new AnimationKeyable().copy(shot.curveKeyable[cname]);
             this.curveNames.push(cname);
@@ -1436,7 +1398,6 @@ Object.assign(window, function () {
      * @returns {AnimationClipSnapshot}
      * @summary static function: linear blending
      */
-
     AnimationClipSnapshot.linearBlend = function (shot1, shot2, p) {
         if (!shot1 || !shot2)
             return null;
@@ -1446,7 +1407,7 @@ Object.assign(window, function () {
 
         var resShot = new AnimationClipSnapshot();
         resShot.copy(shot1);
-        for (var i = 0; i < shot2.curveNames.length; i ++) {
+        for (var i = 0; i < shot2.curveNames.length; i++) {
             var cname = shot2.curveNames[i];
             if (shot1.curveKeyable[cname] && shot2.curveKeyable[cname]) {
                 var resKey = AnimationKeyable.linearBlend(shot1.curveKeyable[cname], shot2.curveKeyable[cname], p);
@@ -1467,7 +1428,6 @@ Object.assign(window, function () {
      * @returns {AnimationClipSnapshot}
      * @summary static function: linear blending except for step curve
      */
-
     AnimationClipSnapshot.linearBlendExceptStep = function (shot1, shot2, p, animCurveMap) {
         if (!shot1 || !shot2)
             return null;
@@ -1477,7 +1437,7 @@ Object.assign(window, function () {
 
         var resShot = new AnimationClipSnapshot();
         resShot.copy(shot1);
-        for (var i = 0; i < shot2.curveNames.length; i ++) {
+        for (var i = 0; i < shot2.curveNames.length; i++) {
             var cname = shot2.curveNames[i];
             if (shot1.curveKeyable[cname] && shot2.curveKeyable[cname]) {
                 if (animCurveMap[cname] && animCurveMap[cname].type === AnimationCurveType.STEP) {
@@ -1509,9 +1469,8 @@ Object.assign(window, function () {
      * @class
      * @param {pc.GraphNode} [root]
      */
-
     var AnimationClip = function (root) {
-        AnimationClip.count ++;
+        AnimationClip.count++;
         this.name = "clip" + AnimationClip.count.toString();
         this.duration = 0;
         this.animCurvesMap = {}; // a map for easy query
@@ -1556,7 +1515,6 @@ Object.assign(window, function () {
      * @param {AnimationClip} clip
      * @returns {AnimationClip}
      */
-
     AnimationClip.prototype.copy = function (clip) {
         this.name = clip.name;
         this.duration = clip.duration;
@@ -1592,7 +1550,6 @@ Object.assign(window, function () {
      * @param {number} fadeEndTime
      * @param {number} fadeTime
      */
-
     AnimationClip.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTime, fadeTime) {
         this.session.showAt(time, fadeDir, fadeBegTime, fadeEndTime, fadeTime);
     };
@@ -1601,7 +1558,6 @@ Object.assign(window, function () {
      * @param {AnimationClipSnapshot} snapshot
      * @param {number} p
      */
-
     AnimationClip.prototype.blendToTarget = function (snapshot, p) {
         this.session.blendToTarget(snapshot, p);
     };
@@ -1609,7 +1565,6 @@ Object.assign(window, function () {
     /**
      * @param {AnimationClipSnapshot} snapshot
      */
-
     AnimationClip.prototype.updateToTarget = function (snapshot) {
         this.session.updateToTarget(snapshot);
     };
@@ -1659,7 +1614,6 @@ Object.assign(window, function () {
     /**
      * @param {number} duration
      */
-
     AnimationClip.prototype.fadeIn = function (duration) {
         this.session.fadeIn(duration, this);
     };
@@ -1667,7 +1621,6 @@ Object.assign(window, function () {
     /**
      * @param {number} duration
      */
-
     AnimationClip.prototype.fadeOut = function (duration) {
         this.session.fadeOut(duration);
     };
@@ -1676,7 +1629,6 @@ Object.assign(window, function () {
      * @param {AnimationClip} toClip
      * @param {number} duration
      */
-
     AnimationClip.prototype.fadeTo = function (toClip, duration) {
         this.session.fadeTo(toClip, duration);
     };
@@ -1686,7 +1638,6 @@ Object.assign(window, function () {
     /**
      * @param {AnimationCurve} curve
      */
-
     AnimationClip.prototype.addCurve = function (curve) {
         if (curve && curve.name) {
             this.animCurves.push(curve);
@@ -1699,7 +1650,6 @@ Object.assign(window, function () {
     /**
      * @param {string} name
      */
-
     AnimationClip.prototype.removeCurve = function (name) {
         if (name) {
             var curve = this.animCurvesMap[name];
@@ -1731,7 +1681,6 @@ Object.assign(window, function () {
      * @param {any} context
      * @param {any} parameter
      */
-
     AnimationClip.prototype.on = function (name, time, fnCallback, context, parameter) {
         if (this.session)
             this.session.on(name, time, fnCallback, context, parameter);
@@ -1743,7 +1692,6 @@ Object.assign(window, function () {
      * @param {number} time
      * @param {AnimationEventCallback} fnCallback
      */
-
     AnimationClip.prototype.off = function (name, time, fnCallback) {
         if (this.session)
             this.session.off(name, time, fnCallback);
@@ -1763,7 +1711,6 @@ Object.assign(window, function () {
      * @param {number} tmEnd
      * @returns {AnimationClip}
      */
-
     AnimationClip.prototype.getSubClip = function (tmBeg, tmEnd) {
         var subClip = new AnimationClip();
         subClip.name = this.name + "_sub";
@@ -1784,7 +1731,6 @@ Object.assign(window, function () {
      * @param {AnimationClipSnapshot} cacheValue
      * @returns {AnimationClipSnapshot}
      */
-
     AnimationClip.prototype.eval_cache = function (time, cacheKeyIdx, cacheValue) { // 1226
         if (!cacheValue) {
             var ret = this.eval();
@@ -1816,7 +1762,6 @@ Object.assign(window, function () {
      * @param {number} [time]
      * @returns {AnimationClipSnapshot}
      */
-
     AnimationClip.prototype.eval = function (time) {
         var snapshot = new AnimationClipSnapshot();
         snapshot.time = time;
@@ -1833,7 +1778,6 @@ Object.assign(window, function () {
     /**
      * @param {pc.GraphNode} root
      */
-
     AnimationClip.prototype.constructFromRoot = function (root) {
         if (!root)
             return;
@@ -1860,7 +1804,7 @@ Object.assign(window, function () {
         this.addCurve(curveRotQuat);
 
         // children
-        for (var i = 0; i < root.children.length; i ++)
+        for (var i = 0; i < root.children.length; i++)
             if (root.children[i]) this.constructFromRoot(root.children[i]);
     };
 
@@ -1910,7 +1854,7 @@ Object.assign(window, function () {
                 curve.animTargets[0].targetNode = root;
 
             var ctarget = curve.animTargets[0];
-                        
+
             var j;
             var keys = Object.keys(dictTarget);
             var nodes = [];
@@ -1990,7 +1934,6 @@ Object.assign(window, function () {
     /**
      * @param {AnimationCurveType} type
      */
-
     AnimationClip.prototype.setInterpolationType = function (type) {
         for (var i = 0, len = this.animCurves.length; i < len; i++) {
             var curve = this.animCurves[i];
@@ -2048,7 +1991,6 @@ Object.assign(window, function () {
      * @param {Playable} [playable]
      * @param {AnimationTargetsMap} [targets]
      */
-
     var AnimationSession = function AnimationSession(playable, targets) {
         this._cacheKeyIdx = undefined;// integer if playable is curve, object {} if playable is clip
         this._cacheValue = undefined;// 1215, keyable if playable is curve, snapshot if playable is clip, all pre allocated
@@ -2097,7 +2039,7 @@ Object.assign(window, function () {
             self.accTime += (self.bySpeed * dt);
 
             if (!self.isPlaying ||// not playing
-                (!self.loop && (self.curTime < self.begTime || self.curTime > self.endTime))){ // not in range
+                (!self.loop && (self.curTime < self.begTime || self.curTime > self.endTime))) { // not in range
                 self.invokeByTime(self.curTime);
                 self.stop();
                 self.invokeByName("stop");
@@ -2109,7 +2051,7 @@ Object.assign(window, function () {
             if (self.curTime > self.endTime) { // loop start
                 self.invokeByTime(self.curTime);
                 self.curTime -= duration;
-                for (var i = 0; i < self.animEvents.length; i ++)
+                for (var i = 0; i < self.animEvents.length; i++)
                     self.animEvents[i].triggered = false;
             }
             if (self.curTime < self.begTime)
@@ -2139,7 +2081,6 @@ Object.assign(window, function () {
      * @param {Playable} playable
      * @returns {AnimationKeyable | AnimationClipSnapshot}
      */
-
     AnimationSession._allocatePlayableCache = function (playable) {
         if (!playable)
             return null;
@@ -2204,7 +2145,7 @@ Object.assign(window, function () {
 
         // events
         cloned.animEvents = [];
-        for (i = 0; i < this.animEvents.length; i ++)
+        for (i = 0; i < this.animEvents.length; i++)
             cloned.animEvents.push(this.animEvents[i].clone());
 
         // blending
@@ -2231,9 +2172,8 @@ Object.assign(window, function () {
      * @param {number} weight
      * @param {string} curveName
      */
-
-    AnimationSession.prototype.setBlend = function (blendValue, weight, curveName){
-        if (blendValue instanceof AnimationClip){
+    AnimationSession.prototype.setBlend = function (blendValue, weight, curveName) {
+        if (blendValue instanceof AnimationClip) {
             if (!curveName || curveName === "")
                 curveName = "__default__";
             this.blendables[curveName] = blendValue;
@@ -2262,7 +2202,6 @@ Object.assign(window, function () {
     /**
      * @param {string} curveName
      */
-
     AnimationSession.prototype.unsetBlend = function (curveName) {
         if (!curveName || curveName === "")
             curveName = "__default__";
@@ -2284,14 +2223,13 @@ Object.assign(window, function () {
      * @param {any} context
      * @param {any} parameter
      */
-
     AnimationSession.prototype.on = function (name, time, fnCallback, context, parameter) {
         if (!name || !fnCallback)
             return;
 
         var event = new AnimationEvent(name, time, fnCallback, context, parameter);
         var pos = 0;
-        for (; pos < this.animEvents.length; pos ++) {
+        for (; pos < this.animEvents.length; pos++) {
             if (this.animEvents[pos].triggerTime > time)
                 break;
         }
@@ -2307,10 +2245,9 @@ Object.assign(window, function () {
      * @param {number} time
      * @param {AnimationEventCallback} fnCallback
      */
-
     AnimationSession.prototype.off = function (name, time, fnCallback) {
         var pos = 0;
-        for ( ; pos < this.animEvents.length; pos ++) {
+        for (; pos < this.animEvents.length; pos++) {
             var event = this.animEvents[pos];
             if (!event) continue;
             if (event.name === name && event.fnCallback === fnCallback)
@@ -2331,9 +2268,8 @@ Object.assign(window, function () {
     /**
      * @param {string} name
      */
-
     AnimationSession.prototype.invokeByName = function (name) {
-        for (var i = 0; i < this.animEvents.length; i ++) {
+        for (var i = 0; i < this.animEvents.length; i++) {
             if (this.animEvents[i] && this.animEvents[i].name === name) {
                 this.animEvents[i].invoke();
             }
@@ -2343,9 +2279,8 @@ Object.assign(window, function () {
     /**
      * @param {number} time
      */
-
     AnimationSession.prototype.invokeByTime = function (time) {
-        for (var i = 0; i < this.animEvents.length; i ++) {
+        for (var i = 0; i < this.animEvents.length; i++) {
             if (!this.animEvents[i])
                 continue;
 
@@ -2362,7 +2297,6 @@ Object.assign(window, function () {
      * @param {AnimationInput} input
      * @param {number} p
      */
-
     AnimationSession.prototype.blendToTarget = function (input, p) {
         var i, j;
         var cname, ctargets, blendUpdateNone;
@@ -2390,7 +2324,7 @@ Object.assign(window, function () {
                 else blendUpdateNone = eBlendType.NONE;
             }
 
-            for (j = 0; j < ctargets.length; j ++) {
+            for (j = 0; j < ctargets.length; j++) {
                 if (blendUpdateNone === eBlendType.PARTIAL_BLEND) ctargets[j].blendToTarget(input.value, p);
                 else if (blendUpdateNone === eBlendType.FULL_UPDATE) ctargets[j].updateToTarget(input.value);
             }
@@ -2399,7 +2333,7 @@ Object.assign(window, function () {
 
         // playable is a clip, input is a AnimationClipSnapshot, animTargets is an object {curvename1:[]targets, curvename2:[]targets, curvename3:[]targets}
         if (this.playable instanceof AnimationClip && input instanceof AnimationClipSnapshot) {
-            for (i = 0; i < input.curveNames.length; i ++) {
+            for (i = 0; i < input.curveNames.length; i++) {
                 cname = input.curveNames[i];
                 if (!cname) continue;
 
@@ -2412,7 +2346,7 @@ Object.assign(window, function () {
                 ctargets = this.animTargets[cname];
                 if (!ctargets) continue;
 
-                for (j = 0; j < ctargets.length; j ++) {
+                for (j = 0; j < ctargets.length; j++) {
                     if (blendUpdateNone === eBlendType.PARTIAL_BLEND) ctargets[j].blendToTarget(input.curveKeyable[cname].value, p);
                     else if (blendUpdateNone === eBlendType.FULL_UPDATE) ctargets[j].updateToTarget(input.value);
                 }
@@ -2423,7 +2357,6 @@ Object.assign(window, function () {
     /**
      * @param {AnimationInput} input
      */
-
     AnimationSession.prototype.updateToTarget = function (input) {
         var i, j;
         var cname, ctargets;
@@ -2438,20 +2371,20 @@ Object.assign(window, function () {
             if (!ctargets)
                 return;
 
-            for (j = 0; j < ctargets.length; j ++)
+            for (j = 0; j < ctargets.length; j++)
                 ctargets[j].updateToTarget(input.value);
             return;
         }
 
         // playable is a clip, input is a AnimationClipSnapshot
         if (this.playable instanceof AnimationClip && input instanceof AnimationClipSnapshot) {
-            for (i = 0; i < input.curveNames.length; i ++) {
+            for (i = 0; i < input.curveNames.length; i++) {
                 cname = input.curveNames[i];
                 if (!cname) continue;
                 ctargets = this.animTargets[cname];
                 if (!ctargets) continue;
 
-                for (j = 0; j < ctargets.length; j ++) {
+                for (j = 0; j < ctargets.length; j++) {
                     if (input.curveKeyable[cname]) {
                         ctargets[j].updateToTarget(input.curveKeyable[cname].value);
                     }
@@ -2467,7 +2400,6 @@ Object.assign(window, function () {
      * @param {number} fadeEndTime
      * @param {number} fadeTime
      */
-
     AnimationSession.prototype.showAt = function (time, fadeDir, fadeBegTime, fadeEndTime, fadeTime) {
         var p;
         var input = this.playable.eval_cache(time, this._cacheKeyIdx, this._cacheValue);
@@ -2515,7 +2447,6 @@ Object.assign(window, function () {
      * @param {AnimationTargetsMap} [animTargets]
      * @returns {AnimationSession}
      */
-
     AnimationSession.prototype.play = function (playable, animTargets) {
         var i;
 
@@ -2546,7 +2477,7 @@ Object.assign(window, function () {
             this.animTargets = animTargets;
 
         // reset events
-        for (i = 0; i < this.animEvents.length; i ++)
+        for (i = 0; i < this.animEvents.length; i++)
             this.animEvents[i].triggered = false;
 
         var app = pc.Application.getApplication();
@@ -2586,7 +2517,6 @@ Object.assign(window, function () {
     /**
      * @param {number} duration
      */
-
     AnimationSession.prototype.fadeOut = function (duration) {
         if (this.fadeDir === 0) // fade out from normal playing session
             this.fadeSpeed = 1;
@@ -2608,7 +2538,6 @@ Object.assign(window, function () {
      * @param {number} duration
      * @param {Playable} [playable]
      */
-
     AnimationSession.prototype.fadeIn = function (duration, playable) {
         if (this.isPlaying) {
             this.stop();
@@ -2633,7 +2562,6 @@ Object.assign(window, function () {
      * @param {Playable} playable
      * @param {number} duration
      */
-
     AnimationSession.prototype.fadeTo = function (playable, duration) {
         this.fadeOut(duration);
         var session = new AnimationSession();
@@ -2644,7 +2572,6 @@ Object.assign(window, function () {
     /**
      * @param {number} duration
      */
-
     AnimationSession.prototype.fadeToSelf = function (duration) {
         var session = this.clone();
         var app = pc.Application.getApplication();
@@ -2665,7 +2592,6 @@ Object.assign(window, function () {
     /**
      * @class
      */
-
     var AnimationComponent = function () {
         this.name = "";
         this.animClipsMap = {}; // make it a map, easy to query clip by name
@@ -2679,7 +2605,6 @@ Object.assign(window, function () {
     /**
      * @returns {number}
      */
-
     AnimationComponent.prototype.clipCount = function () {
         return this.animClips.length;
     };
@@ -2687,7 +2612,6 @@ Object.assign(window, function () {
     /**
      * @returns {AnimationClip}
      */
-
     AnimationComponent.prototype.getCurrentClip = function () {
         return this.animClipsMap[this.curClip];
     };
@@ -2696,7 +2620,6 @@ Object.assign(window, function () {
      * @param {number} index
      * @returns {AnimationClip}
      */
-
     AnimationComponent.prototype.clipAt = function (index) {
         if (this.animClips.length <= index)
             return null;
@@ -2706,7 +2629,6 @@ Object.assign(window, function () {
     /**
      * @param {AnimationClip} clip
      */
-
     AnimationComponent.prototype.addClip = function (clip) {
         if (clip && clip.name) {
             this.animClips.push(clip);
@@ -2717,7 +2639,6 @@ Object.assign(window, function () {
     /**
      * @param {string} name
      */
-
     AnimationComponent.prototype.removeClip = function (name) {
         var clip = this.animClipsMap[name];
         if (clip) {
@@ -2735,7 +2656,6 @@ Object.assign(window, function () {
     /**
      * @param {string} name
      */
-
     AnimationComponent.prototype.playClip = function (name) {
         var clip = this.animClipsMap[name];
         if (clip) {
@@ -2758,7 +2678,6 @@ Object.assign(window, function () {
      * @param {string} name
      * @param {number} duration
      */
-
     AnimationComponent.prototype.crossFadeToClip = function (name, duration) {
         var fromClip = this.animClipsMap[this.curClip];
         var toClip = this.animClipsMap[name];
@@ -2784,7 +2703,6 @@ Object.assign(window, function () {
      * @param {number} weight
      * @param {string} curveName
      */
-
     AnimationComponent.prototype.setBlend = function (blendValue, weight, curveName) {
         var curClip = this.getCurrentClip();
         if (curClip && curClip.session)
@@ -2794,7 +2712,6 @@ Object.assign(window, function () {
     /**
      * @param {string} curveName
      */
-
     AnimationComponent.prototype.unsetBlend = function (curveName) {
         var curClip = this.getCurrentClip();
         if (curClip && curClip.session)
@@ -2810,7 +2727,6 @@ Object.assign(window, function () {
     /**
      * @param {string} name
      */
-
     AnimationComponent.prototype.playSession = function (name) {
         var session = this.animSessions[name];
         if (session) {
@@ -2833,7 +2749,6 @@ Object.assign(window, function () {
      * @param {string} name
      * @param {number} duration
      */
-
     AnimationComponent.prototype.crossFadeToSession = function (name, duration) {
         var fromSession = this.animSessions[this.curClip];
         var toSession = this.animSessions[name];
@@ -2856,7 +2771,6 @@ Object.assign(window, function () {
      * @param {number} weight
      * @param {string} curveName
      */
-
     AnimationComponent.prototype.setBlendSession = function (blendValue, weight, curveName) {
         var curSession = this.animSessions[this.curClip];
         if (curSession) {
@@ -2867,7 +2781,6 @@ Object.assign(window, function () {
     /**
      * @param {string} curveName
      */
-
     AnimationComponent.prototype.unsetBlendSession = function (curveName) {
         var curSession = this.animSessions[this.curClip];
         if (curSession) {
@@ -2878,7 +2791,6 @@ Object.assign(window, function () {
     /**
      * @param {string} substr
      */
-
     AnimationComponent.prototype.playSubstring = function (substr) {
         var n = this.animClips.length;
         for (var i = 0; i < n; i++) {
