@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@playcanvas/eslint-config": "^1.0.16",
-    "electron": "^16.0.7",
+    "electron": "^16.2.6",
     "electron-packager": "^15.4.0",
     "eslint": "^8.7.0"
   },
